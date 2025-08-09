@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1002] Job Edit Auth
+  Opened: 2025-08-09 • Branch: `fix/bug-1002-job-edit-auth`
 - [BUG-1001] Type Abbreviations
   Opened: 2025-08-09 • Branch: `fix/bug-1001-type-abbreviations`
 ## Resolved
@@ -25,6 +27,34 @@ Should abbreviate to "REIs" in the job card
 
 ### Actual
 Abbreviates to "R" on the job card
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1002 - Job Edit Auth
+**Area:** jobs
+**Severity:** High
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Job Edit Auth
+
+### Steps to Reproduce
+While logged out, click a date in the calendar view to open the day view; look at the options available.
+
+### Expected
+An unauth'd user shouldn't be able to edit/delete jobs.
+
+### Actual
+Unauth'd user is able to edit/delete individual jobs.
 
 ### Notes / Suspicions
 -
