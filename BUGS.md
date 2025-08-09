@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1010] Holidays
+  Opened: 2025-08-09 • Branch: `fix/bug-1010-holidays`
 - [BUG-1009] Nameless Job
   Opened: 2025-08-09 • Branch: `fix/bug-1009-nameless-job`
 - [BUG-1008] Locked Day Failure
@@ -265,6 +267,34 @@ Title should be a required field.
 
 ### Actual
 Job creation proceeds with no title provided.
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1010 - Holidays
+**Area:** calendar
+**Severity:** Low
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Holidays
+
+### Steps to Reproduce
+View calendar view on a month inlcuding a Federal holiday
+
+### Expected
+Should show the holiday on the date
+
+### Actual
+Holidays don't appear on the calendar view.
 
 ### Notes / Suspicions
 -
