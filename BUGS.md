@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1003] Unauthorized Lock Toggle
+  Opened: 2025-08-09 • Branch: `fix/bug-1003-unauthorized-lock-to`
 - [BUG-1002] Job Edit Auth
   Opened: 2025-08-09 • Branch: `fix/bug-1002-job-edit-auth`
 - [BUG-1001] Type Abbreviations
@@ -55,6 +57,34 @@ An unauth'd user shouldn't be able to edit/delete jobs.
 
 ### Actual
 Unauth'd user is able to edit/delete individual jobs.
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1003 - Unauthorized Lock Toggle
+**Area:** auth
+**Severity:** Critical
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Unauthorized Lock Toggle
+
+### Steps to Reproduce
+While logged out, attempt to toggle Lock/Unlock Day.
+
+### Expected
+Lock/Unlock Day toggle should not appear at all.
+
+### Actual
+Lock/Unlock Day toggle is clickable, and works.
 
 ### Notes / Suspicions
 -
