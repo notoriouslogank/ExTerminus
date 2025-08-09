@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1007] Clickable Days
+  Opened: 2025-08-09 • Branch: `fix/bug-1007-clickable-days`
 - [BUG-1006] REIs
   Opened: 2025-08-09 • Branch: `fix/bug-1006-reis`
 - [BUG-1005] Multi-Day Arrows
@@ -175,6 +177,34 @@ Calendar view should display "REIs" - "Technician" - "Quantity" - "City Name".
 
 ### Actual
 Calendar simply displays "R - Unknown" for the created job(s)
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1007 - Clickable Days
+**Area:** calendar
+**Severity:** Low
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Clickable Days
+
+### Steps to Reproduce
+On calendar view, select a given date to open the day view for that day
+
+### Expected
+Should be able to click ANYWHERE on a date to open the day view
+
+### Actual
+Must click on the actual date numerals
 
 ### Notes / Suspicions
 -
