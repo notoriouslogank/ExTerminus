@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1014] Time Off
+  Opened: 2025-08-09 • Branch: `fix/bug-1014-time-off`
 - [BUG-1013] Time Picker
   Opened: 2025-08-09 • Branch: `fix/bug-1013-time-picker`
 - [BUG-1012] Force Password Update
@@ -385,6 +387,34 @@ Should open a time picker similar to the date picker
 
 ### Actual
 Does not open time picker; takes input as text
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1014 - Time Off
+**Area:** jobs
+**Severity:** High
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Time Off
+
+### Steps to Reproduce
+Attempt to Add Time Off
+
+### Expected
+Dropdown list should list all technicians
+
+### Actual
+Dropdown does not show any technicians, and thus unable to add Time Off
 
 ### Notes / Suspicions
 -
