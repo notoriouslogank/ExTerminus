@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1017] Missing Audit Trail
+  Opened: 2025-08-09 • Branch: `fix/bug-1017-missing-audit-trail`
 - [BUG-1016] Chronology II
   Opened: 2025-08-09 • Branch: `fix/bug-1016-chronology-ii`
 - [BUG-1015] Chronology
@@ -475,6 +477,34 @@ In day view, jobs should be sorted by timed jobs (at top) and then in ascending 
 
 ### Actual
 Jobs appear in order they were created.
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1017 - Missing Audit Trail
+**Area:** jobs
+**Severity:** High
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Missing Audit Trail
+
+### Steps to Reproduce
+Create any number of jobs
+
+### Expected
+Job cards (day view) should include information about the job Creator, last modified, etc.
+
+### Actual
+Contains no audit information on any job card
 
 ### Notes / Suspicions
 -
