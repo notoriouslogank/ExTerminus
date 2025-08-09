@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1018] End Before Start
+  Opened: 2025-08-09 • Branch: `fix/bug-1018-end-before-start`
 - [BUG-1017] Missing Audit Trail
   Opened: 2025-08-09 • Branch: `fix/bug-1017-missing-audit-trail`
 - [BUG-1016] Chronology II
@@ -505,6 +507,34 @@ Job cards (day view) should include information about the job Creator, last modi
 
 ### Actual
 Contains no audit information on any job card
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1018 - End Before Start
+**Area:** calendar
+**Severity:** High
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+End Before Start
+
+### Steps to Reproduce
+Create a new job whose start date is after its' end date
+
+### Expected
+Should display an error message and not allow user to proceed
+
+### Actual
+Creates the job on the start date only
 
 ### Notes / Suspicions
 -
