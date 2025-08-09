@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1006] REIs
+  Opened: 2025-08-09 • Branch: `fix/bug-1006-reis`
 - [BUG-1005] Multi-Day Arrows
   Opened: 2025-08-09 • Branch: `fix/bug-1005-multi-day-arrows`
 - [BUG-1004] Edit Job Crash
@@ -145,6 +147,34 @@ Should print an arrow (->) on each day of a multi-day job.
 
 ### Actual
 Only prints an arrow on the first day.
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1006 - REIs
+**Area:** calendar
+**Severity:** High
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+REIs
+
+### Steps to Reproduce
+Add REIs of any quantity and with any zipcode to any day.
+
+### Expected
+Calendar view should display "REIs" - "Technician" - "Quantity" - "City Name".
+
+### Actual
+Calendar simply displays "R - Unknown" for the created job(s)
 
 ### Notes / Suspicions
 -
