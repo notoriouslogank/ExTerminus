@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1015] Chronology
+  Opened: 2025-08-09 • Branch: `fix/bug-1015-chronology`
 - [BUG-1014] Time Off
   Opened: 2025-08-09 • Branch: `fix/bug-1014-time-off`
 - [BUG-1013] Time Picker
@@ -415,6 +417,34 @@ Dropdown list should list all technicians
 
 ### Actual
 Dropdown does not show any technicians, and thus unable to add Time Off
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1015 - Chronology
+**Area:** calendar
+**Severity:** Medium
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Chronology
+
+### Steps to Reproduce
+Add multiple jobs with a timeframe to a given day
+
+### Expected
+Should place all timed jobs at top and order them by time in ascending order
+
+### Actual
+Places the timed jobs in an arbitrary order
 
 ### Notes / Suspicions
 -
