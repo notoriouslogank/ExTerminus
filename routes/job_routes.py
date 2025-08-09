@@ -6,32 +6,36 @@ from functools import wraps
 from datetime import datetime
 import zipcodes
 
-job_bp = Blueprint('job', __name__)
+job_bp = Blueprint("job", __name__)
 logger = setup_logger()
 
-def lookup_zipcode(zipcode:str) -> str | None:
+
+def lookup_zipcode(zip: str) -> str | None:
     try:
-        results = zipcodes.matching(str(zipcode).strip())
+        results = zipcodes.matching(str(zip).strip())
         if not results:
             return None
         return results[0].get("city")
     except Exception:
         return None
 
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "user" not in session:
-            return redirect(url_for('auth.login'))
+            return redirect(url_for("auth.login"))
         return f(*args, **kwargs)
+
     return decorated_function
+
 
 @job_bp.route("/add_job", methods=["GET", "POST"])
 @login_required
 def add_job():
     if request.method == "POST":
-        start_date = request.form.get('start_date')
-        rei_city = request.form.get('rei_city')
+        start_date = request.form.get("start_date")
+        rei_city = request.form.get("rei_city")
         rei_city_name = lookup_zipcode(rei_city) if rei_city else None
         if not start_date:
             flash("Start date is required.")
@@ -68,14 +72,16 @@ def add_job():
         if technician_id == "":
             technician_id = None
         if technician_id is not None:
-            if not cur.execute("SELECT 1 FROM technicians WHERE id=?", (technician_id,)).fetchone():
+            if not cur.execute(
+                "SELECT 1 FROM technicians WHERE id=?", (technician_id,)
+            ).fetchone():
                 technician_id = None
 
         fumigation_type = request.form.get("fumigation_type")
         target_pest = request.form.get("target_pest")
         custom_pest = request.form.get("custom_pest")
 
-        if target_pest == "custom":
+        if custom_pest:
             target_pest = custom_pest.strip()
 
         conn = get_database()
@@ -89,10 +95,29 @@ def add_job():
             title, job_type, price, start_date, end_date, time_range, notes,
             created_by, technician_id, rei_qty, rei_city, rei_city_name, exclusion_subtype, fumigation_type, target_pest, custom_pest)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (title, job_type, price, start_date, end_date, time_range, notes, created_by, technician_id, rei_quantity, rei_city, rei_city_name, exclusion_subtype, fumigation_type, target_pest, custom_pest),
+            (
+                title,
+                job_type,
+                price,
+                start_date,
+                end_date,
+                time_range,
+                notes,
+                created_by,
+                technician_id,
+                rei_quantity,
+                rei_city,
+                rei_city_name,
+                exclusion_subtype,
+                fumigation_type,
+                target_pest,
+                custom_pest,
+            ),
         )
         conn.commit()
-        logger.info(f"Job added by user ID {created_by}: {job_type} from {start_date} to {end_date} at {time_range}")
+        logger.info(
+            f"Job added by user ID {created_by}: {job_type} from {start_date} to {end_date} at {time_range}"
+        )
         return redirect(url_for("calendar.index"))
     start_date = None
     connection = get_database()
@@ -100,7 +125,13 @@ def add_job():
     cursor.execute("SELECT * FROM technicians")
     technicians = cursor.fetchall()
 
-    return render_template("job_form.html", date=start_date, technicians=technicians, hide_date_fields=False)
+    return render_template(
+        "job_form.html",
+        date=start_date,
+        technicians=technicians,
+        hide_date_fields=False,
+    )
+
 
 @job_bp.route("/add_job/<date>", methods=["GET", "POST"])
 @login_required
@@ -134,10 +165,26 @@ def add_job_for_date(date):
         cursor.execute(
             """INSERT INTO jobs (title, job_type, price, start_date, end_date, time_range, notes, technician_id, created_by, rei_qty, rei_city, rei_city_name, exclusion_subtype)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (title, job_type, price, start_date, end_date, time_range, notes, technician_id, created_by, rei_quantity, rei_city, rei_city_name, exclusion_subtype),
+            (
+                title,
+                job_type,
+                price,
+                start_date,
+                end_date,
+                time_range,
+                notes,
+                technician_id,
+                created_by,
+                rei_quantity,
+                rei_city,
+                rei_city_name,
+                exclusion_subtype,
+            ),
         )
         conn.commit()
-        logger.info(f"Job added by user ID {created_by}: {job_type} from {start_date} to {end_date} at {time_range}")
+        logger.info(
+            f"Job added by user ID {created_by}: {job_type} from {start_date} to {end_date} at {time_range}"
+        )
         return redirect(url_for("calendar.day_view", selected_date=date))
 
     # ✅ This block only runs on GET
@@ -147,7 +194,13 @@ def add_job_for_date(date):
     technicians = cursor.fetchall()
 
     parsed_date = datetime.strptime(date, "%Y-%m-%d").date()
-    return render_template("job_form.html", date=parsed_date, technicians=technicians, hide_date_fields=True)
+    return render_template(
+        "job_form.html",
+        date=parsed_date,
+        technicians=technicians,
+        hide_date_fields=True,
+    )
+
 
 @job_bp.route("/move_job/<int:job_id>", methods=["POST"])
 @login_required
@@ -168,22 +221,28 @@ def move_job(job_id):
     new_start_dt = datetime.strptime(new_start, "%Y-%m-%d").date()
     new_end_dt = new_start_dt + duration
 
-    cur.execute("""
+    cur.execute(
+        """
                 UPDATE jobs
                 SET start_date = ?, end_date = ?,
                 last_modified = CURRENT_TIMESTAMP,
                 last_modified_by = ?
             WHERE id = ?
-        """, (
+        """,
+        (
             new_start_dt.isoformat(),
             new_end_dt.isoformat(),
             session["user"]["user_id"],
-            job_id
-        ))
+            job_id,
+        ),
+    )
 
     conn.commit()
-    logger.info(f"Job ID {job_id} moved by user ID {session['user']['user_id']} to {new_start_dt}")
+    logger.info(
+        f"Job ID {job_id} moved by user ID {session['user']['user_id']} to {new_start_dt}"
+    )
     return redirect(request.referrer or url_for("calendar.index"))
+
 
 @job_bp.route("/delete_job/<int:job_id>", methods=["POST"])
 @login_required
@@ -195,6 +254,7 @@ def delete_job(job_id):
     conn.commit()
     logger.info(f"Job ID {job_id} deleted by user ID {session['user']['user_id']}")
     return redirect(request.referrer or url_for("calendar.index"))
+
 
 @job_bp.route("/edit_job/<int:job_id>", methods=["GET", "POST"])
 @login_required
@@ -209,7 +269,7 @@ def edit_job(job_id):
         target_pest = request.form.get("target_pest")
         custom_pest = request.form.get("custom_pest")
 
-        if target_pest == "custom":
+        if custom_pest:
             target_pest = custom_pest.strip()
 
         cur.execute(
