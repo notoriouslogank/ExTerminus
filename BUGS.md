@@ -1,25 +1,30 @@
-# ExTerminus Bug Log
+# BUGS
 
+## Open
+
+- [BUG-1001] Type Abbreviations
+  Opened: 2025-08-09 • Branch: `fix/bug-1001-type-abbreviations`
+## Resolved
 
 ---
 
-## BUG-2025-08-09-add-job-crash - Add Job Crash
-**Area:** jobs
-**Severity:** Critical
+## BUG-1001 - Type Abbreviations
+**Area:** calendar
+**Severity:** Low
 **Status:** Open
 **Opened:** 2025-08-09
 
 ### Summary
-Add Job Crash
+Type Abbreviations
 
 ### Steps to Reproduce
-Attempt to Add a Job to a date
+Create a job (for instance, 10 REIs on a date); view the calendar.
 
 ### Expected
-Should add the job
+Should abbreviate to "REIs" in the job card
 
 ### Actual
-Crashes to an Internal Server Error
+Abbreviates to "R" on the job card
 
 ### Notes / Suspicions
 -
