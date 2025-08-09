@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1012] Force Password Update
+  Opened: 2025-08-09 • Branch: `fix/bug-1012-force-password-updat`
 - [BUG-1011] Invalid Username Password
   Opened: 2025-08-09 • Branch: `fix/bug-1011-invalid-username-pas`
 - [BUG-1010] Holidays
@@ -325,6 +327,34 @@ Should flash a box/message re: invalid credentials
 
 ### Actual
 Displays text in upper left -- hard to notice.
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1012 - Force Password Update
+**Area:** auth
+**Severity:** High
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Force Password Update
+
+### Steps to Reproduce
+Create a new user or reset a current user's password as admin
+
+### Expected
+Should require password change upon first login
+
+### Actual
+Never requires password change
 
 ### Notes / Suspicions
 -
