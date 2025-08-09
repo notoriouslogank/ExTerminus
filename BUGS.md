@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1004] Edit Job Crash
+  Opened: 2025-08-09 • Branch: `fix/bug-1004-edit-job-crash`
 - [BUG-1003] Unauthorized Lock Toggle
   Opened: 2025-08-09 • Branch: `fix/bug-1003-unauthorized-lock-to`
 - [BUG-1002] Job Edit Auth
@@ -85,6 +87,34 @@ Lock/Unlock Day toggle should not appear at all.
 
 ### Actual
 Lock/Unlock Day toggle is clickable, and works.
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1004 - Edit Job Crash
+**Area:** jobs
+**Severity:** Critical
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Edit Job Crash
+
+### Steps to Reproduce
+While logged in, attempt to Edit Job via day-view job card.
+
+### Expected
+Edit Job page should open, Save Changes should redirect to the calendar view.
+
+### Actual
+Crash when Save Changes is clicked.
 
 ### Notes / Suspicions
 -
