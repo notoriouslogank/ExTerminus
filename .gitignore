@@ -4,3 +4,4 @@ __pyache__/
 logs/
 db.sqlite3
 .gitmessage.txt
+mkbug.py
