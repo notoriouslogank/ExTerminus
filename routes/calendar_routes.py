@@ -1,3 +1,4 @@
+from utils.decorators import role_required, login_required
 from datetime import date, datetime, timedelta
 from calendar import Calendar, month_name
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
@@ -7,10 +8,12 @@ from ..logger import setup_logger
 calendar_bp = Blueprint("calendar", __name__)
 log = setup_logger()
 
-def _month_weeks(year: int, month: int, firstweekday: int=6):
+
+def _month_weeks(year: int, month: int, firstweekday: int = 6):
     cal = Calendar(firstweekday=firstweekday)
     days = list(cal.itermonthdates(year, month))
-    return [days[i:i+7] for i in range(0, len(days), 7)]
+    return [days[i : i + 7] for i in range(0, len(days), 7)]
+
 
 def _expand_multi_day(sd_str: str, ed_str: str | None):
     sd = datetime.fromisoformat(sd_str).date()
@@ -20,6 +23,7 @@ def _expand_multi_day(sd_str: str, ed_str: str | None):
         yield d
         d += timedelta(days=1)
 
+
 @calendar_bp.route("/", endpoint="index")
 def index():
     today = date.today()
@@ -28,8 +32,8 @@ def index():
 
     weeks = _month_weeks(year, month)
 
-    prev_month, prev_year = (12, year - 1) if month == 1 else (month -1, year)
-    next_month, next_year = (1, year+1) if month == 12 else (month + 1, year)
+    prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
+    next_month, next_year = (1, year + 1) if month == 12 else (month + 1, year)
 
     conn = get_database()
     cur = conn.cursor()
@@ -64,21 +68,23 @@ def index():
     time_off_by_date: dict[str, list[str]] = {}
     for row in cur.fetchall():
         for d in _expand_multi_day(row["start_date"], row["end_date"]):
-            time_off_by_date.setdefault(d.isoformat(), []).append(row["technician_name"])
+            time_off_by_date.setdefault(d.isoformat(), []).append(
+                row["technician_name"]
+            )
 
     conn.close()
 
     holidays = {}
 
     TYPE_ABBR = {
-        "fumigation":"F",
-        "insulation":"I",
-        "exclusion":"EX",
-        "rei":"REIs",
-        "borate":"B",
-        "bird work":"BW",
-        "poly":"P",
-        "power spray":"PS",
+        "fumigation": "F",
+        "insulation": "I",
+        "exclusion": "EX",
+        "rei": "REIs",
+        "borate": "B",
+        "bird work": "BW",
+        "poly": "P",
+        "power spray": "PS",
     }
 
     return render_template(
@@ -98,6 +104,7 @@ def index():
         today=today,
         type_abbr=TYPE_ABBR,
     )
+
 
 @calendar_bp.route("/day/<selected_date>", endpoint="day_view")
 def day_view(selected_date: str):
@@ -129,7 +136,10 @@ def day_view(selected_date: str):
     conn.close()
     return render_template("day.html", selected_date=dt, locked=locked, jobs=jobs)
 
+
 @calendar_bp.route("/timeoff/add", methods=["GET", "POST"], endpoint="add_time_off")
+@login_required
+@role_required("admin", "manager", "technician")
 def add_time_off():
     if "user" not in session:
         return redirect(url_for("auth.login"))
@@ -147,7 +157,10 @@ def add_time_off():
             flash("All fields are required.", "error")
             return redirect(url_for("calendar.add_time_off"))
 
-        cur.execute("INSERT INTO time_off (technician_id, start_date, end_date, reason) VALUES (?, ?, ?, ?)", (technician_id, start_date, end_date, reason),)
+        cur.execute(
+            "INSERT INTO time_off (technician_id, start_date, end_date, reason) VALUES (?, ?, ?, ?)",
+            (technician_id, start_date, end_date, reason),
+        )
         conn.commit()
         flash("Time off added.", "success")
         return redirect(url_for("calendar.index"))
@@ -157,14 +170,17 @@ def add_time_off():
     conn.close()
     return render_template("add_time_off.html", technicians=technicians)
 
+
 @calendar_bp.route("/lock/toggle", methods=["POST"], endpoint="toggle_lock")
+@login_required
+@role_required("manager", "technician", "admin")
 def toggle_lock():
     selected_date = request.form.get("date")
     if not selected_date:
         flash("No date provided.", "error")
         return redirect(url_for("calendar.index"))
 
-    user = session.get('user')
+    user = session.get("user")
     user_id = user["id"] if isinstance(user, dict) and "id" in user else None
 
     conn = get_database()
@@ -176,9 +192,12 @@ def toggle_lock():
     if row:
         cur.execute("DELETE FROM locks WHERE date = ?", (selected_date,))
         conn.commit()
-        flash(f'Unlocked {selected_date}.', "success")
+        flash(f"Unlocked {selected_date}.", "success")
     else:
-        cur.execute("INSERT INTO locks (date, locked_by) VALUES (?, ?)", (selected_date, user_id),)
+        cur.execute(
+            "INSERT INTO locks (date, locked_by) VALUES (?, ?)",
+            (selected_date, user_id),
+        )
         conn.commit()
         flash(f"Locked {selected_date}.", "success")
 
