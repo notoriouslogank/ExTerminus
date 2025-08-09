@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1011] Invalid Username Password
+  Opened: 2025-08-09 • Branch: `fix/bug-1011-invalid-username-pas`
 - [BUG-1010] Holidays
   Opened: 2025-08-09 • Branch: `fix/bug-1010-holidays`
 - [BUG-1009] Nameless Job
@@ -295,6 +297,34 @@ Should show the holiday on the date
 
 ### Actual
 Holidays don't appear on the calendar view.
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1011 - Invalid Username Password
+**Area:** auth
+**Severity:** Low
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Invalid Username Password
+
+### Steps to Reproduce
+Provide incorrect credentials during login
+
+### Expected
+Should flash a box/message re: invalid credentials
+
+### Actual
+Displays text in upper left -- hard to notice.
 
 ### Notes / Suspicions
 -
