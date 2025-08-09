@@ -1,7 +1,23 @@
-.venv
+# Python
+__pycache--/
+*.py[cod]
+*.pyo
+# venv
+.venv/
+venv/
+# SQLite
 db.sqlite3
-__pyache__/
-logs/
-db.sqlite3
-.gitmessage.txt
+db.sqlite3-*
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+# Tools
 mkbug.py
+.gitmessage.txt
+# Logs
+logs/
