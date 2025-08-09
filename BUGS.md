@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1020] Two Man Jobs
+  Opened: 2025-08-09 • Branch: `fix/bug-1020-two-man-jobs`
 - [BUG-1019] Too Many Jobs
   Opened: 2025-08-09 • Branch: `fix/bug-1019-too-many-jobs`
 - [BUG-1018] End Before Start
@@ -565,6 +567,34 @@ The list of job cards on the calendar view should be scrollable
 
 ### Actual
 The date on the calendar view continues to grow larger vertically
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1020 - Two Man Jobs
+**Area:** jobs
+**Severity:** Low
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Two Man Jobs
+
+### Steps to Reproduce
+Add a job that requires multiple technicians
+
+### Expected
+Should be able to add "2-man" toggle to a given job when creating it
+
+### Actual
+No ability to add more than one technician to a given job
 
 ### Notes / Suspicions
 -
