@@ -50,14 +50,26 @@ def add_job():
         price = request.form["price"]
         time_range = request.form.get("time_range", "").strip() or "any"
         notes = request.form.get("notes", "")
-        created_by = session["user"]["user_id"]
+
+        conn = get_database()
+        cur = conn.cursor()
+
+        uid = session.get("user", {}).get("user_id")
+        row = cur.execute("SELECT id FROM users WHERE id=?", (uid,)).fetchone()
+        if not row:
+            session.clear()
+            flash("Your session has expired.  Please log in again.", "error")
+            return redirect(url_for("auth.login"))
+        created_by = uid
         rei_quantity = request.form.get("rei_quantity")
         rei_city = request.form.get("rei_city")
         exclusion_subtype = request.form.get("exclusion_subtype")
         technician_id = request.form.get("technician_id") or None
-
         if technician_id == "":
             technician_id = None
+        if technician_id is not None:
+            if not cur.execute("SELECT 1 FROM technicians WHERE id=?", (technician_id,)).fetchone():
+                technician_id = None
 
         fumigation_type = request.form.get("fumigation_type")
         target_pest = request.form.get("target_pest")
@@ -74,8 +86,8 @@ def add_job():
 
         cursor.execute(
             """INSERT INTO jobs (
-            title, type, price, start_date, end_date, time_range, notes,
-            created_by, technician_id, rei_quantity, rei_city, rei_city_name, exclusion_subtype, fumigation_type, target_pest, custom_pest)
+            title, job_type, price, start_date, end_date, time_range, notes,
+            created_by, technician_id, rei_qty, rei_city, rei_city_name, exclusion_subtype, fumigation_type, target_pest, custom_pest)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (title, job_type, price, start_date, end_date, time_range, notes, created_by, technician_id, rei_quantity, rei_city, rei_city_name, exclusion_subtype, fumigation_type, target_pest, custom_pest),
         )
@@ -120,9 +132,9 @@ def add_job_for_date(date):
             return "Date is locked. Cannot add job.", 403
 
         cursor.execute(
-            """INSERT INTO jobs (title, type, price, start_date, end_date, time_range, notes, created_by, rei_quantity, rei_city, rei_city_name, exclusion_subtype, technician_id)
+            """INSERT INTO jobs (title, job_type, price, start_date, end_date, time_range, notes, technician_id, created_by, rei_qty, rei_city, rei_city_name, exclusion_subtype)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (title, job_type, price, start_date, end_date, time_range, notes, created_by, rei_quantity, rei_city, rei_city_name, exclusion_subtype, technician_id),
+            (title, job_type, price, start_date, end_date, time_range, notes, technician_id, created_by, rei_quantity, rei_city, rei_city_name, exclusion_subtype),
         )
         conn.commit()
         logger.info(f"Job added by user ID {created_by}: {job_type} from {start_date} to {end_date} at {time_range}")

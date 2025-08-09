@@ -1,5 +1,5 @@
 from pathlib import Path
-from flask import Flask, render_template, session, request
+from flask import Flask, render_template, session, request, g
 from datetime import date, datetime
 from calendar import Calendar
 from .config import Config
@@ -20,6 +20,16 @@ def create_app():
 
     init_db()
     ensure_pragmas()
+
+    @app.teardown_appcontext
+    def close_db(_exc):
+        db = g.pop("db", None)
+        if db is not None:
+            try:
+                db.commit()
+            except Exception:
+                db.rollback()
+            db.close()
 
     @app.context_processor
     def inject_globals():

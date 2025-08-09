@@ -72,7 +72,7 @@
                     {% endfor %}
                 {% endif %}
                     {% for job in (jobs_by_date.get(day_str, []) | sort(attribute='time_range')) %}
-                    {% if job.type == "reis" %}
+                    {% if job.type == "rei" %}
                     {% set tech_parts = (job.technician_name or "").split(" ") %}
                     {% set tech_display = tech_parts[0][0] ~ "." ~ tech_parts[1] if tech_parts | length > 1 else job.technician_name %}
 
@@ -95,7 +95,7 @@
                     </div>
                     {% else %}
                         {% set job_type_clean = (job.type or "")|lower|trim %}
-                        {% set type_abbrv = type_abbr.get(job_type_clean, job_type_clean[:1]|upper()) %}
+                        {% set type_abbrv = (type_abbr|default({})).get(job_type_clean, (job_type_clean[:1])|upper) %}
                         {% set display_name = job.title or "Unknown" %}
                         {% set price = job.price %}
                         {% set is_first_day = day_str == job.start_date %}
