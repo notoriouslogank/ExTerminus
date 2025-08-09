@@ -9,7 +9,7 @@ DATABASE = str(BASE_DIR/"db.sqlite3")
 
 def get_database():
     logger.debug(f"Connecting to sqlite3: {DATABASE}")
-    conn = sqlite3.connect(DATABASE)
+    conn = sqlite3.connect(DATABASE, timeout=10)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys=ON;")
     conn.execute("PRAGMA journal_mode=WAL;")
@@ -54,12 +54,18 @@ def init_db():
         end_date TEXT,
         time_range TEXT,
         job_type TEXT,
+        price REAL,
+        fumigation_type TEXT,
+        target_pest TEXT,
+        custom_pest TEXT,
+        exclusion_subtype TEXT,
         notes TEXT,
         address TEXT,
         zip TEXT,
         city TEXT,
         rei_qty INTEGER,
         rei_city TEXT,
+        rei_city_name TEXT,
         technician_id INTEGER,
         created_by INTEGER,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,

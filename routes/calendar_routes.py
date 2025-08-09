@@ -70,6 +70,17 @@ def index():
 
     holidays = {}
 
+    TYPE_ABBR = {
+        "fumigation":"F",
+        "insulation":"I",
+        "exclusion":"EX",
+        "rei":"REIs",
+        "borate":"B",
+        "bird work":"BW",
+        "poly":"P",
+        "power spray":"PS",
+    }
+
     return render_template(
         "index.html",
         weeks=weeks,
@@ -85,6 +96,7 @@ def index():
         jobs_by_date=jobs_by_date,
         time_off_by_date=time_off_by_date,
         today=today,
+        type_abbr=TYPE_ABBR,
     )
 
 @calendar_bp.route("/day/<selected_date>", endpoint="day_view")
