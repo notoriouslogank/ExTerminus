@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="calendar-header">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" class="calendar-logo">
+    <h2 class="calendar-title">{{ month_name }} {{ year }}</h2>
+</div>
+
+<div class="calendar-nav">
+    <a href="{{ url_for('calendar.index', month=prev_month, year=prev_year) }}" class="btn btn-yellow">
+        ← Previous
+    </a>
+    <a href="{{ url_for('calendar.index', month=next_month, year=next_year) }}" class="btn btn-yellow">
+        Next →
+    </a>
+</div>
+
+{% if session.get("user") %}
+<div class="calendar-actions">
+    <a href="{{ url_for('job.add_job', date=today.isoformat()) }}" class="btn btn-yellow">
+        + Add Job
+    </a>
+    <a href="{{ url_for('calendar.add_time_off') }}" class="btn btn-yellow">+ Add Time Off
+    </a>
+</div>
+{% endif %}
+
+<div class="calendar-wrapper">
+  <table class="calendar-table">
+    <tr>
+        {% for dow in ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] %}
+        <th class="calendar-day-label">{{ dow }}</th>
+        {% endfor %}
+    </tr>
+
+    {% for week in weeks %}
+    <tr>
+        {% for day in week %}
+        {% set day_str = day.isoformat() %}
+        {% set is_past = day < today %}
+        {% set holiday = holidays.get(day) %}
+        {% set is_locked = day_str in locks %}
+
+        <td class="calendar-cell
+            {% if is_past %}past{% endif %}
+            {% if holiday %}holiday{% endif %}
+            {% if is_locked %}locked{% endif %}
+            {% if day == today %}today{% endif %}">
+
+
+            <div class="cell-date">
+                <a href="{{ url_for('calendar.day_view', selected_date=day_str) }}" style="text-decoration: none; color: inherit;">
+                    {{ day.day }}
+                </a>
+            </div>
+
+            {% if is_locked %}
+            <div class="locked-msg">FULL</div>
+            {% endif %}
+
+            <div class="jobs-wrapper">
+                {% if time_off_by_date.get(day_str) %}
+                    {% for tech_name in time_off_by_date[day_str] %}
+
+                    <div class="job-entry off-entry" title="{{ tech_name }} is off">
+                        <div class="job-header">
+                            <span class="job-tag">OFF</span>
+                            <span class="job-title">{{ tech_name.split()[0][0] }}.{{ tech_name.split()[1] }}</span>
+                        </div>
+                    </div>
+
+                    {% endfor %}
+                {% endif %}
+                    {% for job in (jobs_by_date.get(day_str, []) | sort(attribute='time_range')) %}
+                    {% if job.type == "reis" %}
+                    {% set tech_parts = (job.technician_name or "").split(" ") %}
+                    {% set tech_display = tech_parts[0][0] ~ "." ~ tech_parts[1] if tech_parts | length > 1 else job.technician_name %}
+
+                    <div class="job-entry rei-entry" title="Reinspection">
+                        <div class="job-header job-info-flex">
+                            <div class="job-left">
+                                <span class="job-tag">REIs</span>
+                                <span class="job-qty">{{ job.rei_quantity }}</span>
+                            </div>
+                            <span class="job-city">{{ job.rei_city_name or job.rei_city }}</span>
+                        </div>
+
+                        {% if tech_display %}
+                        <div class="job-footer">
+                            <span class="job-title">{{ tech_display }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    </div>
+                    {% else %}
+                        {% set job_type_clean = (job.type or "")|lower|trim %}
+                        {% set type_abbrv = type_abbr.get(job_type_clean, job_type_clean[:1]|upper()) %}
+                        {% set display_name = job.title or "Unknown" %}
+                        {% set price = job.price %}
+                        {% set is_first_day = day_str == job.start_date %}
+                        {% set is_multi_day = job.start_date != job.end_date %}
+                        {% set show_arrow = is_multi_day and is_first_day %}
+                        {% set show_price = is_first_day %}
+
+                    <div class="job-entry" title="{{ display_name }}">
+                        <div class="job-header">
+                            {% if job.time_range and job.time_range != "any" %}
+                            <span class="job-time">{{ job.time_range }}</span>
+                            {% endif %}
+                            <span class="job-tag">{{ type_abbrv }}</span>
+                            <span class="job-title">{{ display_name }}</span>
+                        </div>
+                        <div class="job-footer">
+                            {% if show_price and price not in [None, '', 0] %}
+                                <span class="job-price">${{ ("%0.2f"|format(price|float)).rstrip('0').rstrip('.') }}</span>
+                            {% else %}
+                                <span class="job-price tbd">TBD</span>
+                            {% endif %}
+                            {% if show_arrow %}
+                                <span class="job-arrow">→</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            {% if holiday %}
+                <div class="holiday-label">
+                    {{ holiday }}
+                </div>
+            {% endif %}
+        </td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}
+

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+
+<div class="logo-container">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ExTerminus Logo" class="login-logo">
+</div>
+
+<form method="POST" class="auth-form">
+    <div class="form-group">
+        <label for="username">Username:</label>
+        <input type="text" name="username" required>
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" name="password" required>
+    </div>
+
+    <div class="text-center mt-1">
+        <button type="submit" class="btn green">Login</button>
+    </div>
+</form>
+
+<p class="version-number">v{{ app_version }}</p>
+
+{% endblock %}

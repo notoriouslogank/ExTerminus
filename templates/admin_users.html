@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2 class="text-center heading">User Management</h2>
+
+<!-- Create New User Form -->
+<form method="POST" class="user-form">
+    <fieldset>
+        <legend>Create New User</legend>
+        <label for="first_name">First Name:</label>
+        <input type="text" name="first_name" required>
+
+        <label for="last_name">Last Name:</label>
+        <input type="text" name="last_name" required>
+
+        <label for="username">Username:</label>
+        <input type="text" name="username" required>
+
+        <label for="password">Password</label>
+        <input type="password" name="password" placeholder="changeme">
+
+        <label for="role">Role:</label>
+        <select name="role" required>
+            <option value="technician">Technician</option>
+            <option value="sales">Sales</option>
+            <option value="manager">Manager</option>
+            <option value="admin">Admin</option>
+        </select>
+
+        <button type="submit" class="btn btn-green mt-05">Create User</button>
+    </fieldset>
+</form>
+
+<hr>
+
+<table class="user-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Username</th>
+            <th>Role</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <form method="POST" action="{{ url_for('admin.admin_users') }}">
+        <tr>
+                <td>{{ user.first_name }} {{ user.last_name }}</td>
+                <td>{{ user.username }}</td>
+                <td>
+                    <select name="role">
+                        <option value="technician" {% if user.role == 'technician' %}selected{% endif %}>Technician</option>
+                        <option value="sales" {% if user.role == 'sales' %}selected{% endif %}>Sales</option>
+                        <option value="manager" {% if user.role == 'manager' %}selected{% endif %}>Manager</option>
+                        <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                    </select>
+                </td>
+        <td>
+            <input type="hidden" name="update_user_id" value="{{ user.id }}">
+            <button type="submit" name="action" value="update_role" class="btn btn-blue btn-small">Update Role</button>
+            <button type="submit" name="action" value="reset_password" class="btn btn-blue btn-small">Reset PW</button>
+            <button type="submit" name="action" value="delete_user" class="btn btn-red btn-small" onclick="return confirm('Are you sure you want to delete {{ user.username }}?');">Delete</button>
+        </td>
+    </tr>
+    </form>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Termite Department Job Board</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+<body>
+
+    <!-- Top Right User Bar -->
+     <div class="top-bar">
+         {% if not session.get("user") %}
+         <a href="{{ url_for('auth.login') }}" class="text-light">Login</a> |
+         {% else %}
+         <a href="{{ url_for('calendar.index') }}">Calendar View</a> |
+            <span class="user-info">Logged in as {{ session['user'].username }} | </span>
+            <a href="{{ url_for('auth.change_password') }}">Change Password</a>
+            {% if session["user"]["role"] == "admin" %}
+                | <a href="{{ url_for('admin.admin_users') }}">Admin Panel</a>
+            {% endif %}
+            | <a href="{{ url_for('auth.logout') }}" class="text-light">Logout</a>
+        {% endif %}
+    </div>
+
+    <!-- Flash messages -->
+    <div class="container py-3">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-message">{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Page-specific content goes here -->
+        {% block content %}{% endblock %}
+    </div>
+
+</body>
+</html>
+

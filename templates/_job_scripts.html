@@ -1,0 +1,96 @@
+<script>
+
+console.log("JS is running.")
+
+function showElement(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.remove("hidden");
+        el.classList.add("reveal");
+    }
+}
+
+function hideElement(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.add("hidden");
+        el.classList.remove("reveal");
+    }
+}
+
+function handleTypeChange(sel) {
+    if (!sel || !sel.value) {
+        console.warn("handleTypeChange called with invalid element", sel);
+        return;
+    }
+
+    const val = sel.value.trim().toLowerCase();
+    console.log("handleTypeChange() val:", val);
+
+    const visibilityMap = {
+        "custom": ["custom-type-div"],
+        "exclusion": ["exclusion-options"],
+        "reis": ["rei-options"],
+        "fumigation": ["fumigation-section"],
+    };
+
+    ["custom-type-div", "exclusion-options", "rei-options", "fumigation-section"].forEach(hideElement);
+
+    const visibleIDs = visibilityMap[val];
+    if (Array.isArray(visibleIDs)) {
+        visibleIDs.forEach(showElement);
+    } else {
+        console.warn(`No visibility mapping found for type "${val}"`);
+    }
+
+    // Title/price logic
+    const titleField = document.getElementById("title-field");
+    const titleWrapper = document.getElementById("title-wrapper");
+    const priceWrapper = document.getElementById("price-wrapper");
+
+    if (val === "reis") {
+        hideElement("job-name-wrapper");
+        hideElement("price-wrapper");
+        if (titleField) {
+            titleField.required = false;
+            titleField.value = "";
+        }
+    } else {
+        showElement("title-wrapper");
+        if (titleField) titleField.required = true;
+        (val === "retreat") ? hideElement("price-wrapper") : showElement("price-wrapper");
+    }
+}
+
+function toggleCustomPestField() {
+    const select = document.getElementById("target_pest_select");
+    const input = document.getElementById("custom_pest_input");
+    if (!select || !input) return;
+
+    (select.value === "Other") ? showElement("custom_pest_input") : hideElement("custom_pest_input");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const typeSelect = document.getElementById("type-select");
+    if (typeSelect) {
+        typeSelect.addEventListener("change", () => handleTypeChange(typeSelect));
+    }
+
+    const pestSelect = document.getElementById("target_pest_select");
+    if (pestSelect) {
+        pestSelect.addEventListener("change", toggleCustomPestField);
+        toggleCustomPestField();
+    }
+
+    const startInput = document.getElementById("start_date")
+    const endInput = document.getElementById("end_date")
+
+    if (startInput && endInput) {
+        startInput.addEventListener("change", () => {
+            if (!endInput.value) {
+                endInput.value = startInput.value;
+            }
+        });
+    }
+});
+</script>

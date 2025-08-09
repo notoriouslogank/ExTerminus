@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="text-center heading">Add Technician Time Off</h2>
+
+<form method="POST" class="form-container card">
+
+    <div class="form-section">
+        <h3 class="section-heading">Technician</h3>
+        <div class="form-group">
+            <label for="technician_id">Technician:</label>
+            <select name="technician_id" required>
+                {% for tech in technicians %}
+                <option value="{{ tech.id }}">{{ tech.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="form-section">
+            <h3 class="section-heading">Schedule</h3>
+            <div class="form-group">
+                <label for="start_date">Start Date:</label>
+                <input type="date" name="start_date" required>
+        </div>
+        <div class="form-group">
+            <label for="end_date">End Date:</label><br>
+            <input type="date" name="end_date" required>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn-submit">Submit</button>
+    </div>
+</form>
+
+{% endblock %}
+

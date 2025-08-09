@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="text-center heading">Edit Job</h2>
+
+<form method="POST" class="form-container">
+    <div class="form-group">
+        <label for="title">Title:</label>
+        <input name="title" value="{{ job['title'] }}" required>
+    </div>
+
+    <div class="form-group">
+        <label for="type">Type:</label>
+        <input name="type" value="{{ job['type'] }}">
+    </div>
+
+    <div class="form-group">
+        <label for="price">Price:</label>
+        <input name="price" type="number" step="0.01" value="{{ job['price'] }}">
+    </div>
+
+    <div class="form-group">
+        <label for="time_range">Time:</label>
+    <input name="time_range" value="{{ job['time_range'] }}">
+    </div>
+
+    <div class="form-group">
+        <label for="notes">Notes:</label>
+        <textarea name="notes">{{ job['notes'] }}</textarea>
+    </div>
+
+<!-- Fumigation Options -->
+    <div id="fumigation-options" class="form-group hidden mt-1">
+        <label><strong>Fumigation Type:</strong></label>
+        <input type="radio" name="fumigation_type" value="Tape and Seal" id="fum_type_tape"
+            {% if job.fumigation_type == "Tape and Seal" %}checked{% endif %}>
+        <label for="fum_type_tape">Tape and Seal</label><br>
+
+        <input type="radio" name="fumigation_type" value="Tent" id="fum_type_tent" {% if job.fumigation_type == "Tent" %}checked{% endif %}>
+        <label for="fum_type_tent">Tent</label>
+    </div>
+
+    <div id="fumigation-target" class="form-group hidden">
+        <label for="target_pest"><strong>Target Pest:</strong></label><br>
+        <select name="target_pest" id="target_pest_select">
+            <option value="">-- Select a target pest --</option>
+            {% for pest in ["Bedbugs", "Powder Post Beetles", "Old House Borers", "Carpenter Ants"] %}
+                <option value="{{ pest }}"
+                    {% if job.target_pest == pest %}selected{% endif%}>{{ pest }}</option>
+            {% endfor %}
+            <option value="custom"
+                {% if job.target_pest and job.target_pest not in ["Bedbugs", "Powder Post Beetles", "Old House Borers", "Carpenter Ants"] %}selected{% endif %}>
+                Other (please specify)
+        </option>
+    </select>
+
+    {% set is_custom = job.target_pest and job.target_pest not in ["Bedbugs", "Powder Post Beetles", "Old House Borers", "Carpenter Ants"] %}
+    <input type="text" name="custom_pest" id="custom_pest_input" placeholder="Enter target pest"
+        {% if is_custom %}value="{{ job.target_pest }}"{% endif %}
+        style="{% if not is_custom %}display:none;{% endif %}">
+</div>
+
+    <button type="submit" class="btn-submit">Save Changes</button>
+</form>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const typeField = document.querySelector('[name="type"]');
+        const fumigationOptions = document.getElementById("fumigation-options");
+        const pestSelect = document.getElementById("target_pest_select");
+        const customPest = document.getElementById("custom_pest_input");
+
+        function toggleFumigationOptions() {
+            fumigationOptions.style.display = (typeField.value.toLowerCase() === "fumigation") ? "block" : "none";
+        }
+
+        function toggleCustomPestField() {
+            customPest.style.display = (pestSelect.value === "custom") ? "inline-block" : "none";
+        }
+
+        if (typeField) {
+            typeField.addEventListener("change", toggleFumigationOptions);
+            toggleFumigationOptions();
+        }
+
+        if (pestSelect) {
+            pestSelect.addEventListener("change", toggleCustomPestField);
+            toggleCustomPestField();
+        }
+    });
+</script>
+{% endblock %}

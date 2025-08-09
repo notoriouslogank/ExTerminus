@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="text-center heading">Add Job for {{ date }}</h2>
+
+<form method="POST" class="form-container">
+    <input type="hidden" name="start_date" value="{{ date }}">
+    <input type="hidden" name="end_date" value="{{ date }}">
+    {% include "_job_fields.html" with context %}
+
+    <button type="submit" class="btn-submit">Add Job</button>
+</form>
+
+{% include "_job_scripts.html" %}
+
+{% endblock %}
+

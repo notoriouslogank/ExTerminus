@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="text-center heading">Add a New Job</h2>
+
+<form method="POST" class="form-container">
+    {% include "_job_fields.html" with context %}
+
+    <div class="form-actions">
+        <button type="submit" class="btn-submit">Add Job</button>
+
+</form>
+
+{% include "_job_scripts.html" %}
+{% endblock %}
