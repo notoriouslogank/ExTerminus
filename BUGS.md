@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1009] Nameless Job
+  Opened: 2025-08-09 • Branch: `fix/bug-1009-nameless-job`
 - [BUG-1008] Locked Day Failure
   Opened: 2025-08-09 • Branch: `fix/bug-1008-locked-day-failure`
 - [BUG-1007] Clickable Days
@@ -235,6 +237,34 @@ Should fail, but show a popup.
 
 ### Actual
 Redirects to a poorly-styled flashbang page.
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1009 - Nameless Job
+**Area:** jobs
+**Severity:** High
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Nameless Job
+
+### Steps to Reproduce
+Leave Title field blank while creating a new job.
+
+### Expected
+Title should be a required field.
+
+### Actual
+Job creation proceeds with no title provided.
 
 ### Notes / Suspicions
 -
