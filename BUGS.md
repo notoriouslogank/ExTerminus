@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1008] Locked Day Failure
+  Opened: 2025-08-09 • Branch: `fix/bug-1008-locked-day-failure`
 - [BUG-1007] Clickable Days
   Opened: 2025-08-09 • Branch: `fix/bug-1007-clickable-days`
 - [BUG-1006] REIs
@@ -205,6 +207,34 @@ Should be able to click ANYWHERE on a date to open the day view
 
 ### Actual
 Must click on the actual date numerals
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1008 - Locked Day Failure
+**Area:** auth
+**Severity:** Medium
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Locked Day Failure
+
+### Steps to Reproduce
+While logged in as any user, attempt to add a job to a locked day.
+
+### Expected
+Should fail, but show a popup.
+
+### Actual
+Redirects to a poorly-styled flashbang page.
 
 ### Notes / Suspicions
 -
