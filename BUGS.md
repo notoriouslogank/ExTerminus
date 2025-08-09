@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1016] Chronology II
+  Opened: 2025-08-09 • Branch: `fix/bug-1016-chronology-ii`
 - [BUG-1015] Chronology
   Opened: 2025-08-09 • Branch: `fix/bug-1015-chronology`
 - [BUG-1014] Time Off
@@ -445,6 +447,34 @@ Should place all timed jobs at top and order them by time in ascending order
 
 ### Actual
 Places the timed jobs in an arbitrary order
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1016 - Chronology II
+**Area:** jobs
+**Severity:** Medium
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Chronology II
+
+### Steps to Reproduce
+Create multiple timed jobs on the same date
+
+### Expected
+In day view, jobs should be sorted by timed jobs (at top) and then in ascending order of timeframe
+
+### Actual
+Jobs appear in order they were created.
 
 ### Notes / Suspicions
 -
