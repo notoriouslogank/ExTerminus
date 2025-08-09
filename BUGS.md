@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1013] Time Picker
+  Opened: 2025-08-09 • Branch: `fix/bug-1013-time-picker`
 - [BUG-1012] Force Password Update
   Opened: 2025-08-09 • Branch: `fix/bug-1012-force-password-updat`
 - [BUG-1011] Invalid Username Password
@@ -355,6 +357,34 @@ Should require password change upon first login
 
 ### Actual
 Never requires password change
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1013 - Time Picker
+**Area:** jobs
+**Severity:** Low
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Time Picker
+
+### Steps to Reproduce
+Provide a time or time range for a job
+
+### Expected
+Should open a time picker similar to the date picker
+
+### Actual
+Does not open time picker; takes input as text
 
 ### Notes / Suspicions
 -
