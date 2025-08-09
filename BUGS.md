@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1019] Too Many Jobs
+  Opened: 2025-08-09 • Branch: `fix/bug-1019-too-many-jobs`
 - [BUG-1018] End Before Start
   Opened: 2025-08-09 • Branch: `fix/bug-1018-end-before-start`
 - [BUG-1017] Missing Audit Trail
@@ -535,6 +537,34 @@ Should display an error message and not allow user to proceed
 
 ### Actual
 Creates the job on the start date only
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1019 - Too Many Jobs
+**Area:** calendar
+**Severity:** Medium
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Too Many Jobs
+
+### Steps to Reproduce
+Add multiple (>6) jobs to any particular date
+
+### Expected
+The list of job cards on the calendar view should be scrollable
+
+### Actual
+The date on the calendar view continues to grow larger vertically
 
 ### Notes / Suspicions
 -
