@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1005] Multi-Day Arrows
+  Opened: 2025-08-09 • Branch: `fix/bug-1005-multi-day-arrows`
 - [BUG-1004] Edit Job Crash
   Opened: 2025-08-09 • Branch: `fix/bug-1004-edit-job-crash`
 - [BUG-1003] Unauthorized Lock Toggle
@@ -115,6 +117,34 @@ Edit Job page should open, Save Changes should redirect to the calendar view.
 
 ### Actual
 Crash when Save Changes is clicked.
+
+### Notes / Suspicions
+-
+
+### Fix PR
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1005 - Multi-Day Arrows
+**Area:** calendar
+**Severity:** Low
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Multi-Day Arrows
+
+### Steps to Reproduce
+Create a multi-day job, then view it on the calendar view.
+
+### Expected
+Should print an arrow (->) on each day of a multi-day job.
+
+### Actual
+Only prints an arrow on the first day.
 
 ### Notes / Suspicions
 -
