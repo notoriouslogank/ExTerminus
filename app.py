@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from pathlib import Path
-from flask import Flask, g, request, redirect, url_for, flash
+from flask import Flask, g, request, redirect, url_for, flash, render_template
 from flask_wtf import CSRFProtect
 from flask_wtf.csrf import CSRFError, generate_csrf
 from datetime import date, datetime
@@ -33,6 +33,9 @@ def create_app():
 
     CSRFProtect(app)
 
+    logger = setup_logger()  # type: ignore
+    logger.debug("App starting with config loaded.")
+
     @app.context_processor
     def inject_csrf():
         return dict(csrf_token=generate_csrf)
@@ -42,8 +45,13 @@ def create_app():
         flash("Your session expired or the form was invalid. Please try again", "error")
         return redirect(request.referrer or url_for("auth.login")), 303
 
-    logger = setup_logger()  # type: ignore
-    logger.debug("App starting with config loaded.")
+    @app.errorhandler(404)
+    def not_found(e):
+        return render_template("errors.html", code=404), 404
+
+    @app.errorhandler(500)
+    def server_error(e):
+        return render_template("errors.html", code=500), 500
 
     init_db()
     ensure_pragmas()
