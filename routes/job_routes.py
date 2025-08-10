@@ -1,5 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from functools import wraps
+from datetime import datetime, date
 from werkzeug.security import generate_password_hash, check_password_hash
+from utils.decorators import login_required, role_required
 from ..db import get_database
 from ..logger import setup_logger
 from functools import wraps
@@ -8,6 +11,18 @@ import zipcodes
 
 job_bp = Blueprint("job", __name__)
 logger = setup_logger()
+
+
+def _parse_date(s: str | None) -> date | None:
+    s = (s or "").strip()
+    if not s:
+        return None
+    for fmt in ("%Y-%m-%d", "%m/%d/%Y"):
+        try:
+            return datetime.strptime(s, fmt).date()
+        except ValueError:
+            continue
+    return None
 
 
 def lookup_zipcode(zip: str) -> str | None:
@@ -34,15 +49,24 @@ def login_required(f):
 @login_required
 def add_job():
     if request.method == "POST":
-        start_date = request.form.get("start_date")
+        start_date_raw = request.form.get("start_date")
         rei_city = request.form.get("rei_city")
         rei_city_name = lookup_zipcode(rei_city) if rei_city else None
-        if not start_date:
+        if not start_date_raw:
             flash("Start date is required.")
             return redirect(request.url)
 
-        end_date = request.form.get("end_date" or start_date)
-        title = request.form["title"]
+        # BUG-1018: correct fallback and validate dates
+        end_date_raw = request.form.get("end_date") or start_date_raw
+        sd = _parse_date(start_date_raw)
+        ed = _parse_date(end_date_raw) if end_date_raw else None
+        if not sd:
+            flash("Start date is invalid.", "error")
+            return redirect(request.url)
+        start_date = sd.isoformat()
+        end_date = ed.isoformat() if ed else None
+
+        title = (request.form.get("title") or "").strip()
         job_type = request.form["type"]
 
         if job_type == "reis":
@@ -50,6 +74,11 @@ def add_job():
             end_date = start_date
         if job_type == "custom":
             job_type = request.form.get("custom_type", "").strip()
+
+        # BUG-1009: require non-empty title for non-REI jobs
+        if job_type != "reis" and not title:
+            flash("Title is required.", "error")
+            return redirect(request.url)
 
         price = request.form["price"]
         time_range = request.form.get("time_range", "").strip() or "any"
@@ -215,7 +244,10 @@ def move_job(job_id):
         return "Job not found", 404
 
     old_start = datetime.strptime(job["start_date"], "%Y-%m-%d").date()
-    old_end = datetime.strptime(job["end_date"], "%Y-%m-%d").date()
+    if job["end_date"]:
+        old_end = datetime.strptime(job["end_date"], "%Y-%m-%d").date()
+    else:
+        old_end = old_start
     duration = old_end - old_start
 
     new_start_dt = datetime.strptime(new_start, "%Y-%m-%d").date()
@@ -258,6 +290,7 @@ def delete_job(job_id):
 
 @job_bp.route("/edit_job/<int:job_id>", methods=["GET", "POST"])
 @login_required
+@role_required("admin", "manager", "sales")
 def edit_job(job_id):
     if "user" not in session:
         return redirect(url_for("auth.login"))
@@ -286,6 +319,72 @@ def edit_job(job_id):
                 job_id,
             ),
         )
+        # BUG-1018: validate and normalize dates on edit
+        start_date_raw = request.form.get("start_date")
+        end_date_raw = request.form.get("end_date") or start_date_raw
+        sd = _parse_date(start_date_raw)
+        ed = _parse_date(end_date_raw) if end_date_raw else None
+        if not sd:
+            flash("Start date is invalid.", "error")
+            return render_template(
+                "edit_job.html",
+                job=cur.execute(
+                    "SELECT * FROM jobs WHERE id = ?", (job_id,)
+                ).fetchone(),
+            )
+        if ed and ed < sd:
+            flash("End date cannot be before start date.", "error")
+            return render_template(
+                "edit_job.html",
+                job=cur.execute(
+                    "SELECT * FROM jobs WHERE id = ?", (job_id,)
+                ).fetchone(),
+            )
+
+        title = (request.form.get("title") or "").strip()
+        job_type = request.form.get("type")
+        if job_type == "custom":
+            job_type = (request.form.get("custom_type") or "").strip()
+        if job_type != "reis" and not title:
+            flash("Title is required.", "error")
+            return render_template(
+                "edit_job.html",
+                job=cur.execute(
+                    "SELECT * FROM jobs WHERE id = ?", (job_id,)
+                ).fetchone(),
+            )
+
+        cur.execute(
+            """
+            UPDATE jobs
+                SET title = ?,
+                    job_type = ?,
+                    price = ?,
+                    start_date = ?,
+                    end_date = ?,
+                    time_range = ?,
+                    notes = ?,
+                    fumigation_type = ?,
+                    target_pest = ?,
+                    last_modified = CURRENT_TIMESTAMP,
+                    last_modified_by = ?,
+            WHERE id = ?
+            """,
+            (
+                title,
+                job_type,
+                request.form["price"],
+                sd.isoformat(),
+                ed.isoformat() if ed else None,
+                request.form.get("time_range", "").strip() or "any",
+                request.form.get("notes", ""),
+                fumigation_type,
+                target_pest,
+                session["user"]["user_id"],
+                job_id,
+            ),
+        )
+
         conn.commit()
         logger.info(f"Job ID {job_id} edited by user ID {session['user']['user_id']}")
         return redirect(url_for("calendar.index"))

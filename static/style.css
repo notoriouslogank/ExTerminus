@@ -576,6 +576,32 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     box-shadow: inset 0 0 0 2px #661111, inset 0 0 8px #330000;
 }
 
+/* >>> BUG-1019 fix: scrollable job list in day cells */
+.calendar-cell .jobs {
+    max-height: 10.5rem;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.calendar-cell .cell-date {
+    margin-bottom: 0.25rem;
+}
+
+/* BUG-1007: make the entire day cell clickable */
+.calendar-cell .cell-overlay {
+    position: absolute;
+    inset: 0;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    z-index: 1;
+}
+
+.calendar-cell * {
+    position: relative;
+    z-index: 2;
+}
+
 /* === Job Entries === */
 .job-entry {
     display: flex;
