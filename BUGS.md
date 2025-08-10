@@ -4,10 +4,6 @@
 
 - [BUG-1020] Two Man Jobs
   Opened: 2025-08-09 • Branch: `fix/bug-1020-two-man-jobs`
-- [BUG-1019] Too Many Jobs
-  Opened: 2025-08-09 • Branch: `fix/bug-1019-too-many-jobs`
-- [BUG-1018] End Before Start
-  Opened: 2025-08-09 • Branch: `fix/bug-1018-end-before-start`
 - [BUG-1017] Missing Audit Trail
   Opened: 2025-08-09 • Branch: `fix/bug-1017-missing-audit-trail`
 - [BUG-1016] Chronology II
@@ -28,10 +24,6 @@
   Opened: 2025-08-09 • Branch: `fix/bug-1009-nameless-job`
 - [BUG-1008] Locked Day Failure
   Opened: 2025-08-09 • Branch: `fix/bug-1008-locked-day-failure`
-- [BUG-1007] Clickable Days
-  Opened: 2025-08-09 • Branch: `fix/bug-1007-clickable-days`
-- [BUG-1006] REIs
-  Opened: 2025-08-09 • Branch: `fix/bug-1006-reis`
 - [BUG-1005] Multi-Day Arrows
   Opened: 2025-08-09 • Branch: `fix/bug-1005-multi-day-arrows`
 - [BUG-1004] Edit Job Crash
@@ -45,6 +37,14 @@
 
 - [BUG-1003] Unauthorized Lock Toggle
   Opened: 2025-08-09 • Branch: `fix/bug-1003-unauthorized-lock-to`
+- [BUG-1019] Too Many Jobs
+  Opened: 2025-08-09 • Branch: `fix/bug-1019-too-many-jobs`
+- [BUG-1018] End Before Start
+  Opened: 2025-08-09 • Branch: `fix/bug-1018-end-before-start`
+- [BUG-1006] REIs
+  Opened: 2025-08-09 • Branch: `fix/bug-1006-reis`
+- [BUG-1007] Clickable Days
+  Opened: 2025-08-09 • Branch: `fix/bug-1007-clickable-days`
 
 ---
 
@@ -157,39 +157,39 @@ Lock/Unlock Day toggle is clickable, and works.
 #### Fix PR
 
 - PR: bug-1003-unauthorized-lock-to
-- Fix commit: 3304e9a
+- Fix commit: `3304e9a`
 - Released in: dev (pending)
 
 ---
 
-## BUG-1004 - Edit Job Crash
+### BUG-1004 - Edit Job Crash
 
 **Area:** jobs
 **Severity:** Critical
 **Status:** Open
 **Opened:** 2025-08-09
 
-### Summary
+#### Summary
 
 Edit Job Crash
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
 While logged in, attempt to Edit Job via day-view job card.
 
-### Expected
+#### Expected
 
 Edit Job page should open, Save Changes should redirect to the calendar view.
 
-### Actual
+#### Actual
 
 Crash when Save Changes is clicked.
 
-### Notes / Suspicions
+#### Notes / Suspicions
 
 -
 
-### Fix PR
+#### Fix PR
 
 - PR: -
 - Fix commit: -
@@ -197,34 +197,34 @@ Crash when Save Changes is clicked.
 
 ---
 
-## BUG-1005 - Multi-Day Arrows
+### BUG-1005 - Multi-Day Arrows
 
 **Area:** calendar
 **Severity:** Low
 **Status:** Open
 **Opened:** 2025-08-09
 
-### Summary
+#### Summary
 
 Multi-Day Arrows
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
 Create a multi-day job, then view it on the calendar view.
 
-### Expected
+#### Expected
 
 Should print an arrow (->) on each day of a multi-day job.
 
-### Actual
+#### Actual
 
 Only prints an arrow on the first day.
 
-### Notes / Suspicions
+#### Notes / Suspicions
 
 -
 
-### Fix PR
+#### Fix PR
 
 - PR: -
 - Fix commit: -
@@ -232,104 +232,120 @@ Only prints an arrow on the first day.
 
 ---
 
-## BUG-1006 - REIs
+### BUG-1006 - REIs
 
 **Area:** calendar
 **Severity:** High
-**Status:** Open
+**Status:** Fixed
 **Opened:** 2025-08-09
+**Fixed:** 2025-08-09
 
-### Summary
+#### Summary
 
-REIs
+REI jobs displayed incorrectly in calendar view, showing "R - Unknown" instead of proper REIs label, quantity, and city.
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
 Add REIs of any quantity and with any zipcode to any day.
 
-### Expected
+#### Expected
 
 Calendar view should display "REIs" - "Technician" - "Quantity" - "City Name".
 
-### Actual
+#### Actual
 
 Calendar simply displays "R - Unknown" for the created job(s)
 
-### Notes / Suspicions
+#### Resolution
 
--
+- Normalized job type check in `index.html` to accept both `"rei"` and `"reis"` (and handle `job.job_type`).
+- Corrected display logic to show REIs tag, quantity, city, and technician.
+- Removed stray closing `</div>` that broke layout inside REIs branch.
 
-### Fix PR
+#### Verification
 
-- PR: -
-- Fix commit: -
-- Released in: -
+- REI jobs now display correct label, quantity, city, and technician initials.
+- Non-REI jobs unaffected.
+
+#### Fix PR
+
+- PR: fix/bug-1018-end-before-start
+- Fix commit: `feffa64`
+- Released in: dev (pending)
 
 ---
 
-## BUG-1007 - Clickable Days
+### BUG-1007 - Clickable Days
 
 **Area:** calendar
 **Severity:** Low
-**Status:** Open
+**Status:** Fixed
 **Opened:** 2025-08-09
+**Fixed:** 2025-08-09
 
-### Summary
+#### Summary
 
-Clickable Days
+Only the date number inside a day cell was clickable to open the day view.
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
-On calendar view, select a given date to open the day view for that day
+On calendar view, click anywhere in a date cell except directly on the date numerals.
 
-### Expected
+#### Expected
 
 Should be able to click ANYWHERE on a date to open the day view
 
-### Actual
+#### Actual
 
 Must click on the actual date numerals
 
-### Notes / Suspicions
+#### Resolution
 
--
+- Added `.cell-overlay` anchor spanning the full calendar cell in `index.html`.
+- Updated CSS to make the overlay block-level and cover the cell without breaking inner controls.
+- Ensured overlay inherits styles to keep the calendar appearance unchanged.
 
-### Fix PR
+#### Verification
 
-- PR: -
-- Fix commit: -
-- Released in: -
+- Clicking anywhere in a cell now opens the day view.
+- Existing links/buttons inside the cell (e.g., job edit, lock toggles) remain functional.
+
+#### Fix PR
+
+- PR: fix/bug-1018-end-before-start
+- Fix commit: `feffa64`
+- Released in: dev (pending)
 
 ---
 
-## BUG-1008 - Locked Day Failure
+### BUG-1008 - Locked Day Failure
 
 **Area:** auth
 **Severity:** Medium
 **Status:** Open
 **Opened:** 2025-08-09
 
-### Summary
+#### Summary
 
 Locked Day Failure
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
 While logged in as any user, attempt to add a job to a locked day.
 
-### Expected
+#### Expected
 
 Should fail, but show a popup.
 
-### Actual
+#### Actual
 
 Redirects to a poorly-styled flashbang page.
 
-### Notes / Suspicions
+#### Notes / Suspicions
 
 -
 
-### Fix PR
+#### Fix PR
 
 - PR: -
 - Fix commit: -
@@ -337,69 +353,78 @@ Redirects to a poorly-styled flashbang page.
 
 ---
 
-## BUG-1009 - Nameless Job
+### BUG-1009 - Nameless Job
 
 **Area:** jobs
 **Severity:** High
-**Status:** Open
+**Status:** Fixed
 **Opened:** 2025-08-09
+**Fixed:** 2025-08-09
 
-### Summary
+#### Summary
 
-Nameless Job
+Jobs could be created without a title, resulting in empty or unclear job cards in the calendar and day views.
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
 Leave Title field blank while creating a new job.
 
-### Expected
+#### Expected
 
 Title should be a required field.
 
-### Actual
+#### Actual
 
 Job creation proceeds with no title provided.
 
-### Notes / Suspicions
+#### Resolution
 
--
+- Updated `add_job` and `edit_job` in `job_routes.py` to require non-empty title for all non-REI jobs.
+- Trimmed whitespace before validation to prevent titles that were only spaces.
+- Left REIs exempt from title requirement, as they display standardized info.
 
-### Fix PR
+#### Verification
 
-- PR: -
-- Fix commit: -
-- Released in: -
+- Attempting to create/edit non-REI job with blank title -> blocked, flash message shown.
+- Creating/editing REI jobs without a title works and displays standardized label.
+- Valid titled jobs save and display correctly.
+
+#### Fix PR
+
+- PR: fix/bug-1018-end-before-start
+- Fix commit: `feffa64`
+- Released in: dev (pending)
 
 ---
 
-## BUG-1010 - Holidays
+### BUG-1010 - Holidays
 
 **Area:** calendar
 **Severity:** Low
 **Status:** Open
 **Opened:** 2025-08-09
 
-### Summary
+#### Summary
 
 Holidays
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
 View calendar view on a month inlcuding a Federal holiday
 
-### Expected
+#### Expected
 
 Should show the holiday on the date
 
-### Actual
+#### Actual
 
 Holidays don't appear on the calendar view.
 
-### Notes / Suspicions
+#### Notes / Suspicions
 
 -
 
-### Fix PR
+#### Fix PR
 
 - PR: -
 - Fix commit: -
@@ -407,34 +432,34 @@ Holidays don't appear on the calendar view.
 
 ---
 
-## BUG-1011 - Invalid Username Password
+### BUG-1011 - Invalid Username Password
 
 **Area:** auth
 **Severity:** Low
 **Status:** Open
 **Opened:** 2025-08-09
 
-### Summary
+#### Summary
 
 Invalid Username Password
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
 Provide incorrect credentials during login
 
-### Expected
+#### Expected
 
 Should flash a box/message re: invalid credentials
 
-### Actual
+#### Actual
 
 Displays text in upper left -- hard to notice.
 
-### Notes / Suspicions
+#### Notes / Suspicions
 
 -
 
-### Fix PR
+#### Fix PR
 
 - PR: -
 - Fix commit: -
@@ -442,34 +467,34 @@ Displays text in upper left -- hard to notice.
 
 ---
 
-## BUG-1012 - Force Password Update
+### BUG-1012 - Force Password Update
 
 **Area:** auth
 **Severity:** High
 **Status:** Open
 **Opened:** 2025-08-09
 
-### Summary
+#### Summary
 
 Force Password Update
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
 Create a new user or reset a current user's password as admin
 
-### Expected
+#### Expected
 
 Should require password change upon first login
 
-### Actual
+#### Actual
 
 Never requires password change
 
-### Notes / Suspicions
+#### Notes / Suspicions
 
 -
 
-### Fix PR
+#### Fix PR
 
 - PR: -
 - Fix commit: -
@@ -477,34 +502,34 @@ Never requires password change
 
 ---
 
-## BUG-1013 - Time Picker
+### BUG-1013 - Time Picker
 
 **Area:** jobs
 **Severity:** Low
 **Status:** Open
 **Opened:** 2025-08-09
 
-### Summary
+#### Summary
 
 Time Picker
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
 Provide a time or time range for a job
 
-### Expected
+#### Expected
 
 Should open a time picker similar to the date picker
 
-### Actual
+#### Actual
 
 Does not open time picker; takes input as text
 
-### Notes / Suspicions
+#### Notes / Suspicions
 
 -
 
-### Fix PR
+#### Fix PR
 
 - PR: -
 - Fix commit: -
@@ -512,34 +537,34 @@ Does not open time picker; takes input as text
 
 ---
 
-## BUG-1014 - Time Off
+### BUG-1014 - Time Off
 
 **Area:** jobs
 **Severity:** High
 **Status:** Open
 **Opened:** 2025-08-09
 
-### Summary
+#### Summary
 
 Time Off
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
 Attempt to Add Time Off
 
-### Expected
+#### Expected
 
 Dropdown list should list all technicians
 
-### Actual
+#### Actual
 
 Dropdown does not show any technicians, and thus unable to add Time Off
 
-### Notes / Suspicions
+#### Notes / Suspicions
 
 -
 
-### Fix PR
+#### Fix PR
 
 - PR: -
 - Fix commit: -
@@ -547,34 +572,34 @@ Dropdown does not show any technicians, and thus unable to add Time Off
 
 ---
 
-## BUG-1015 - Chronology
+### BUG-1015 - Chronology
 
 **Area:** calendar
 **Severity:** Medium
 **Status:** Open
 **Opened:** 2025-08-09
 
-### Summary
+#### Summary
 
 Chronology
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
 Add multiple jobs with a timeframe to a given day
 
-### Expected
+#### Expected
 
 Should place all timed jobs at top and order them by time in ascending order
 
-### Actual
+#### Actual
 
 Places the timed jobs in an arbitrary order
 
-### Notes / Suspicions
+#### Notes / Suspicions
 
 -
 
-### Fix PR
+#### Fix PR
 
 - PR: -
 - Fix commit: -
@@ -582,34 +607,34 @@ Places the timed jobs in an arbitrary order
 
 ---
 
-## BUG-1016 - Chronology II
+### BUG-1016 - Chronology II
 
 **Area:** jobs
 **Severity:** Medium
 **Status:** Open
 **Opened:** 2025-08-09
 
-### Summary
+#### Summary
 
 Chronology II
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
 Create multiple timed jobs on the same date
 
-### Expected
+#### Expected
 
 In day view, jobs should be sorted by timed jobs (at top) and then in ascending order of timeframe
 
-### Actual
+#### Actual
 
 Jobs appear in order they were created.
 
-### Notes / Suspicions
+#### Notes / Suspicions
 
 -
 
-### Fix PR
+#### Fix PR
 
 - PR: -
 - Fix commit: -
@@ -617,34 +642,34 @@ Jobs appear in order they were created.
 
 ---
 
-## BUG-1017 - Missing Audit Trail
+### BUG-1017 - Missing Audit Trail
 
 **Area:** jobs
 **Severity:** High
 **Status:** Open
 **Opened:** 2025-08-09
 
-### Summary
+#### Summary
 
 Missing Audit Trail
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
 Create any number of jobs
 
-### Expected
+#### Expected
 
 Job cards (day view) should include information about the job Creator, last modified, etc.
 
-### Actual
+#### Actual
 
 Contains no audit information on any job card
 
-### Notes / Suspicions
+#### Notes / Suspicions
 
 -
 
-### Fix PR
+#### Fix PR
 
 - PR: -
 - Fix commit: -
@@ -652,104 +677,125 @@ Contains no audit information on any job card
 
 ---
 
-## BUG-1018 - End Before Start
+### BUG-1018 - End Before Start
 
 **Area:** calendar
 **Severity:** High
-**Status:** Open
+**Status:** Fixed
 **Opened:** 2025-08-09
+**Fixed:** 2025-08-09
 
-### Summary
+#### Summary
 
-End Before Start
+Jobs could be created or edited with an end date earlier than the start date, leading to incorrect rendering and data inconsistencies.
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
 Create a new job whose start date is after its' end date
 
-### Expected
+#### Expected
 
 Should display an error message and not allow user to proceed
 
-### Actual
+#### Actual
 
 Creates the job on the start date only
 
-### Notes / Suspicions
+#### Resolution
 
--
+- Added `_parse_date` helper to validate and normalize start/end dates in `job_routes.py`.
+- Updated `add_job` and `edit_job` routes to:
+  - Require valid start date.
+  - Block end date earlier than start date.
+  - Store dates in ISO `YYYY-MM-DD` format.
+- Added fallback in `move_job` to handle jobs with no end date.
 
-### Fix PR
+#### Verification
 
-- PR: -
-- Fix commit: -
-- Released in: -
+- Attempt to create/edit job with end < start -> blocked, flash message shown.
+- Valid start/end saves correctly and displays in multi-day calendar view.
+- Jobs without end date can still be moved without errors.
+
+#### Fix PR
+
+- PR: fix/bug-1018-end-before-start
+- Fix commit: `feffa64`
+- Released in: dev (pending)
 
 ---
 
-## BUG-1019 - Too Many Jobs
+### BUG-1019 - Too Many Jobs
 
 **Area:** calendar
 **Severity:** Medium
-**Status:** Open
+**Status:** Fixed
 **Opened:** 2025-08-09
+**Fixed:** 2025-08-09
 
-### Summary
+#### Summary
 
-Too Many Jobs
+Calendar day cells stretched vertically when more than ~6 jobs were present, making the calendar hard to scan.
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
-Add multiple (>6) jobs to any particular date
+Add 7+ jobs to a single date in calendar view
 
-### Expected
+#### Expected
 
 The list of job cards on the calendar view should be scrollable
 
-### Actual
+#### Actual
 
 The date on the calendar view continues to grow larger vertically
 
-### Notes / Suspicions
+#### Resolution
 
--
+- Wrapped per-day job list in `.jobs` container in `index.html`.
+- Added CSS max-height and `overflow-y:auto` to `.calendar-cell .jobs`.
+- Ensured date and holiday labels remain visible above scroll area.
 
-### Fix PR
+#### Verification
 
-- PR: -
-- Fix commit: -
-- Released in: -
+- Added 10+ jobs to a date -> cell height remains consistent and scroll bar appears for jobs
+- Other day cells unaffected.
+- Holiday/date display remains fixed at top.
+
+#### Fix PR
+
+- PR: fix/bug-1018-end-before-start
+- Fix commit: `feffa64`
+- Released in: dev (pending)
 
 ---
 
-## BUG-1020 - Two Man Jobs
+### BUG-1020 - Two Man Jobs
 
 **Area:** jobs
 **Severity:** Low
 **Status:** Open
 **Opened:** 2025-08-09
 
-### Summary
+#### Summary
 
 Two Man Jobs
 
-### Steps to Reproduce
+#### Steps to Reproduce
 
 Add a job that requires multiple technicians
 
-### Expected
+#### Expected
 
 Should be able to add "2-man" toggle to a given job when creating it
 
-### Actual
+#### Actual
 
 No ability to add more than one technician to a given job
 
-### Notes / Suspicions
+#### Notes / Suspicions
 
 -
 
-### Fix PR
+#### Fix PR
 
 - PR: -
 - Fix commit: -
