@@ -34,18 +34,9 @@ def lookup_zipcode(zip: str) -> str | None:
         return None
 
 
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if "user" not in session:
-            return redirect(url_for("auth.login"))
-        return f(*args, **kwargs)
-
-    return decorated_function
-
-
 @job_bp.route("/add_job", methods=["GET", "POST"])
 @login_required
+@role_required("manager", "technician", "sales")
 def add_job():
     if request.method == "POST":
         start_date_raw = request.form.get("start_date")
@@ -163,6 +154,7 @@ def add_job():
 
 @job_bp.route("/add_job/<date>", methods=["GET", "POST"])
 @login_required
+@role_required("manager", "technician", "sales")
 def add_job_for_date(date):
     if request.method == "POST":
 
@@ -232,6 +224,7 @@ def add_job_for_date(date):
 
 @job_bp.route("/move_job/<int:job_id>", methods=["POST"])
 @login_required
+@role_required("manager", "technician", "sales")
 def move_job(job_id):
     new_start = request.form["new_date"]
     conn = get_database()
@@ -277,6 +270,7 @@ def move_job(job_id):
 
 @job_bp.route("/delete_job/<int:job_id>", methods=["POST"])
 @login_required
+@role_required("manager", "sales")
 def delete_job(job_id):
     if "user" not in session:
         return redirect(url_for("auth.login"))
@@ -289,7 +283,7 @@ def delete_job(job_id):
 
 @job_bp.route("/edit_job/<int:job_id>", methods=["GET", "POST"])
 @login_required
-@role_required("admin", "manager", "sales")
+@role_required("manager", "sales")
 def edit_job(job_id):
     if "user" not in session:
         return redirect(url_for("auth.login"))
