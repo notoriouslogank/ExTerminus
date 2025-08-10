@@ -1,5 +1,7 @@
 from pathlib import Path
-from flask import Flask, g
+from flask import Flask, g, request, redirect, url_for, flash
+from flask_wtf import CSRFProtect
+from flask_wtf.csrf import CSRFError, generate_csrf
 from datetime import date, datetime
 from .utils.config import Config
 from .utils.logger import setup_logger
@@ -17,6 +19,17 @@ def create_app():
         __name__, static_folder=str(STATIC_DIR), template_folder=str(TEMPLATES_DIR)
     )
     app.config.from_object(Config)
+
+    CSRFProtect(app)
+
+    @app.context_processor
+    def inject_csrf():
+        return dict(csrf_token=generate_csrf)
+
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(e):
+        flash("Your session expired or the form was invalid. Please try again", "error")
+        return redirect(request.referrer or url_for("auth.login")), 303
 
     logger = setup_logger()  # type: ignore
     logger.debug("App starting with config loaded.")

@@ -3,6 +3,7 @@
 <h2 class="text-center heading">Edit Job</h2>
 
 <form method="POST" class="form-container">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-group">
         <label for="title">Title:</label>
         <input name="title" value="{{ job['title'] }}" required>

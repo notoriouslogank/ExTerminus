@@ -4,6 +4,7 @@
 <h2 class="text-center heading">Add Technician Time Off</h2>
 
 <form method="POST" class="form-container card">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <div class="form-section">
         <h3 class="section-heading">Technician</h3>
