@@ -46,7 +46,7 @@
             {% if holiday %}holiday{% endif %}
             {% if is_locked %}locked{% endif %}
             {% if day == today %}today{% endif %}">
-
+        <a class="cell-overlay" href="{{ url_for('calendar.day_view', selected_date=day_str) }}" aria-label="Open day view for {{ day_str }}"></a>
 
             <div class="cell-date">
                 <a href="{{ url_for('calendar.day_view', selected_date=day_str) }}" style="text-decoration: none; color: inherit;">
@@ -58,7 +58,7 @@
             <div class="locked-msg">FULL</div>
             {% endif %}
 
-            <div class="jobs-wrapper">
+            <div class="jobs">
                 {% if time_off_by_date.get(day_str) %}
                     {% for tech_name in time_off_by_date[day_str] %}
 
@@ -71,8 +71,11 @@
 
                     {% endfor %}
                 {% endif %}
-                    {% for job in (jobs_by_date.get(day_str, []) | sort(attribute='time_range')) %}
-                    {% if job.type == "rei" %}
+                    {% for job in (jobs_by_date.get(day_str, []) | sort
+                    (attribute='time_range')) %}
+                    {# BUG-1006: template expects 'rei' but code uses 'reis'. Normalize: #}
+                    {% set job_type_clean = (job.type or job.job_type or "")|lower|trim %}
+                    {% if job_type_clean in ["rei","reis"] %}
                     {% set tech_parts = (job.technician_name or "").split(" ") %}
                     {% set tech_display = tech_parts[0][0] ~ "." ~ tech_parts[1] if tech_parts | length > 1 else job.technician_name %}
 
@@ -92,10 +95,10 @@
                         {% endif %}
                     </div>
 
-                    </div>
+                    {# removed stray </div> that prematurely closed jobs-wrapper #}
                     {% else %}
                         {% set job_type_clean = (job.type or "")|lower|trim %}
-                        {% set type_abbrv = (type_abbr|default({})).get(job_type_clean, (job_type_clean[:1])|upper) %}
+                        {% set type_abbrv = (type_abbr|default({})).get(job_type_clean, (job_type_clean[:1])|upper %}
                         {% set display_name = job.title or "Unknown" %}
                         {% set price = job.price %}
                         {% set is_first_day = day_str == job.start_date %}
