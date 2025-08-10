@@ -98,7 +98,7 @@
                     {# removed stray </div> that prematurely closed jobs-wrapper #}
                     {% else %}
                         {% set job_type_clean = (job.type or "")|lower|trim %}
-                        {% set type_abbrv = (type_abbr|default({})).get(job_type_clean, (job_type_clean[:1])|upper %}
+                        {% set type_abbrv = (type_abbr|default).get(job_type_clean, (job_type_clean[:1])|upper) %}
                         {% set display_name = job.title or "Unknown" %}
                         {% set price = job.price %}
                         {% set is_first_day = day_str == job.start_date %}
