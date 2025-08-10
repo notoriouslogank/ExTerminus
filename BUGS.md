@@ -2,6 +2,8 @@
 
 ## Open
 
+- [BUG-1022] Bug Report Format
+  Opened: 2025-08-09 • Branch: `fix/bug-1022-bug-report-format`
 - [BUG-1020] Two Man Jobs
   Opened: 2025-08-09 • Branch: `fix/bug-1020-two-man-jobs`
 - [BUG-1017] Missing Audit Trail
@@ -797,6 +799,34 @@ No ability to add more than one technician to a given job
 
 #### Fix PR
 
+- PR: -
+- Fix commit: -
+- Released in: -
+
+---
+
+## BUG-1022 - Bug Report Format
+**Area:** misc
+**Severity:** Medium
+**Status:** Open
+**Opened:** 2025-08-09
+
+### Summary
+Bug Report Format
+
+### Steps to Reproduce
+Simply add a bug.
+
+### Expected
+Retain formatting.
+
+### Actual
+Doesn't.
+
+### Notes / Suspicions
+-
+
+### Fix PR
 - PR: -
 - Fix commit: -
 - Released in: -
