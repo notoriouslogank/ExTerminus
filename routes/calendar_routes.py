@@ -48,7 +48,7 @@ def index():
         """
         SELECT j.*,
             j.job_type AS type,
-            j.rei_qty AS rei_quantity,
+            j.rei_quantity AS rei_quantity,
             t.name AS technician_name
         FROM jobs j
         LEFT JOIN technicians t ON t.id = j.technician_id
@@ -123,7 +123,7 @@ def day_view(selected_date: str):
         """
         SELECT j.*,
                 j.job_type AS type,
-                j.rei_qty AS rei_quantity,
+                j.rei_quantity AS rei_quantity,
                 t.name AS technician_name
         FROM jobs j
         LEFT JOIN technicians t ON t.id = j.technician_id
