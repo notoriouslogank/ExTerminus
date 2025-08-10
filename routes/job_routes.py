@@ -195,7 +195,7 @@ def add_job_for_date(date):
             return "Date is locked. Cannot add job.", 403
 
         cursor.execute(
-            """INSERT INTO jobs (title, job_type, price, start_date, end_date, time_range, notes, technician_id, created_by, rei_qty, rei_city, rei_city_name, exclusion_subtype)
+            """INSERT INTO jobs (title, job_type, price, start_date, end_date, time_range, notes, technician_id, created_by, rei_quantity, rei_zip, rei_city_name, exclusion_subtype)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 title,
