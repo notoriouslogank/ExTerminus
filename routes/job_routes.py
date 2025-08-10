@@ -40,8 +40,15 @@ def lookup_zipcode(zip: str) -> str | None:
 def add_job():
     if request.method == "POST":
         start_date_raw = request.form.get("start_date")
-        rei_city = request.form.get("rei_city")
-        rei_city_name = lookup_zipcode(rei_city) if rei_city else None
+        rei_zip = (request.form.get("rei_zip") or "").strip()
+        rei_city_name = None
+        if rei_zip and rei_zip.isdigit() and len(rei_zip) == 5:
+            try:
+                match = zipcodes.matching(rei_zip)
+                rei_city_name = match[0]["city"] if match else None
+            except Exception:
+                rei_city_name = None
+
         if not start_date_raw:
             flash("Start date is required.")
             return redirect(request.url)
@@ -85,7 +92,6 @@ def add_job():
             return redirect(url_for("auth.login"))
         created_by = uid
         rei_quantity = request.form.get("rei_quantity")
-        rei_city = request.form.get("rei_city")
         exclusion_subtype = request.form.get("exclusion_subtype")
         technician_id = request.form.get("technician_id") or None
         if technician_id == "":
@@ -112,7 +118,7 @@ def add_job():
         cursor.execute(
             """INSERT INTO jobs (
             title, job_type, price, start_date, end_date, time_range, notes,
-            created_by, technician_id, rei_qty, rei_city, rei_city_name, exclusion_subtype, fumigation_type, target_pest, custom_pest)
+            created_by, technician_id, rei_quantity, rei_zip, rei_city_name, exclusion_subtype, fumigation_type, target_pest, custom_pest)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 title,
@@ -125,7 +131,7 @@ def add_job():
                 created_by,
                 technician_id,
                 rei_quantity,
-                rei_city,
+                rei_zip,
                 rei_city_name,
                 exclusion_subtype,
                 fumigation_type,
@@ -169,8 +175,14 @@ def add_job_for_date(date):
         notes = request.form.get("notes", "")
         created_by = session["user"]["user_id"]
         rei_quantity = request.form.get("rei_quantity")
-        rei_city = request.form.get("rei_city")
-        rei_city_name = request.form.get("rei_city_name")
+        rei_zip = (request.form.get("rei_zip") or "").strip()
+        rei_city_name = None
+        if rei_zip and rei_zip.isdigit() and len(rei_zip) == 5:
+            try:
+                match = zipcodes.matching(rei_zip)
+                rei_city_name = match[0]["city"] if match else None
+            except Exception:
+                rei_city_name = None
         exclusion_subtype = request.form.get("exclusion_subtype")
         technician_id = request.form.get("technician_id") or None
         if technician_id == "":
@@ -196,7 +208,7 @@ def add_job_for_date(date):
                 technician_id,
                 created_by,
                 rei_quantity,
-                rei_city,
+                rei_zip,
                 rei_city_name,
                 exclusion_subtype,
             ),
