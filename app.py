@@ -6,6 +6,7 @@ from .config import Config
 from .logger import setup_logger
 from .routes import register_routes
 from .db import init_db, get_database, ensure_pragmas
+from .utils.version import APP_VERSION
 
 BASE_DIR = Path(__file__).parent
 TEMPLATES_DIR = BASE_DIR / "templates"
@@ -37,6 +38,10 @@ def create_app():
     @app.context_processor
     def inject_globals():
         return {"today": date.today(), "now": datetime.now()}
+
+    @app.context_processor
+    def inject_app_version():
+        return dict(app_version=APP_VERSION)
 
     register_routes(app)
 
