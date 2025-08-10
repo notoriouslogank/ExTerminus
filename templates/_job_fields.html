@@ -99,17 +99,19 @@
 
 <!-- REI Options -->
 <div class="form-section hidden" id="rei-options">
-    <h3 class="section-heading">Reinspections</h3>
+    <h3 class="section-heading">Reinspections (REIs)</h3>
 
     <div class="form-group">
-        <label for="rei_quantity">Number of REIs:</label>
-        <input type="number" name="rei_quantity" min="1">
+        <label for="rei_quantity">Quantity</label>
+        <input type="number" id="rei_quantity" name="rei_quantity" min="1" step="1" placeholder="e.g., 12">
     </div>
 
     <div class="form-group">
-        <label for="rei_zip">ZIP:</label>
-        <input type="text" id="rei_zip" maxlength="5" pattern="\d{5}">
+        <label for="rei_zip">ZIP (5 digits):</label>
+        <input type="text" id="rei_zip" name="rei_zip" maxlength="5" pattern="\d{5}" placeholder="e.g., 90210">
     </div>
+
+    <p class="hint">City name will auto-populate from ZIP and be stored as <code>rei_city_name</code>.</p>
 </div>
 
 <!-- Custom Job Type -->
