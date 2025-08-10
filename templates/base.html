@@ -35,7 +35,9 @@
         {% endwith %}
 
         <!-- Page-specific content goes here -->
-        {% block content %}{% endblock %}
+        {% block content %}
+        <p class="version-number">v{{ app_version }}</p>
+        {% endblock %}
     </div>
 
 </body>

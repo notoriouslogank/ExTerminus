@@ -1,11 +1,11 @@
 from pathlib import Path
-from flask import Flask, render_template, session, request, g
+from flask import Flask, g
 from datetime import date, datetime
-from calendar import Calendar
-from .config import Config
-from .logger import setup_logger
+from .utils.config import Config
+from .utils.logger import setup_logger
 from .routes import register_routes
-from .db import init_db, get_database, ensure_pragmas
+from .db import init_db, ensure_pragmas
+from .utils.version import APP_VERSION
 
 BASE_DIR = Path(__file__).parent
 TEMPLATES_DIR = BASE_DIR / "templates"
@@ -18,7 +18,7 @@ def create_app():
     )
     app.config.from_object(Config)
 
-    logger = setup_logger(level=1)
+    logger = setup_logger()  # type: ignore
     logger.debug("App starting with config loaded.")
 
     init_db()
@@ -37,6 +37,10 @@ def create_app():
     @app.context_processor
     def inject_globals():
         return {"today": date.today(), "now": datetime.now()}
+
+    @app.context_processor
+    def inject_app_version():
+        return dict(app_version=APP_VERSION)
 
     register_routes(app)
 
