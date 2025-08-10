@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>{{ code }} - {{ 'Not Found' if code==404 else 'Something broke' }}</h2>
+    <p>Try that again, maybe with fewer gremlins.</p>
+{% endblock %}
