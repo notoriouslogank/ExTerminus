@@ -113,7 +113,8 @@ def add_job():
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM locks WHERE date = ?", (start_date,))
         if cursor.fetchone():
-            return "Date is locked. Cannot add job.", 403
+            flash("Date is locked. Cannot add job.", "error")
+            return redirect(url_for("calendar.day_view", selected_date=start_date))
 
         cursor.execute(
             """INSERT INTO jobs (
@@ -192,7 +193,8 @@ def add_job_for_date(date):
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM locks WHERE date = ?", (date,))
         if cursor.fetchone():
-            return "Date is locked. Cannot add job.", 403
+            flash("Date is locked. Cannot add job.", "error")
+            return redirect(url_for("calendar.day_view", selected_date=date))
 
         cursor.execute(
             """INSERT INTO jobs (title, job_type, price, start_date, end_date, time_range, notes, technician_id, created_by, rei_quantity, rei_zip, rei_city_name, exclusion_subtype)
