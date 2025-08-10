@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 from pathlib import Path
 from flask import Flask, g, request, redirect, url_for, flash
 from flask_wtf import CSRFProtect
@@ -9,6 +10,9 @@ from .routes import register_routes
 from .db import init_db, ensure_pragmas
 from .utils.version import APP_VERSION
 
+env_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=env_path)
+
 BASE_DIR = Path(__file__).parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
@@ -19,6 +23,13 @@ def create_app():
         __name__, static_folder=str(STATIC_DIR), template_folder=str(TEMPLATES_DIR)
     )
     app.config.from_object(Config)
+
+    if not app.debug and app.config.get("SECRET_KEY") in (
+        None,
+        "",
+        "dev-insecure-change-me",
+    ):
+        raise RuntimeError("SECRET_KEY must be set in production.")
 
     CSRFProtect(app)
 
