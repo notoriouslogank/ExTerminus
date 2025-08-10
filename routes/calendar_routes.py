@@ -173,7 +173,7 @@ def add_time_off():
 
 @calendar_bp.route("/lock/toggle", methods=["POST"], endpoint="toggle_lock")
 @login_required
-@role_required("manager", "technician", "admin")
+@role_required("admin", "manager", "technician")
 def toggle_lock():
     selected_date = request.form.get("date")
     if not selected_date:

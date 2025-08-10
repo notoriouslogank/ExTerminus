@@ -2,12 +2,14 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from werkzeug.security import generate_password_hash
 from ..db import get_database
 from ..utils.logger import setup_logger
+from ..utils.decorators import role_required
 
 admin_bp = Blueprint("admin", __name__)
 logger = setup_logger()
 
 
 @admin_bp.route("/admin/users", methods=["GET", "POST"])
+@role_required("admin")
 def admin_users():
     if not session.get("user") or session["user"].get("role") != "admin":
         flash("Access denied.", "error")
