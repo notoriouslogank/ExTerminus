@@ -6,6 +6,7 @@
 
 <!-- Create New User Form -->
 <form method="POST" class="user-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <fieldset>
         <legend>Create New User</legend>
         <label for="first_name">First Name:</label>
@@ -45,6 +46,7 @@
     <tbody>
         {% for user in users %}
         <form method="POST" action="{{ url_for('admin.admin_users') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <tr>
                 <td>{{ user.first_name }} {{ user.last_name }}</td>
                 <td>{{ user.username }}</td>

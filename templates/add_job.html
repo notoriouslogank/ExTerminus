@@ -3,6 +3,7 @@
 <h2 class="text-center heading">Add a New Job</h2>
 
 <form method="POST" class="form-container">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     {% include "_job_fields.html" with context %}
 
     <div class="form-actions">

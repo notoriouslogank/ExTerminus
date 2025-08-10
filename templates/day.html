@@ -16,6 +16,7 @@
 
 <div class="flex-center gap mb-1">
     <form method="POST" action="{{ url_for('calendar.toggle_lock') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="date" value="{{ selected_date.isoformat() }}">
         <button type="submit" class="btn btn-yellow">
         {% if locked %}🔓 Unlock Day{% else %}🔒 Lock Day{% endif %}
@@ -112,6 +113,7 @@
                     </a>
 
                     <form method="POST" action="{{ url_for('job.delete_job', job_id=job.id) }}" onsubmit="return confirm('Delete this job?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-red">🗑 Delete</button>
                     </form>
 
@@ -129,6 +131,7 @@
 <div id="moveModal" class="modal">
     <div class="modal-content">
         <form method="POST" id="moveForm" action="">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label for="new_date">Select New Date:</label><br>
             <input type="date" name="new_date" required class="mt-05">
             <div class="flex-space-between mt-1">
