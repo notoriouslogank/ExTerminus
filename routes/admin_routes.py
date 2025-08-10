@@ -1,8 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash
 from ..db import get_database
-from ..logger import setup_logger
-import zipcodes
+from ..utils.logger import setup_logger
 
 admin_bp = Blueprint("admin", __name__)
 logger = setup_logger()
