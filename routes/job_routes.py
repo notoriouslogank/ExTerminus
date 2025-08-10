@@ -3,7 +3,7 @@ from functools import wraps
 from datetime import datetime, date
 from ..utils.decorators import login_required, role_required
 from ..db import get_database
-from ..logger import setup_logger
+from ..utils.logger import setup_logger
 from functools import wraps
 from datetime import datetime
 import zipcodes
