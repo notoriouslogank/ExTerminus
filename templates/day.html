@@ -48,7 +48,7 @@
                 <h3 class="job-heading">REIs</h3>
                 <p class="job-meta">
                     📋 REIs: <strong>{{ job.rei_quantity or "?" }}</strong>
-                    {% if job.rei_city %} in {{ job.rei_city }}{% endif %}
+                    {% if job.rei_city_name %} in {{ job.rei_city_name }}{% endif %}
                 </p>
                 {% if job.technician_name %}
                 <p class="job-meta job-meta-light"> Technician:
