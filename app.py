@@ -1,7 +1,7 @@
 from pathlib import Path
 from flask import Flask, g
 from datetime import date, datetime
-from .config import Config
+from .utils.config import Config
 from .logger import setup_logger
 from .routes import register_routes
 from .db import init_db, ensure_pragmas
