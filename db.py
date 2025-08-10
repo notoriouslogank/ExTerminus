@@ -76,9 +76,9 @@ def init_db():
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         last_modified TEXT,
         last_modified_by INTEGER,
-        FOREIGN KEY (technician_id) REFERENCES technicians(id),
-        FOREIGN KEY (created_by) REFERENCES users(id),
-        FOREIGN KEY (last_modified_by) REFERENCES users(id)
+        FOREIGN KEY (technician_id) REFERENCES technicians(id) ON DELETE SET NULL,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+        FOREIGN KEY (last_modified_by) REFERENCES users(id) ON DELETE SET NULL
     );
     """
     )
@@ -91,7 +91,7 @@ def init_db():
         date TEXT UNIQUE NOT NULL,
         locked_by INTEGER,
         locked_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (locked_by) REFERENCES users(id)
+        FOREIGN KEY (locked_by) REFERENCES users(id) ON DELETE SET NULL
     );
     """
     )
@@ -105,7 +105,7 @@ def init_db():
         start_date TEXT NOT NULL,
         end_date TEXT NOT NULL,
         reason TEXT,
-        FOREIGN KEY (technician_id) REFERENCES technicians(id)
+        FOREIGN KEY (technician_id) REFERENCES technicians(id) ON DELETE CASCADE
     );
     """
     )
