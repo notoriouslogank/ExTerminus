@@ -27,11 +27,11 @@
         </div>
 
         <div class="form-group">
-            <label for="technician_id">Technician (optional):</label>
-            <select name="technician_id">
+            <label for="technician_id">Assign Technician</label>
+            <select id="technician_id" name="technician_id">
                 <option value="">-- Unassigned --</option>
-                {% for tech in technicians %}
-                <option value="{{ tech.id }}"> {{ tech.name }}</option>
+                {% for t in technicians %}
+                    <option value="{{ t.id }}"> {{ t.name }}</option>
                 {% endfor %}
             </select>
         </div>
