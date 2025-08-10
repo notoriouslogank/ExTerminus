@@ -2,7 +2,8 @@ import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-def setup_logger(name="exterminus", log_file=None, level=logging.INFO):
+
+def setup_logger(name="exterminus", log_file=None, level=logging.DEBUG):
     base = Path(__file__).parent
     logs_dir = base / "logs"
     logs_dir.mkdir(exist_ok=True)
@@ -12,8 +13,10 @@ def setup_logger(name="exterminus", log_file=None, level=logging.INFO):
     logger.setLevel(level)
 
     if not logger.handlers:
-        file_handler = RotatingFileHandler(log_path, maxBytes=512*1024, backupCount=5)
-        formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s in %(pathname)s:%(lineno)d')
+        file_handler = RotatingFileHandler(log_path, maxBytes=512 * 1024, backupCount=5)
+        formatter = logging.Formatter(
+            "%(asctime)s [%(levelname)s] %(message)s in %(pathname)s:%(lineno)d"
+        )
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
