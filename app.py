@@ -19,8 +19,8 @@ def create_app():
     )
     app.config.from_object(Config)
 
-    logger = setup_logger(level=1)
-    logger.debug("App starting with config loaded.")
+    app.logger = setup_logger()  # type: ignore
+    app.logger.debug("App starting with config loaded.")
 
     init_db()
     ensure_pragmas()
