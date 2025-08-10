@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from functools import wraps
 from datetime import datetime, date
 from werkzeug.security import generate_password_hash, check_password_hash
-from utils.decorators import login_required, role_required
+from ..utils.decorators import login_required, role_required
 from ..db import get_database
 from ..logger import setup_logger
 from functools import wraps
