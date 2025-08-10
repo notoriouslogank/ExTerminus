@@ -84,8 +84,10 @@
                             <div class="job-left">
                                 <span class="job-tag">REIs</span>
                                 <span class="job-qty">{{ job.rei_quantity }}</span>
+                                {% if job.rei_city_name or job.rei_zip %}
+                                    <span class="job-city">{{ job.rei_city_name or job.rei_zip }}</span>
+                                {% endif %}
                             </div>
-                            <span class="job-city">{{ job.rei_city_name or job.rei_zip }}</span>
                         </div>
 
                         {% if tech_display %}
