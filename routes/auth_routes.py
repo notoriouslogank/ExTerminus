@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from werkzeug.security import generate_password_hash, check_password_hash
 from ..utils.decorators import login_required
 from ..db import get_database
-from ..logger import setup_logger
+from ..utils.logger import setup_logger
 
 auth_bp = Blueprint("auth", __name__)
 logger = setup_logger()

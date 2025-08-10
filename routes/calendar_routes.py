@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta
 from calendar import Calendar, month_name
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from ..db import get_database
-from ..logger import setup_logger
+from ..utils.logger import setup_logger
 
 calendar_bp = Blueprint("calendar", __name__)
 log = setup_logger()
