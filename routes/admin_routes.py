@@ -23,13 +23,33 @@ def admin_users():
 
         if action == "update_role":
             user_id = request.form.get("update_user_id")
-            new_role = request.form.get("role")
+            new_role = (request.form.get("role") or "").strip().lower()
+            if new_role == "tech":
+                new_role = "technician"
+
+            # fetch user so we can build tech name
+            row = cursor.execute(
+                "SELECT first_name, last_name, username FROM users WHERE id = ?",
+                (user_id,),
+            ).fetchone()
+            if not row:
+                flash("User not found.", "error")
+                return redirect(url_for("admin.admin_users"))
+
             cursor.execute(
                 "UPDATE users SET role = ? WHERE id = ?", (new_role, user_id)
             )
+
+            if new_role == "technician":
+                full_name = f"{(row['first_name'] or '').strip()} {(row['last_name'] or '').strip()}".strip()
+                tech_name = full_name or row["username"]
+                cursor.execute(
+                    "INSERT OR IGNORE INTO technicians (name) VALUES (?)", (tech_name,)
+                )
+
             conn.commit()
             flash("Role updated.")
-            logger.info(f"Admin updated role for user ID {user_id} to {new_role}")
+            logger.info(f"Admin updated role for user ID {user_id} to {new_role}.")
             return redirect(url_for("admin.admin_users"))
 
         elif action == "reset_password":
@@ -64,6 +84,14 @@ def admin_users():
                 (first, last, username, hashed, role),
             )
 
+            if role.lower() in ("technician", "tech"):
+                full_name = (
+                    f"{(first or '').strip()} {(last or '').strip()}".strip()
+                    or username
+                )
+                cursor.execute(
+                    "INSERT OR IGNORE INTO technicians (name) VALUES (?)", (full_name,)
+                )
             conn.commit()
             flash(f"User {username} created with role {role}.")
             return redirect(url_for("admin.admin_users"))
