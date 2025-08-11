@@ -10,9 +10,11 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 ---
 
 ## Open Bugs (summary)
-<!-- BUGS:SUMMARY START -->| ID        | Title                   | Severity | Status        | Opened      | Owner | Target |
+<!-- BUGS:SUMMARY START -->
+| ID        | Title                   | Severity | Status        | Opened      | Owner | Target |
 |-----------|-------------------------|----------|---------------|-------------|-------|--------|
 | BUG-1023  | Immortal REIs           | P1       | Open          | 2025-08-10  |       | v0.1.0 |
+| BUG-1029  | Test Bug                | P0       | Open          | 2025-08-10  |       | v0.2.1 |
 <!-- BUGS:SUMMARY END -->
 ---
 
@@ -25,6 +27,15 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Notes:** -
 - **Owner:** 
 - **Target:** v0.1.0
+
+### BUG-1029 — Test Bug
+
+- **Severity:** P0 · **Status:** Open · **Affects:** jobs
+- **Repro:** Write a new bug
+- **Expected/Actual:** Should make a bug without fucking up the table layout / Probably not that it should do
+- **Notes:** -
+- **Owner:** 
+- **Target:** v0.2.1
 
 <!-- BUGS:DETAILS END -->
 ---
