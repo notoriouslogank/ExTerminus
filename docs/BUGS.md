@@ -24,6 +24,7 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 | BUG-1022  | Bug Report Format       | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1026  | Fail to Delete          | P1       | Open          | 2025-08-10  |       | v0.1.0 |
 | BUG-1027  | REI Title (Unknown)     | P2       | Open          | 2025-08-10  |       | v0.1.0 |
+| BUG-1028  | Bad Auth Notification   | P3       | Open          | 2025-08-10  |       | v0.1.1 |
 <!-- BUGS:SUMMARY END -->
 ---
 
@@ -116,6 +117,15 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Notes:** -
 - **Owner:** 
 - **Target:** v0.1.0
+
+### BUG-1028 — Bad Auth Notification
+
+- **Severity:** P3 · **Status:** Open · **Affects:** auth
+- **Repro:** While logged in as technician, try to delete a job.
+- **Expected/Actual:** If job deletion fails due to lack of credentials, a message should notify user of auth failure. / Confirmation box appears; when "OK" is clicked, redirect to calendar view but target job remains.
+- **Notes:** -
+- **Owner:** 
+- **Target:** v0.1.1
 
 <!-- BUGS:DETAILS END -->
 ---
