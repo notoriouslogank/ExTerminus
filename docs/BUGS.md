@@ -10,7 +10,8 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 ---
 
 ## Open Bugs (summary)
-<!-- BUGS:SUMMARY START -->| ID        | Title                   | Severity | Status        | Opened      | Owner | Target |
+<!-- BUGS:SUMMARY START -->
+| ID        | Title                   | Severity | Status        | Opened      | Owner | Target |
 |-----------|-------------------------|----------|---------------|-------------|-------|--------|
 | BUG-1005  | Multi-Day Arrows        | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1010  | Holidays not shown      | P2       | Open          | 2025-08-09  |       | v0.1.1 |
