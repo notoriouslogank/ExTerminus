@@ -116,6 +116,9 @@ def day_view(selected_date: str):
         return redirect(url_for("calendar.index"))
 
     conn = get_database()
+    import sqlite3
+
+    conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
     cur.execute("SELECT 1 FROM locks WHERE date = ?", (selected_date,))
@@ -123,15 +126,25 @@ def day_view(selected_date: str):
 
     cur.execute(
         """
-        SELECT j.*,
-                j.job_type AS type,
-                j.rei_quantity AS rei_quantity,
-                j.rei_zip AS rei_zip,
-                j.rei_city_name AS rei_city_name,
-                t.name AS technician_name
+        SELECT
+            j.*,
+            j.job_type AS type,
+            j.rei_quantity AS rei_quantity,
+            j.rei_zip AS rei_zip,
+            j.rei_city_name AS rei_city_name,
+            t.name AS technician_name,
+            cu.username AS created_by_name,
+            mu.username AS modified_by_name,
+            CASE
+                WHEN LOWER(COALESCE(j.job_type, '')) = 'rei' THEN 'REIs'
+                ELSE COALESCE(NULLIF(j.type, ''), '(Untitled)')
+            END AS display_title
         FROM jobs j
         LEFT JOIN technicians t ON t.id = j.technician_id
+        LEFT JOIN users cu ON cu.id = j.created_by
+        LEFT JOIN users mu ON mu.id = j.last_modified_by
         WHERE j.start_date <= ? AND (j.end_date IS NULL OR j.end_date >= ?)
+        ORDER BY j.start_date, j.id
         """,
         (selected_date, selected_date),
     )
