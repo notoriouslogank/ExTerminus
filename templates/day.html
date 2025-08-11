@@ -44,7 +44,7 @@
 <div style="max-width: 700px; margin: 0 auto;">
     {% for job in jobs %}
     <div class="card">
-                {% if job.type == "rei" %}
+                {% if job.type and job.type|lower in ['rei', 'reis'] %}
                     <h3 class="job-heading">REIs</h3>
                     <p class="job-meta">
                     📋 REIs: <strong>{{ job.rei_quantity or "?" }}</strong>
@@ -64,7 +64,7 @@
                 <p class="job-meta">🕒 {{ job.time_range }}</p>
                 {% endif %}
                 {% if job.type %}
-                <p class="job-meta">🏷️ Type: <strong>{{ job.type }}</strong></p>
+                <p class="job-meta">🏷️ Type: <strong>{{ job.type and job.type|lower in ['rei', 'reis'] else job.type }}</strong></p>
                 {% endif %}
                 {% if job.technician_name %}
                 <p class="job-meta" "job-meta-light">
