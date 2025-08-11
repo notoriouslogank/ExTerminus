@@ -26,6 +26,7 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 | BUG-1026  | Fail to Delete          | P1       | Open          | 2025-08-10  |       | v0.1.0 |
 | BUG-1027  | REI Title (Unknown)     | P2       | Open          | 2025-08-10  |       | v0.1.0 |
 | BUG-1028  | Bad Auth Notification   | P3       | Open          | 2025-08-10  |       | v0.1.1 |
+| BUG-1031  | Job Card Audit Log      | P0       | Open          | 2025-08-11  |       | v0.1.0 |
 <!-- BUGS:SUMMARY END -->
 ---
 
@@ -127,6 +128,15 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Notes:** -
 - **Owner:** 
 - **Target:** v0.1.1
+
+### BUG-1031 — Job Card Audit Log
+
+- **Severity:** P0 · **Status:** Open · **Affects:** jobs
+- **Repro:** Create/modify any job; view job card on day view.
+- **Expected/Actual:** Should show "created by", "last modified by", "creation date", etc. / Shows no audit log
+- **Notes:** -
+- **Owner:** 
+- **Target:** v0.1.0
 
 <!-- BUGS:DETAILS END -->
 ---
