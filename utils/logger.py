@@ -3,7 +3,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 
-def setup_logger(name="exterminus", log_file=None, level=logging.DEBUG):
+def setup_logger(name="exterminus", log_file=None, level=logging.INFO):
     base = Path(__file__).parent
     logs_dir = base / "logs"
     logs_dir.mkdir(exist_ok=True)
