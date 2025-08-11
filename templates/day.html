@@ -64,10 +64,10 @@
                 <p class="job-meta">🕒 {{ job.time_range }}</p>
                 {% endif %}
                 {% if job.type %}
-                <p class="job-meta">🏷️ Type: <strong>{{ job.type and job.type|lower in ['rei', 'reis'] else job.type }}</strong></p>
+                <p class="job-meta">🏷️ Type: <strong>{{ 'rei' if job.type and (job.type|lower in ['rei', 'reis']) else job.type }}</strong></p>
                 {% endif %}
                 {% if job.technician_name %}
-                <p class="job-meta" "job-meta-light">
+                <p class="job-meta job-meta-light">
                     🔧 {{ job.technician_name }}
                 </p>
                 {% endif %}
