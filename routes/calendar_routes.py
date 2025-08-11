@@ -137,7 +137,7 @@ def day_view(selected_date: str):
             mu.username AS modified_by_name,
             CASE
                 WHEN LOWER(COALESCE(j.job_type, '')) = 'rei' THEN 'REIs'
-                ELSE COALESCE(NULLIF(j.type, ''), '(Untitled)')
+                ELSE COALESCE(NULLIF(j.title, ''), '(Untitled)')
             END AS display_title
         FROM jobs j
         LEFT JOIN technicians t ON t.id = j.technician_id
