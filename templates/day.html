@@ -45,18 +45,18 @@
     {% for job in jobs %}
     <div class="card">
                 {% if job.type == "rei" %}
-                <h3 class="job-heading">REIs</h3>
-                <p class="job-meta">
+                    <h3 class="job-heading">REIs</h3>
+                    <p class="job-meta">
                     📋 REIs: <strong>{{ job.rei_quantity or "?" }}</strong>
                     {% if job.rei_city_name %} in {{ job.rei_city_name }}{% endif %}
-                </p>
-                {% if job.technician_name %}
-                <p class="job-meta job-meta-light"> Technician:
-                    {{ job.technician_name }}
-                </p>
-                {% endif %}
+                    </p>
+                    {% if job.technician_name %}
+                    <p class="job-meta job-meta-light"> Technician:
+                        {{ job.technician_name }}
+                    </p>
+                    {% endif %}
                 {% else %}
-                <h3 class="job-heading">{{ job.title or "(Untitled)" }}</h3>
+                    <h3 class="job-heading">{{ job.display_title or job.title or "(Untitled)" }}</h3>
                 {% if job.price %}
                 <p class="job-meta">💵 ${{ "%.2f"|format(job.price) }}</p>
                 {% endif %}
@@ -94,17 +94,16 @@
                     {% endif %}
                 {% endif %}
 
-                {% if job.first_name and job.last_name and job.created_fmt %}
-                <p class="job-created">
-                    Created by {{ job.first_name }} {{ job.last_name}} on {{ job.created_fmt}}
-                </p>
-                {% endif %}
+               <!-- Audit Block -->
+                <div class="job-meta job-meta-light" style="margin-top:.25rem;">
+                    Job Created By: {{ job.created_by_name or 'Unknown' }}
+                    • {{ job.created_at|fmt_ts }}
+                </div>
+                <div class="job-meta job-meta-light">
+                    Last Modified By: {{ job.modified_by_name or (job.created_by_name or '-') }}
+                    {% if job.last_modified %} • {{ job.last_modified|fmt_ts }}{% endif %}
+                </div>
 
-                {% if job.editor_first_name and job.last_modified_fmt %}
-                <p class="job-edited">
-                    Last edited by {{ job.editor_first_name }} {{ job.editor_last_name }} on {{ job.last_modified_fmt }}
-                </p>
-                {% endif %}
 
                 {% if not locked %}
                 <div class="flex-row mt-05 gap">

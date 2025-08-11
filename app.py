@@ -9,6 +9,7 @@ from .utils.logger import setup_logger
 from .routes import register_routes
 from .db import init_db, ensure_pragmas
 from .utils.version import APP_VERSION
+from zoneinfo import ZoneInfo
 
 env_path = Path(__file__).resolve().parent / ".env"
 load_dotenv(dotenv_path=env_path)
@@ -17,12 +18,42 @@ BASE_DIR = Path(__file__).parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
 
+DISPLAY_TZ = ZoneInfo("America/New_York")
+ASSUME_UTC = True
+
+
+def fmt_ts(value):
+    if not value:
+        return ""
+    if isinstance(value, datetime):
+        dt = value
+    else:
+        s = str(value)
+        try:
+            dt = datetime.fromisoformat(s)
+        except ValueError:
+            for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S"):
+                try:
+                    dt = datetime.strptime(s, fmt)
+                    break
+                except ValueError:
+                    dt = None
+            if dt is None:
+                return s
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=ZoneInfo("UTC") if ASSUME_UTC else DISPLAY_TZ)
+    dt = dt.astimezone(DISPLAY_TZ)
+
+    return dt.strftime("%B %d, %Y at %I:%M %p")
+
 
 def create_app():
     app = Flask(
         __name__, static_folder=str(STATIC_DIR), template_folder=str(TEMPLATES_DIR)
     )
     app.config.from_object(Config)
+
+    app.jinja_env.filters["fmt_ts"] = fmt_ts
 
     if not app.debug and app.config.get("SECRET_KEY") in (
         None,
