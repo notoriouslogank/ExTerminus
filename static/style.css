@@ -3,43 +3,18 @@
    Dark Mode Default | Monospace Themed
    ========================================================================== */
 
-/* === Design Tokens ==== */
-:root {
-    --bg-0: #111;
-    --bg-1: #1a1a1a;
-    --bg-2: #222;
-    --bg-3: #2a2a2a;
-    --fg-0: #eee;
-    --fg-1: #ccc;
-    --fg-2: #bbb;
-    --fg-3: #aaa;
-    --fg-dim: #666;
-    --accent-y: #fcd535;
-    --accent-y-2: #e4be30;
-    --accent-y-3: #c9a916;
-    --accent-r: #aa0000;
-    --accent-r-2: #990000;
-    --accent-r-3: #661111;
-    --line-0: #444;
-    --line-1: #333;
-    --line-2: #2b2b2b;
-    --shadow: rgba(0, 0, 0, .2);
-}
-
 /* === Reset & Globals === */
 html,
 body {
-    background-color: var(--bg-0);
-    color: var(--fg-0);
+    background-color: #111;
+    color: #eee;
     margin: 0;
     padding: 0;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    font-family: monospace;
 }
 
 a {
-    color: var(--fg-1);
+    color: #ccc;
     text-decoration: none;
 }
 
@@ -52,7 +27,7 @@ a:hover {
     text-align: center;
     font-family: monospace;
     font-size: 0.7em;
-    color: var(--fg-dim);
+    color: #666;
     margin-top: 1em;
 }
 
@@ -65,7 +40,7 @@ a:hover {
 }
 
 nav .user-info {
-    font-weight: 700;
+    font-weight: bold;
     color: #7f7;
 }
 
@@ -75,12 +50,12 @@ nav .user-info {
 }
 
 .text-muted {
-    color: var(--fg-3);
+    color: #aaa;
     font-size: 0.85em;
 }
 
 .bold {
-    font-weight: 700;
+    font-weight: bold;
 }
 
 /* === Margin & Padding Utilities === */
@@ -103,14 +78,13 @@ nav .user-info {
 /* === Buttons === */
 .btn {
     background-color: #333;
-    color: var(--fg-0);
+    color: #eee;
     border: 1px solid #666;
     border-radius: 4px;
     padding: 0.4em 0.8em;
     font-size: 0.9em;
     text-decoration: none;
     cursor: pointer;
-    transition: background-color .2s, transform .1s, filter .15s;
 }
 
 .btn:hover {
@@ -118,32 +92,20 @@ nav .user-info {
     filter: brightness(1.1);
 }
 
-.btn:active {
-    transform: translateY(1px);
-}
-
 .btn-red {
-    background-color: var(--accent-r);
+    background-color: #aa0000;
     color: #fff;
     border: none;
     border-radius: 4px;
     padding: 0.4em 0.8em;
-    font-weight: 700;
+    font-weight: bold;
     font-family: inherit;
     font-size: 0.9em;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
-    box-shadow: 0 1px 2px var(--shadow);
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.btn-red:hover {
-    background-color: var(--accent-r-2);
-}
-
-.btn-red:active {
-    transform: scale(.98);
-    background-color: #c00000;
-}
 
 .btn-cancel {
     background-color: #555;
@@ -156,52 +118,55 @@ nav .user-info {
     padding: 0.6em 1.4em;
     border: none;
     border-radius: 4px;
-    font-weight: 700;
+    font-weight: bold;
     cursor: pointer;
-    transition: background 0.2s;
-}
-
-.btn-submit:hover {
-    background: #e5b600;
+    transition: background 0.2s ease-in-out;
 }
 
 .btn-yellow {
-    background-color: var(--accent-y);
+    background-color: #fcd535;
     color: #111;
     border: none;
     border-radius: 4px;
     padding: 0.4em 0.8em;
-    font-weight: 700;
+    font-weight: bold;
+    font-family: inherit;
     font-size: 0.9em;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
-    box-shadow: 0 1px 2px var(--shadow);
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .btn-yellow:hover {
-    background-color: var(--accent-y-2);
+    background-color: #e4be30;
 }
 
 .btn-yellow:active {
     transform: scale(0.98);
-    background-color: var(--accent-y-3);
+    background-color: #c9a916;
 }
 
-/* === Badges (unified) === */
+.btn-red:hover {
+    background-color: #990000;
+}
+
+.btn-red:active {
+    transform: scale(0.98);
+    background-color: #c00000;
+}
+
+.btn-submit:hover {
+    background-color: #e5b600;
+}
 
 .badge {
-    display: inline-block;
-    padding: 2px 6px;
-    font-size: .75rem;
-    font-weight: 600;
-    border-radius: 3px;
-    letter-spacing: .5px;
-    text-transform: uppercase;
-    line-height: 1.2;
+    padding: 0.3em 0.6em;
+    border-radius: 0.25em;
+    font-weight: bold;
 }
 
 .badge-locked {
-    background-color: var(accent-r);
+    background-color: #aa0000;
     color: #fff;
 }
 
@@ -214,8 +179,8 @@ nav .user-info {
 input,
 select,
 textarea {
-    background-color: var(--bg-0);
-    color: var(--fg-0);
+    background-color: #111;
+    color: #eee;
     border: 1px solid #555;
     border-radius: 3px;
     padding: 0.4em 0.6em;
@@ -229,7 +194,7 @@ select:focus,
 textarea:focus {
     outline: none;
     border-color: #7fff7f;
-    background-color: var(--bg-1);
+    background-color: #1a1a1a;
 }
 
 textarea {
@@ -238,7 +203,7 @@ textarea {
 
 label {
     margin-bottom: 0.3em;
-    font-weight: 700;
+    font-weight: bold;
     color: #ccc;
 }
 
@@ -262,7 +227,7 @@ label {
     max-width: 800px;
     margin: 2em auto;
     padding: 2em;
-    background-color: var(--bg-0);
+    background-color: #111;
     border-radius: 8px;
     box-shadow: 0 0 12px rgba(255, 255, 255, 0.05)
 }
@@ -293,7 +258,7 @@ label {
 .form-section {
     margin-bottom: 1.8em;
     padding-bottom: 1em;
-    border-bottom: 1px solid var(--line-2);
+    border-bottom: 1px solid #2b2b2b;
 }
 
 
@@ -316,8 +281,8 @@ label {
 .form-group textarea {
     padding: 0.5em;
     background-color: #1b1b1b;
-    border: 1px solid var(--line-1);
-    color: var(--fg-0);
+    border: 1px solid #333;
+    color: #eee;
     border-radius: 4px;
 }
 
@@ -342,8 +307,8 @@ input[type="radio"] {
 
 input[type="date"] {
     background-color: #1b1b1b;
-    color: var(--fg-0);
-    border: 1px solid var(--ling-1);
+    color: #eee;
+    border: 1px solid #333;
     padding: 0.5em;
     border-radius: 4px;
 }
@@ -389,12 +354,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* === Cards === */
 .card {
-    background-color: var(--bg-2);
+    background-color: #222;
     padding: 1em;
     margin-bottom: 1em;
     border-radius: 6px;
     box-shadow: 0 0 4px rgba(255, 215, 0, 0.15);
-    color: var(--fg-0);
+    color: #eee;
 }
 
 .job-heading {
@@ -404,13 +369,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .job-meta {
-    color: var(--fg-2);
+    color: #bbb;
     margin: 0.3em 0;
 }
 
 .job-notes {
-    background-color: --bg-0;
-    border-left: 4px solid var(--accent-y);
+    background-color: #111;
+    border-left: 4px solid #ffd700;
     padding: 0.4em 0.8em;
     margin-top: 0.5em;
     font-style: italic;
@@ -420,7 +385,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .job-created,
 .job-edited {
     font-size: 0.85em;
-    color: var(--fg-dim);
+    color: #666;
     margin-top: 0.4em;
 }
 
@@ -430,9 +395,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     font-size: 0.75em;
     padding: 0.1em 0.4em;
     border-radius: 4px;
-    font-weight: 700;
+    font-weight: bold;
 }
 
+.tag.termite {
+    background-color: #fc3;
+    color: #000;
+}
+
+.tag.ps {
+    background-color: lime;
+    color: #000;
+}
 
 .tag.locked {
     background-color: #a33;
@@ -448,18 +422,19 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     font-size: 0.7em;
     padding: 0.15em 0.4em;
     border-radius: 3px;
-    font-weight: 700;
+    font-weight: bold;
+    font-family: monospace;
     letter-spacing: 0.03em;
     text-transform: uppercase;
 }
 
 .time-off-box {
-    border: 1px dashed var(--accent-y);
-    background-color: var(--bg-0);
+    border: 1px dashed #ffd700;
+    background-color: #111;
     padding: 0.6em;
     margin-bottom: 0.5em;
-    font-weight: 700;
-    color: var(--accent-y);
+    font-weight: bold;
+    color: #ffd700;
     border-radius: 4px;
 }
 
@@ -481,13 +456,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .status-badge.unlocked {
-    background-color: var(--bg-2);
-    color: var(--accent-y);
-    border: 1px solid var(--accent-y);
+    background-color: #222;
+    color: #ffd700;
+    border: 1px solid #ffd700;
 }
 
 .status-badge.locked {
-    background-color: var(--accent-y);
+    background-color: #ffd700;
     color: #111;
     border: 1px solid #444;
 }
@@ -495,17 +470,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* === Calendar === */
 .calendar-header {
     flex-direction: column;
-    gap: 1em;
+    gap: 0.3em;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 1em;
     margin-top: 0.5em;
     margin-bottom: 1em;
 }
 
 .calendar-title {
     font-size: 2em;
-    color: var(--fg-0);
+    color: #eee;
     margin: 0;
 }
 
@@ -537,14 +513,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     position: relative;
     padding: 8px;
     height: 140px;
-    border: 1px solid var(--line-0);
-    background-color: var(--bg-2);
+    border: 1px solid #444;
+    background-color: #222;
     vertical-align: top;
     color: #ccc;
 }
 
 .calendar-cell:hover {
-    background-color: var(--bg-3);
+    background-color: #2a2a2a;
 }
 
 
@@ -558,7 +534,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .calendar-cell.past {
-    background-color: var(--bg-1);
+    background-color: #1a1a1a;
     color: #666;
     opacity: 0.6;
 }
@@ -566,10 +542,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .calendar-cell.today {
     position: relative;
     background-color: #1f1f0d;
-    outline: 1px solid var(--accent-y);
+    outline: 1px solid #fc3;
+
     box-shadow:
-        inset 0 0 4px var(--accent-y),
-        0 0 3px var(--accent-y);
+        inset 0 0 4px #fc3,
+        0 0 3px #fc3;
     z-index: 2;
 }
 
@@ -579,12 +556,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     bottom: 6px;
     right: 6px;
     font-size: 0.65em;
-    color: var(--accent-y);
-    background-color: var(--bg-0);
+    color: #fc3;
+    background-color: #111;
     padding: 0.1em 0.4em;
     border-radius: 2px;
-    border: 1px solid var(--accent-y);
-    font-weight: 700;
+    border: 1px solid #fc3;
+    font-weight: bold;
     opacity: 0.7;
     pointer-events: none;
 }
@@ -596,7 +573,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .calendar-cell.locked {
-    box-shadow: inset 0 0 0 2px var(--accent-r-3), inset 0 0 8px #300;
+    box-shadow: inset 0 0 0 2px #661111, inset 0 0 8px #330000;
 }
 
 /* >>> BUG-1019 fix: scrollable job list in day cells */
@@ -630,13 +607,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     display: flex;
     flex-direction: column;
     gap: 0.15em;
-    padding: 0.45em 0.6em;
-    background-color: var(--bg-0);
+    padding: 0.4em 0.6em;
+    background-color: #111;
     font-size: 0.85em;
     border-radius: 6px;
     margin-bottom: 0.4em;
-    border-left: 3px solid var(--accent-y);
-    color: var(--fg-0);
+    border-left: 3px solid #fcd535;
+    color: #eee;
 }
 
 .job-header,
@@ -649,16 +626,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .job-tag {
-    background-color: var(--accent-y);
+    background-color: #fcd535;
     color: #111;
-    padding: 0.15em 0.45em;
+    padding: 0.1em 0.4em;
     border-radius: 3px;
-    font-weight: 700;
+    font-weight: bold;
     font-size: 0.75em;
 }
 
 .job-time {
-    color: var(--fg-3);
+    color: #aaa;
     font-style: italic;
     font-size: 0.75em;
 }
@@ -669,13 +646,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .job-price {
-    font-weight: 600;
+    font-weight: bold;
     color: #ccc;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
 }
 
 .job-price.tbd {
@@ -684,8 +656,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .job-arrow {
-    font-weight: 700;
-    color: var(--accent-y);
+    font-weight: bold;
+    color: #fcd535;
 }
 
 .job-info-flex {
@@ -702,14 +674,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .job-qty {
-    font-weight: 700;
+    font-weight: bold;
     font-variant-numeric: tabular-nums;
     font-size: 0.9em;
 }
 
 .job-city {
     font-size: 0.85em;
-    color: var(--fg-2);
+    color: #bbb;
     white-space: nowrap;
 }
 
@@ -720,7 +692,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .off-entry {
-    background-color: var(--bg-2);
+    background-color: #222;
     border-left: 3px solid #888;
 }
 
@@ -744,7 +716,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .modal-content {
-    background-color: var(--bg-2);
+    background-color: #222;
     border: 1px solid #ffd700;
     border-radius: 8px;
     padding: 1em;
