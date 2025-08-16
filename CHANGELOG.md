@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented here.
 
-## [0.1.0] - 2025-08-10
+## [0.1.0] - 2025-08-15
 
 ### Added
 
@@ -33,6 +33,9 @@ All notable changes to this project will be documented here.
 - **BUG-1019 - Too Many Jobs:** Month/day views no longer double-count multi-day jobs; explansion logic and date filters corrected; dates are now scrollable when jobs overflow cell size
 - **BUG-1018 - End Before Start:** Server-side validation prevents end date earlier than start date; REI jobs normalized to single-day where appropriate.
 - **BUG-1009 - Nameless Job:** Require non-empty title for non-REI jobs.
+- **BUG-1026 - Fail to Delete:** Authorized job deletions now properly remove jobs from the database and display a success message; unauthorized attempts show a clear error message.
+- **BUG-1027 / 1032 - REI Title (Unknown):** REI jobs now always display the title "REIs" in Day View instead of showing "(Unknown)" or an empty title.
+- **BUG-1017 / BUG-1031 - Job Card Audit Log:** Job cards in Day View now display complete audit trails, including creator, creation date, last editor, and last modified date, with timestamps formatted in EST.
 - Technician dropdown: auto-sync technicians on role change/user creation.
 - CSRF: added tokens to all POST forms; friendly error handler.
 - SECRET_KEY: fail-fast in prod; .env loading via python-dotenv.
