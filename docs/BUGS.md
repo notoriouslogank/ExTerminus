@@ -23,6 +23,7 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 | BUG-1020  | Two Man Jobs            | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1033  | Inconsistent Assignment | P1       | Open          | 2025-08-16  |       | v0.2.0 |
 | BUG-1034  | Remove Time Off         | P3       | Open          | 2025-08-16  |       | v0.2.0 |
+| BUG-1035  | Missing Time Off (Day V | P3       | Open          | 2025-08-16  |       | v0.2.0 |
 <!-- BUGS:SUMMARY END -->
 ---
 
@@ -99,6 +100,15 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Severity:** P3 · **Status:** Open · **Affects:** misc
 - **Repro:** Create Time Off for a technician.
 - **Expected/Actual:** Should have an option to REMOVE Time Off. / There is no method of removing Time Off once scheduled.
+- **Notes:** -
+- **Owner:** 
+- **Target:** v0.2.0
+
+### BUG-1035 — Missing Time Off (Day View)
+
+- **Severity:** P3 · **Status:** Open · **Affects:** misc
+- **Repro:** View any day in Day View.
+- **Expected/Actual:** Should be able to 'Add Time Off' via day view / No option to 'Add Time Off' via Day View.
 - **Notes:** -
 - **Owner:** 
 - **Target:** v0.2.0
