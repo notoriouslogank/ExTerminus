@@ -20,25 +20,12 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 | BUG-1013  | Time Picker             | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1015  | Chronology              | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1016  | Chronology II           | P2       | Open          | 2025-08-09  |       | v0.1.1 |
-| BUG-1017  | Missing Audit Trail     | P1       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1020  | Two Man Jobs            | P2       | Open          | 2025-08-09  |       | v0.1.1 |
-| BUG-1022  | Bug Report Format       | P2       | Open          | 2025-08-09  |       | v0.1.1 |
-| BUG-1026  | Fail to Delete          | P1       | Open          | 2025-08-10  |       | v0.1.0 |
-| BUG-1027  | REI Title (Unknown)     | P2       | Open          | 2025-08-10  |       | v0.1.0 |
-| BUG-1028  | Bad Auth Notification   | P3       | Open          | 2025-08-10  |       | v0.1.1 |
-| BUG-1031  | Job Card Audit Log      | P0       | Open          | 2025-08-11  |       | v0.1.0 |
-| BUG-1032  | REI Job Titles          | P1       | Open          | 2025-08-11  |       | v0.1.0 |
 <!-- BUGS:SUMMARY END -->
 ---
 
 ## Details
 <!-- BUGS:DETAILS START -->
-### BUG-1022 — Bug Report Format
-
-- **Severity:** P2 · **Status:** Open · **Affects:** BUGS.md formatting flow
-- **Repro:** Add a bug entry → formatting degrades.
-- **Expected/Actual:** Keeps structure / loses structure.
-- **Notes:** Adopt the template at bottom of this file for new entries.
 
 ### BUG-1020 — Two Man Jobs
 
@@ -46,13 +33,6 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Repro:** Create a job that needs 2 techs → can’t select >1.
 - **Expected/Actual:** Toggle or multi-select / single tech only.
 - **Notes:** Likely needs `jobs_technicians` join table + UI multi-select.
-
-### BUG-1017 — Missing Audit Trail
-
-- **Severity:** P1 · **Status:** Open · **Affects:** day view job cards
-- **Repro:** Create/edit jobs → no creator / last modified shown.
-- **Expected/Actual:** Audit fields visible / absent.
-- **Notes:** DB already has `created_by`, `last_modified`, `last_modified_by`; just render + ensure they’re populated on edit.
 
 ### BUG-1016 — Chronology II
 
@@ -103,51 +83,6 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Expected/Actual:** Arrow on each day / first day only.
 - **Notes:** Render prefix/suffix arrows based on start/end.
 
-### BUG-1026 — Fail to Delete
-
-- **Severity:** P1 · **Status:** Open · **Affects:** jobs
-- **Repro:** Login as technician; go to day view on a day with a REI job; click Delete on REI job.
-- **Expected/Actual:** Job deletes and redirect to calendar view. / Redirect to calendar view; job remains.
-- **Notes:** -
-- **Owner:** 
-- **Target:** v0.1.0
-
-### BUG-1027 — REI Title (Unknown)
-
-- **Severity:** P2 · **Status:** Open · **Affects:** jobs
-- **Repro:** Create a REI job on any day. Go to day view.
-- **Expected/Actual:** Job card (in day view) should have title 'REIs' not '(Unknown)' / Job card in day view has title '(Unknown)'
-- **Notes:** -
-- **Owner:** 
-- **Target:** v0.1.0
-
-### BUG-1028 — Bad Auth Notification
-
-- **Severity:** P3 · **Status:** Open · **Affects:** auth
-- **Repro:** While logged in as technician, try to delete a job.
-- **Expected/Actual:** If job deletion fails due to lack of credentials, a message should notify user of auth failure. / Confirmation box appears; when "OK" is clicked, redirect to calendar view but target job remains.
-- **Notes:** -
-- **Owner:** 
-- **Target:** v0.1.1
-
-### BUG-1031 — Job Card Audit Log
-
-- **Severity:** P0 · **Status:** Open · **Affects:** jobs
-- **Repro:** Create/modify any job; view job card on day view.
-- **Expected/Actual:** Should show "created by", "last modified by", "creation date", etc. / Shows no audit log
-- **Notes:** -
-- **Owner:** 
-- **Target:** v0.1.0
-
-### BUG-1032 — REI Job Titles
-
-- **Severity:** P1 · **Status:** Open · **Affects:** jobs
-- **Repro:** Create a REI job on any date
-- **Expected/Actual:** Should show title as "REIs" on job card in daily view / Shows "(Unknown)" as the title on job card in daily view
-- **Notes:** -
-- **Owner:** 
-- **Target:** v0.1.0
-
 <!-- BUGS:DETAILS END -->
 ---
 
@@ -162,4 +97,11 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **BUG-1014** Time Off
 - **BUG-1018** End Before Start
 - **BUG-1019** Too Many Jobs
+- **BUG-1022** Bug Report Format
 - **BUG-1001** Type Abbreviations
+- **BUG-1026** Fail to Delete
+- **BUG-1031** Job Card Audit Log
+- **BUG-1017** Missing Audit Trail (duplicate of 1031)
+- **BUG-1032** REI Job Titles
+- **BUG-1027** REI Title (Unknown) (duplicate of 1032)
+- **BUG-1028** Bad Auth Notification
