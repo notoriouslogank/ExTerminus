@@ -24,18 +24,21 @@ def _parse_date(s: str | None) -> date | None:
     return None
 
 
-def _parse_technician(value: str | None, cur) -> tuple[int | None, int]:
+def _parse_technician(value: str | None, cur=None):
     if value == "__BOTH__":
-        return None
-        1
-    if not value:
+        return None, 1
+    if value is None or str(value).strip == "":
         return None, 0
     try:
         tid = int(value)
     except (TypeError, ValueError):
         return None, 0
-    ok = cur.execute("SELECT 1 FROM technicians WHERE id=?", (tid,)).fetchone()
-    return (tid if ok else None, 0)
+
+    if cur is not None:
+        ok = cur.execute("SELECT 1 FROM technicians WHERE id=?", (tid,)).fetchone()
+        if not ok:
+            return None, 0
+        return tid, 0
 
 
 def lookup_zipcode(zip: str) -> str | None:
