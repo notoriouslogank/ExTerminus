@@ -27,9 +27,12 @@
 
 <div class="calendar-wrapper">
   <table class="calendar-table">
+
     <tr>
-        {% for dow in ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] %}
-        <th class="calendar-day-label">{{ dow }}</th>
+        {% set dows = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] %}
+        {% set dows_mobile = ["S", "M", "T", "W", "T", "F", "S"] %}
+        {% for dow in dows %}
+            <th class="calendar-day-label" data-short="{{ dows_mobile[loop.index0] }}">{{ dow }}</th>
         {% endfor %}
     </tr>
 
