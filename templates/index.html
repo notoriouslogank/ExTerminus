@@ -114,6 +114,7 @@
                                 else (job.start_time ~ '-' ~ job.end_time if job.start_time and job.end_time else None) %}
                             {% if _display_time %}
                                 <span class="job-time">{{ _display_time }}</span>
+                            {% endif %}
                             <span class="job-tag">{{ type_abbrv }}</span>
                             <span class="job-title">{{ display_name }}</span>
                         </div>
