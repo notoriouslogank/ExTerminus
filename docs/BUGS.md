@@ -24,6 +24,7 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 | BUG-1033  | Inconsistent Assignment | P1       | Open          | 2025-08-16  |       | v0.2.0 |
 | BUG-1034  | Remove Time Off         | P3       | Open          | 2025-08-16  |       | v0.2.0 |
 | BUG-1035  | Missing Time Off (Day V | P3       | Open          | 2025-08-16  |       | v0.2.0 |
+| BUG-1036  | MULTI-DAY ARROWS        | P1       | Open          | 2025-08-16  |       | v0.2.0 |
 <!-- BUGS:SUMMARY END -->
 ---
 
@@ -109,6 +110,15 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Severity:** P3 · **Status:** Open · **Affects:** misc
 - **Repro:** View any day in Day View.
 - **Expected/Actual:** Should be able to 'Add Time Off' via day view / No option to 'Add Time Off' via Day View.
+- **Notes:** -
+- **Owner:** 
+- **Target:** v0.2.0
+
+### BUG-1036 — MULTI-DAY ARROWS
+
+- **Severity:** P1 · **Status:** Open · **Affects:** calendar
+- **Repro:** Create a multi-day job and go to Calendar View.
+- **Expected/Actual:** Should show an arrow for each day except the last one. / Shows an arrow only on the FIRST day of a multi-day job.
 - **Notes:** -
 - **Owner:** 
 - **Target:** v0.2.0
