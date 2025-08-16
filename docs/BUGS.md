@@ -21,6 +21,7 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 | BUG-1015  | Chronology              | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1016  | Chronology II           | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1020  | Two Man Jobs            | P2       | Open          | 2025-08-09  |       | v0.1.1 |
+| BUG-1033  | Inconsistent Assignment | P1       | Open          | 2025-08-16  |       | v0.2.0 |
 <!-- BUGS:SUMMARY END -->
 ---
 
@@ -82,6 +83,15 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Repro:** Multi-day job → arrow only on first day.
 - **Expected/Actual:** Arrow on each day / first day only.
 - **Notes:** Render prefix/suffix arrows based on start/end.
+
+### BUG-1033 — Inconsistent Assignment Formatting
+
+- **Severity:** P1 · **Status:** Open · **Affects:** calendar
+- **Repro:** Assign a technician to a job via the day and/or calendar view, then view it on the calendar.
+- **Expected/Actual:** All technician names (except 'Two Man') should be in format F.Lastname / Some jobs show technician Firstname Lastname, some show F.Lastname
+- **Notes:** -
+- **Owner:** 
+- **Target:** v0.2.0
 
 <!-- BUGS:DETAILS END -->
 ---
