@@ -93,7 +93,7 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Repro:** Assign a technician to a job via the day and/or calendar view, then view it on the calendar.
 - **Expected/Actual:** All technician names (except 'Two Man') should be in format F.Lastname / Some jobs show technician Firstname Lastname, some show F.Lastname
 - **Notes:** -
-- **Owner:** 
+- **Owner:**
 - **Target:** v0.2.0
 
 ### BUG-1034 — Remove Time Off
@@ -102,7 +102,7 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Repro:** Create Time Off for a technician.
 - **Expected/Actual:** Should have an option to REMOVE Time Off. / There is no method of removing Time Off once scheduled.
 - **Notes:** -
-- **Owner:** 
+- **Owner:**
 - **Target:** v0.2.0
 
 ### BUG-1035 — Missing Time Off (Day View)
@@ -111,7 +111,7 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Repro:** View any day in Day View.
 - **Expected/Actual:** Should be able to 'Add Time Off' via day view / No option to 'Add Time Off' via Day View.
 - **Notes:** -
-- **Owner:** 
+- **Owner:**
 - **Target:** v0.2.0
 
 ### BUG-1036 — MULTI-DAY ARROWS
@@ -120,7 +120,7 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Repro:** Create a multi-day job and go to Calendar View.
 - **Expected/Actual:** Should show an arrow for each day except the last one. / Shows an arrow only on the FIRST day of a multi-day job.
 - **Notes:** -
-- **Owner:** 
+- **Owner:**
 - **Target:** v0.2.0
 
 <!-- BUGS:DETAILS END -->
