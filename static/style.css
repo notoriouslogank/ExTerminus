@@ -731,3 +731,112 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     width: 90%;
     max-width: 400px;
 }
+
+/* === Mobile Polish (<640px) === */
+@media (max-width: 640px) {
+    .calendar-day-label {
+        font-size: 0;
+    }
+
+    .calendar-day-label::after {
+        content: attr(data-short);
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+    }
+
+    /* Compact header and controls */
+    .calendar-header {
+        gap: 6px;
+        margin-bottom: 0.5em;
+    }
+
+    .calendar-logo {
+        max-height: 36px;
+    }
+
+    .calendar-title {
+        font-size: 1.25rem;
+    }
+
+    .calendar-nav .btn,
+    .calendar-actions .btn {
+        padding: 6px 10 px;
+        font-size: .9rem;
+    }
+
+    /* Bigger tap targets; reduce clutter */
+    .btn {
+        min-height: 44px;
+    }
+
+    input,
+    select,
+    textarea {
+        font-size: 16px;
+    }
+
+    /* Grid tuning */
+    .calendar-day-label {
+        font-size: .8rem;
+        padding: 6px 0;
+    }
+
+    .calendar-cell {
+        padding: 6px;
+        height: 110px;
+    }
+
+    .calendar-cell:hover::after {
+        content: none;
+    }
+
+    /* Keep whole cell tappable but content clickable */
+    .calendar-cell .cell-overlay {
+        z-index: 1;
+    }
+
+    .calendar-cell * {
+        z-index: 2;
+    }
+
+    /* Jobs list readability */
+    .calendar-cell .jobs {
+        max-height: 8.75rem;
+    }
+
+    .job-entry {
+        padding: 6px 8px;
+        margin-bottom: 6px;
+        border-radius: 6px;
+    }
+
+    .job-header,
+    .job-footer {
+        gap: 6px;
+    }
+
+    .job-time,
+    .job-price {
+        font-size: .75rem;
+        opacity: .85;
+    }
+
+    /* Clamp long titles to one line */
+    .job-title {
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Holiday badge fit */
+    .holiday-badge,
+    .calendar-cell.holiday .holiday-badge {
+        max-width: 70%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+}
