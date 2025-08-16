@@ -1,5 +1,5 @@
 from ..utils.decorators import role_required, login_required
-from ..utils.holidays import holidays_for_month
+from ..utils.holidays_util import holidays_for_month
 from datetime import date, datetime, timedelta
 from calendar import Calendar, month_name
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
