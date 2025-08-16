@@ -24,6 +24,20 @@ def _parse_date(s: str | None) -> date | None:
     return None
 
 
+def _parse_technician(value: str | None, cur) -> tuple[int | None, int]:
+    if value == "__BOTH__":
+        return None
+        1
+    if not value:
+        return None, 0
+    try:
+        tid = int(value)
+    except (TypeError, ValueError):
+        return None, 0
+    ok = cur.execute("SELECT 1 FROM technicians WHERE id=?", (tid,)).fetchone()
+    return (tid if ok else None, 0)
+
+
 def lookup_zipcode(zip: str) -> str | None:
     try:
         results = zipcodes.matching(str(zip).strip())
@@ -129,14 +143,8 @@ def add_job():
 
         rei_quantity = request.form.get("rei_quantity")
         exclusion_subtype = request.form.get("exclusion_subtype")
-        technician_id = request.form.get("technician_id") or None
-        if technician_id == "":
-            technician_id = None
-        if technician_id is not None:
-            if not cur.execute(
-                "SELECT 1 FROM technicians WHERE id=?", (technician_id,)
-            ).fetchone():
-                technician_id = None
+        technician_raw = request.form.get("technician_id")
+        technician_id, two_man = _parse_technician(technician_raw, cur)
 
         fumigation_type = request.form.get("fumigation_type")
         target_pest = request.form.get("target_pest")
@@ -153,8 +161,8 @@ def add_job():
         cursor.execute(
             """INSERT INTO jobs (
             title, job_type, price, start_date, end_date, start_time, end_time, time_range, notes,
-            created_by, technician_id, rei_quantity, rei_zip, rei_city_name, exclusion_subtype, fumigation_type, target_pest, custom_pest)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            created_by, technician_id, two_man, rei_quantity, rei_zip, rei_city_name, exclusion_subtype, fumigation_type, target_pest, custom_pest)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 title,
                 job_type,
@@ -167,6 +175,7 @@ def add_job():
                 notes,
                 created_by,
                 technician_id,
+                two_man,
                 rei_quantity,
                 rei_zip,
                 rei_city_name,
@@ -200,6 +209,9 @@ def add_job():
 @role_required("manager", "technician", "sales")
 def add_job_for_date(date):
     if request.method == "POST":
+
+        conn = get_database()
+        cursor = conn.cursor()
 
         start_date = end_date = date
 
@@ -235,20 +247,22 @@ def add_job_for_date(date):
             except Exception:
                 rei_city_name = None
         exclusion_subtype = request.form.get("exclusion_subtype")
-        technician_id = request.form.get("technician_id") or None
-        if technician_id == "":
-            technician_id = None
+        technician_raw = request.form.get("technician_id")
+        technician_id, two_man = _parse_technician(technician_raw, cursor)
+        fumigation_type = request.form.get("fumigation_type")
+        target_pest = request.form.get("target_pest")
+        custom_pest = request.form.get("custom_pest")
+        if custom_pest:
+            target_pest = custom_pest.strip()
 
-        conn = get_database()
-        cursor = conn.cursor()
         cursor.execute("SELECT * FROM locks WHERE date = ?", (date,))
         if cursor.fetchone():
             flash("Date is locked. Cannot add job.", "error")
             return redirect(url_for("calendar.day_view", selected_date=date))
 
         cursor.execute(
-            """INSERT INTO jobs (title, job_type, price, start_date, end_date, start_time, end_time, time_range, notes, technician_id, created_by, rei_quantity, rei_zip, rei_city_name, exclusion_subtype,)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO jobs (title, job_type, price, start_date, end_date, start_time, end_time, time_range, notes, technician_id, two_man, created_by, rei_quantity, rei_zip, rei_city_name, fumigation_type, target_pest, custom_pest, exclusion_subtype)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 title,
                 job_type,
@@ -260,10 +274,14 @@ def add_job_for_date(date):
                 time_range,
                 notes,
                 technician_id,
+                two_man,
                 created_by,
                 rei_quantity,
                 rei_zip,
                 rei_city_name,
+                fumigation_type,
+                target_pest,
+                custom_pest,
                 exclusion_subtype,
             ),
         )
@@ -415,6 +433,9 @@ def edit_job(job_id):
                 ).fetchone(),
             )
 
+        technician_raw = request.form.get("technician_id")
+        technician_id, two_man = _parse_technician(technician_raw, cur)
+
         cur.execute(
             """
             UPDATE jobs
@@ -429,6 +450,8 @@ def edit_job(job_id):
                     notes = ?,
                     fumigation_type = ?,
                     target_pest = ?,
+                    technician_id = ?,
+                    two_man = ?,
                     last_modified = CURRENT_TIMESTAMP,
                     last_modified_by = ?
             WHERE id = ?
@@ -445,6 +468,8 @@ def edit_job(job_id):
                 request.form.get("notes", ""),
                 fumigation_type,
                 target_pest,
+                technician_id,
+                two_man,
                 session["user"]["user_id"],
                 job_id,
             ),
