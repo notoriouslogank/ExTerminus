@@ -38,7 +38,7 @@
         {% for day in week %}
         {% set day_str = day.isoformat() %}
         {% set is_past = day < today %}
-        {% set holiday = holidays.get(day) %}
+        {% set holiday = holidays.get(day_str) %}
         {% set is_locked = day_str in locks %}
 
         <td class="calendar-cell
@@ -52,6 +52,9 @@
                 <a href="{{ url_for('calendar.day_view', selected_date=day_str) }}" style="text-decoration: none; color: inherit;">
                     {{ day.day }}
                 </a>
+                {% if holiday %}
+                    <span class="holiday-badge">{{ holiday }}</span>
+                {% endif %}
             </div>
 
             {% if is_locked %}
@@ -132,12 +135,6 @@
                     {% endif %}
                 {% endfor %}
             </div>
-
-            {% if holiday %}
-                <div class="holiday-label">
-                    {{ holiday }}
-                </div>
-            {% endif %}
         </td>
         {% endfor %}
     </tr>

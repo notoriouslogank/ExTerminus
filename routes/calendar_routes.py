@@ -1,4 +1,5 @@
 from ..utils.decorators import role_required, login_required
+from ..utils.holidays import holidays_for_month
 from datetime import date, datetime, timedelta
 from calendar import Calendar, month_name
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
@@ -89,6 +90,9 @@ def index():
         "power spray": "PS",
     }
 
+    STATE_CODE = "VA"
+    holidays_map = holidays_for_month(year, month, state=STATE_CODE)
+
     return render_template(
         "index.html",
         weeks=weeks,
@@ -100,11 +104,11 @@ def index():
         next_month=next_month,
         next_year=next_year,
         locks=locks,
-        holidays=holidays,
         jobs_by_date=jobs_by_date,
         time_off_by_date=time_off_by_date,
         today=today,
         type_abbr=TYPE_ABBR,
+        holidays=holidays_map,
     )
 
 
