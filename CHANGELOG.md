@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented here.
 
+## [Unreleased]
+
+### Added
+
+- Holiday display on calendar view using the `holidays` Python library (US holidays).
+- New CSS styling for holiday dates to visually distinguish them on the calendar.
+- Backend utility function `holidays_for_month(year, month)` in `utils/holidays_util.py` for retrieving holiday names/dates.
+- Integration of holiday data into `calendar_routes` so holidays are passed to the template.
+
+### Changed
+
+- Updated `index.html` calendar template to highlight holidays with a distinct style.
+
 ## [0.1.0] - 2025-08-15
 
 ### Added
