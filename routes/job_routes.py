@@ -34,6 +34,28 @@ def lookup_zipcode(zip: str) -> str | None:
         return None
 
 
+def normalize_hhmm(s: str | None) -> str | None:
+    if not s:
+        return None
+    s = s.strip()
+    if not s:
+        return None
+    if s.isdigit():
+        return f"{int(s):02d}:00"
+    if ":" in s:
+        h, m = s.split(":", 1)
+        return f"{int(h):02d}:{int(m):02d}"
+    return None
+
+
+def derive_time_range(start_hhmm: str | None, end_hhmm: str | None) -> str | None:
+    if not start_hhmm or not end_hhmm:
+        return None
+    sh, sm = map(int, start_hhmm.split(":"))
+    eh, em = map(int, end_hhmm.split(":"))
+    return f"{sh}-{eh}"
+
+
 @job_bp.route("/add_job", methods=["GET", "POST"])
 @login_required
 @role_required("manager", "technician", "sales")
@@ -50,10 +72,11 @@ def add_job():
                 rei_city_name = None
 
         if not start_date_raw:
-            flash("Start date is required.")
+            flash("Start date is required.", "error")
             return redirect(request.url)
 
-        # BUG-1018: correct fallback and validate dates
+        # Dates
+
         end_date_raw = request.form.get("end_date") or start_date_raw
         sd = _parse_date(start_date_raw)
         ed = _parse_date(end_date_raw) if end_date_raw else None
@@ -63,22 +86,34 @@ def add_job():
         start_date = sd.isoformat()
         end_date = ed.isoformat() if ed else None
 
+        # Times
+        start_time_raw = request.form.get("start_time")
+        end_time_raw = request.form.get("end_time")
+        start_time = normalize_hhmm(start_time_raw)
+        end_time = normalize_hhmm(end_time_raw)
+        if start_time and end_time and end_time <= start_time:
+            flash("End time must be after start time.", "error")
+            return redirect(url_for("calendar.day_view", selected_date=date))
+
+        time_range = derive_time_range(start_time, end_time) or (
+            request.form.get("time_range", "").strip() or "any"
+        )
+
+        # Job Fields
         title = (request.form.get("title") or "").strip()
         job_type = request.form["type"]
-
         if job_type == "reis":
             title = ""
             end_date = start_date
         if job_type == "custom":
             job_type = request.form.get("custom_type", "").strip()
 
-        # BUG-1009: require non-empty title for non-REI jobs
+        # Require non-empty title for non-REI jobs
         if job_type != "reis" and not title:
             flash("Title is required.", "error")
             return redirect(request.url)
 
         price = request.form["price"]
-        time_range = request.form.get("time_range", "").strip() or "any"
         notes = request.form.get("notes", "")
 
         conn = get_database()
@@ -91,6 +126,7 @@ def add_job():
             flash("Your session has expired.  Please log in again.", "error")
             return redirect(url_for("auth.login"))
         created_by = uid
+
         rei_quantity = request.form.get("rei_quantity")
         exclusion_subtype = request.form.get("exclusion_subtype")
         technician_id = request.form.get("technician_id") or None
@@ -105,11 +141,9 @@ def add_job():
         fumigation_type = request.form.get("fumigation_type")
         target_pest = request.form.get("target_pest")
         custom_pest = request.form.get("custom_pest")
-
         if custom_pest:
             target_pest = custom_pest.strip()
 
-        conn = get_database()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM locks WHERE date = ?", (start_date,))
         if cursor.fetchone():
@@ -118,15 +152,17 @@ def add_job():
 
         cursor.execute(
             """INSERT INTO jobs (
-            title, job_type, price, start_date, end_date, time_range, notes,
+            title, job_type, price, start_date, end_date, start_time, end_time, time_range, notes,
             created_by, technician_id, rei_quantity, rei_zip, rei_city_name, exclusion_subtype, fumigation_type, target_pest, custom_pest)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 title,
                 job_type,
                 price,
                 start_date,
                 end_date,
+                start_time,
+                end_time,
                 time_range,
                 notes,
                 created_by,
@@ -172,7 +208,21 @@ def add_job_for_date(date):
         if job_type == "custom":
             job_type = request.form.get("custom_type", "").strip()
         price = request.form["price"]
-        time_range = request.form.get("time_range", "").strip() or "any"
+        # time fields
+        start_time_raw = request.form.get("start_time")
+        end_time_raw = request.form.get("end_time")
+
+        start_time = normalize_hhmm(start_time_raw)
+        end_time = normalize_hhmm(end_time_raw)
+
+        if start_time and end_time and end_time <= start_time:
+            flash("End time must be after start time.", "error")
+            return redirect(request.url)
+
+        time_range = derive_time_range(start_time, end_time) or (
+            request.form.get("time_range", "").strip() or "any"
+        )
+
         notes = request.form.get("notes", "")
         created_by = session["user"]["user_id"]
         rei_quantity = request.form.get("rei_quantity")
@@ -197,14 +247,16 @@ def add_job_for_date(date):
             return redirect(url_for("calendar.day_view", selected_date=date))
 
         cursor.execute(
-            """INSERT INTO jobs (title, job_type, price, start_date, end_date, time_range, notes, technician_id, created_by, rei_quantity, rei_zip, rei_city_name, exclusion_subtype)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO jobs (title, job_type, price, start_date, end_date, start_time, end_time, time_range, notes, technician_id, created_by, rei_quantity, rei_zip, rei_city_name,)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 title,
                 job_type,
                 price,
                 start_date,
                 end_date,
+                start_time,
+                end_time,
                 time_range,
                 notes,
                 technician_id,
@@ -308,24 +360,26 @@ def edit_job(job_id):
         fumigation_type = request.form.get("fumigation_type")
         target_pest = request.form.get("target_pest")
         custom_pest = request.form.get("custom_pest")
+        start_time_raw = request.form.get("start_time")
+        end_time_raw = request.form.get("end_time")
+
+        start_time = normalize_hhmm(start_time_raw)
+        end_time = normalize_hhmm(end_time_raw)
+
+        if start_time and end_time and end_time <= start_time:
+            flash("End time must be after start time.", "error")
+            return render_template(
+                "edit_job.html",
+                job=cur.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone(),
+            )
+
+        time_range = derive_time_range(start_time, end_time) or (
+            request.form.get("time_range", "").strip() or "any"
+        )
 
         if custom_pest:
             target_pest = custom_pest.strip()
 
-        cur.execute(
-            """UPDATE jobs SET title = ?, type = ?, price = ?, time_range = ?, notes = ?, fumigation_type = ?, target_pest = ?, last_modified = CURRENT_TIMESTAMP, last_modified_by = ? WHERE id = ?""",
-            (
-                request.form["title"],
-                request.form["type"],
-                request.form["price"],
-                request.form["time_range"],
-                request.form["notes"],
-                fumigation_type,
-                target_pest,
-                session["user"]["user_id"],
-                job_id,
-            ),
-        )
         # BUG-1018: validate and normalize dates on edit
         start_date_raw = request.form.get("start_date")
         end_date_raw = request.form.get("end_date") or start_date_raw
@@ -369,12 +423,14 @@ def edit_job(job_id):
                     price = ?,
                     start_date = ?,
                     end_date = ?,
+                    start_time = ?,
+                    end_time = ?,
                     time_range = ?,
                     notes = ?,
                     fumigation_type = ?,
                     target_pest = ?,
                     last_modified = CURRENT_TIMESTAMP,
-                    last_modified_by = ?,
+                    last_modified_by = ?
             WHERE id = ?
             """,
             (
@@ -383,7 +439,9 @@ def edit_job(job_id):
                 request.form["price"],
                 sd.isoformat(),
                 ed.isoformat() if ed else None,
-                request.form.get("time_range", "").strip() or "any",
+                start_time,
+                end_time,
+                time_range,
                 request.form.get("notes", ""),
                 fumigation_type,
                 target_pest,
