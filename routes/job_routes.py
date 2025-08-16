@@ -247,8 +247,8 @@ def add_job_for_date(date):
             return redirect(url_for("calendar.day_view", selected_date=date))
 
         cursor.execute(
-            """INSERT INTO jobs (title, job_type, price, start_date, end_date, start_time, end_time, time_range, notes, technician_id, created_by, rei_quantity, rei_zip, rei_city_name,)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO jobs (title, job_type, price, start_date, end_date, start_time, end_time, time_range, notes, technician_id, created_by, rei_quantity, rei_zip, rei_city_name, exclusion_subtype,)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 title,
                 job_type,
