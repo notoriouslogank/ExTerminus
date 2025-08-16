@@ -60,8 +60,8 @@
                 {% if job.price %}
                 <p class="job-meta">💵 ${{ "%.2f"|format(job.price) }}</p>
                 {% endif %}
-                {% if job.time_range and job.time_range != "any" %}
-                <p class="job-meta">🕒 {{ job.time_range }}</p>
+                {% if job.time_range and job.time_range != "" %}
+                <p class="job-meta">🕒 {{ job.time_range or (job.start_time ~ '-' ~ job.end_time if job.start_time and job.end_time else '') }}</p>
                 {% endif %}
                 {% if job.type %}
                 <p class="job-meta">🏷️ Type: <strong>{{ 'rei' if job.type and (job.type|lower in ['rei', 'reis']) else job.type }}</strong></p>

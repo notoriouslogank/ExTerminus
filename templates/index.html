@@ -110,9 +110,10 @@
 
                     <div class="job-entry" title="{{ display_name }}">
                         <div class="job-header">
-                            {% if job.time_range and job.time_range != "any" %}
-                            <span class="job-time">{{ job.time_range }}</span>
-                            {% endif %}
+                            {% set _display_time = job.time_range if job.time_range and job.time_range != 'any'
+                                else (job.start_time ~ '-' ~ job.end_time if job.start_time and job.end_time else None) %}
+                            {% if _display_time %}
+                                <span class="job-time">{{ _display_time }}</span>
                             <span class="job-tag">{{ type_abbrv }}</span>
                             <span class="job-title">{{ display_name }}</span>
                         </div>
