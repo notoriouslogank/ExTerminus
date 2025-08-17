@@ -1,11 +1,18 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    flash,
+    Response,
+)
 from functools import wraps
 from datetime import datetime, date
 from ..utils.decorators import login_required, role_required
 from ..db import get_database
 from ..utils.logger import setup_logger
-from functools import wraps
-from datetime import datetime
 import zipcodes
 
 job_bp = Blueprint("job", __name__)
@@ -13,6 +20,16 @@ logger = setup_logger()
 
 
 def _parse_date(s: str | None) -> date | None:
+    """Parse a user-supplied date string into a `date`.
+
+    Accepts ISO ``YYYY-MM-DD`` or US ``MM/DD/YYYY``.  Returns ``None`` for blank or unparsable values.  Does not raise.
+
+    Args:
+        s (str | None): Raw date value from a form.
+
+    Returns:
+        date | None: Parsed date, or ``None`` if parsing fails.
+    """
     s = (s or "").strip()
     if not s:
         return None
@@ -24,7 +41,18 @@ def _parse_date(s: str | None) -> date | None:
     return None
 
 
-def _parse_technician(value: str | None, cur=None):
+def _parse_technician(value: str | None, cur=None) -> tuple[int | None, int]:
+    """Interpret the technician selector from the job form.
+
+    The form value may be an integer ID (as a string), the sentinel ``"__BOTH__"`` to indicate a Two-Man Job, or blank.  If a DB cursor is provided, the ID is validated against the ``technicians`` table.
+
+    Args:
+        value (str | None): Form value (``"__BOTH__"``, ``""``, or int-like string).
+        cur (optional): Optional SQLite cursor for existence check.
+
+    Returns:
+        tuple[int | None, int]: ``(technician_id, two_man)``. For ``"__BOTH__"`` returns ``(None, 1)``; for a valid technician ID returns ``(id, 0)``; otherwise ``(None, 0)``.
+    """
     if value == "__BOTH__":
         return None, 1
     if value is None or str(value).strip() == "":
@@ -41,9 +69,17 @@ def _parse_technician(value: str | None, cur=None):
     return tid, 0
 
 
-def lookup_zipcode(zip: str) -> str | None:
+def lookup_zipcode(zip_code: str) -> str | None:
+    """Resolve a 5-digit ZIP code to a city name using ``zipcodes``.
+
+    Args:
+        zip_code (str): ZIP code as entered (whitespace allowed).
+
+    Returns:
+        str | None: City name if found; otherwise ``None``.
+    """
     try:
-        results = zipcodes.matching(str(zip).strip())
+        results = zipcodes.matching(str(zip_code).strip())
         if not results:
             return None
         return results[0].get("city")
@@ -52,6 +88,16 @@ def lookup_zipcode(zip: str) -> str | None:
 
 
 def normalize_hhmm(s: str | None) -> str | None:
+    """Normalize a loose time input to ``HH:MM``.
+
+    Accepts inputs like ``"9"``, ``"09"``, ``"9:30"``, ``"09:30"`` and returns canonical ``"09:00"`` or ``"09:30"``.  Returns ``None`` for blank/invalid.
+
+    Args:
+        s (str | None): Raw time string.
+
+    Returns:
+        str | None: Normalized time string, or ``None``.
+    """
     if not s:
         return None
     s = s.strip()
@@ -66,6 +112,17 @@ def normalize_hhmm(s: str | None) -> str | None:
 
 
 def derive_time_range(start_hhmm: str | None, end_hhmm: str | None) -> str | None:
+    """Build a compact ``H-H`` label from start/end times.
+
+    Intended for teh calendar's small badges.  Minuts are intentionally dropped (e.g., ``"09:30"`` - ``"14:00"`` => ``"9-14"``).  Returns ``None`` if either time is missing.
+
+    Args:
+        start_hhmm (str | None): Start time like ``"HH:MM"``.
+        end_hhmm (str | None): End time like ``"HH:MM"``.
+
+    Returns:
+        str | None: A label like ``"9-14"`` or ``None``.
+    """
     if not start_hhmm or not end_hhmm:
         return None
     sh, sm = map(int, start_hhmm.split(":"))
@@ -77,6 +134,14 @@ def derive_time_range(start_hhmm: str | None, end_hhmm: str | None) -> str | Non
 @login_required
 @role_required("manager", "technician", "sales")
 def add_job():
+    """Create a new job (GET shows form, POST submits).
+
+    Handles GET (render form) and POST (submit). Validates dates/times, supports REIs (ZIP -> city; ``end_date = start_date``), parses a single technician or ``"__BOTH__"`` for Two-Man, rejects locked days, inserts the job, and logs.
+
+    Returns:
+        Response: On success, redirect to ``calendar.index``.  On validation errors, redirect back to the form.  On GET, render the form.
+    """
+
     conn = get_database()
     cur = conn.cursor()
 
@@ -208,6 +273,16 @@ def add_job():
 @login_required
 @role_required("manager", "technician", "sales")
 def add_job_for_date(date):
+    """Create a job for a specific day.
+
+    Uses the URL date (``YYYY-MM-DD``) as both ``start_date`` and ``end_date``.  Applies the same validation rules as ``add_job`` and rejects locked days.
+
+    Args:
+        date (str): ISO date from the route segment (``YYYY-MM-DD``).
+
+    Returns:
+        Response: GET renders the form with date fields prefilled/hidden.  POST redirects to ``calendar.day_view`` on success; otherwise re-renders with errors.
+    """
     if request.method == "POST":
 
         conn = get_database()
@@ -309,7 +384,17 @@ def add_job_for_date(date):
 @job_bp.route("/move_job/<int:job_id>", methods=["POST"])
 @login_required
 @role_required("manager", "technician", "sales")
-def move_job(job_id):
+def move_job(job_id: int):
+    """Move a job to a new start date, preserving its duration.
+
+    Reads the new start from the form field ``new_date``, computes the original span (``end_date - start_date``), applies the same duration from the new start, updates audit fields, and logs.
+
+    Args:
+        job_id (int): Identifier of the job to move.
+
+    Returns:
+        Response: Redirect to the referrer or ``calendar.index``.  Returns a 404 response if the job is not found.
+    """
     new_start = request.form["new_date"]
     conn = get_database()
     cur = conn.cursor()
@@ -356,6 +441,17 @@ def move_job(job_id):
 @login_required
 @role_required("manager", "sales")
 def delete_job(job_id):
+    """Delete a job permanently.
+
+    Removes the job from the ``jobs`` table and logs the action.
+
+    Args:
+        job_id (int): Identifier of the job to delete.
+
+    Returns:
+        Response: Redirect to the referrer or ``calendar.index``.
+
+    """
     if "user" not in session:
         return redirect(url_for("auth.login"))
     conn = get_database()
@@ -369,6 +465,16 @@ def delete_job(job_id):
 @login_required
 @role_required("manager", "sales")
 def edit_job(job_id):
+    """Edit an existing job.
+
+    On POST, validates and normalizes dates/times (end must be >= start), enforces title for non-REI jobs.parses technician or Two-Man selection via ``_parse_technicians``, updates price/notes/fumigation/target pest, and audit columns.
+
+    Args:
+        job_id (int): Identifier of the job to edit.
+
+    Returns:
+        Response: On success, redirect to ``calendar.index``.  On validation errors, re-render ``edit_job.html`` with the current job.
+    """
     if "user" not in session:
         return redirect(url_for("auth.login"))
 

@@ -1,3 +1,15 @@
+"""Database utilities for ExTerminus (SQLite).
+
+Provides:
+    - ``get_database()``: open a configured SQLite connection (WAL, FKs on).
+    - ``ensure_pragmas()``: no-op that touches a connection to apply PRAGMAs.
+    - ``init_db()``: create tables if missing and bootstrap a default admin.
+
+Notes:
+    - File path is ``db.sqlite3`` under the package directory.
+    - PRAGMAs: ``foreign_keys=ON`` and ``journal_mode=WAL``.
+"""
+
 import sqlite3
 from pathlib import Path
 from .utils.logger import setup_logger
@@ -8,7 +20,17 @@ BASE_DIR = Path(__file__).parent
 DATABASE = str(BASE_DIR / "db.sqlite3")
 
 
-def get_database():
+def get_database() -> sqlite3.Connection:
+    """Open a SQLite connection with standard app settings.
+
+    Configures:
+        - ``row_factory = sqlite3.Row`` for dict-like rows.
+        - ``PRAGMA foreign_keys = ON`` to enforce FK constraints.
+        - ``PRAGMA journal_mode = WAL`` for better concurrency and durability.
+
+    Returns:
+        sqlite3.Connection: An open connection pointing at ``DATABASE``.
+    """
     logger.debug(f"Connecting to sqlite3: {DATABASE}")
     conn = sqlite3.connect(DATABASE, timeout=10)
     conn.row_factory = sqlite3.Row
@@ -17,12 +39,35 @@ def get_database():
     return conn
 
 
-def ensure_pragmas():
+def ensure_pragmas() -> None:
+    """Ensure database PRAGMAs are applied.
+
+    Opens and closes a connection so the PRAGMA settings in ``get_database()`` take effect at least once during app lifetime.
+
+    Returns:
+        None
+    """
     conn = get_database()
     conn.close()
 
 
-def init_db():
+def init_db() -> None:
+    """Create all tables if they don't exist and seed a default admin.
+
+    Creates tables:
+        - ``users``: basic auth and role info.
+        - ``technicians``: technician roster.
+        - ``jobs``: scheduled work items with optional technician and audit cols.
+        - ``locks``: per-day lock to prevent scheduling.
+        - ``time_off``: technician time-off ranges (inclusive).
+
+    Bootstraps:
+        - When there are no users, inserts an ``admin`` user with username ``"admin"`` and password ``"changeme"`` and sets a force-reset flag.
+
+    Returns:
+        None
+
+    """
     logger.debug("Initializing database...")
     conn = get_database()
     cur = conn.cursor()
@@ -37,7 +82,7 @@ def init_db():
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'tech',
-        force_password_change INTEGER NOT NULL DEFAULT 0
+        must_reset_password INTEGER NOT NULL DEFAULT 0
     );
     """
     )
@@ -117,7 +162,7 @@ def init_db():
             "No users found; creating default admin (username 'admin' / password 'changeme')."
         )
         cur.execute(
-            "INSERT INTO users (first_name,last_name,username,password,role,force_password_change) VALUES (?,?,?,?,?,?)",
+            "INSERT INTO users (first_name,last_name,username,password,role,must_reset_password) VALUES (?,?,?,?,?,?)",
             ("Admin", "User", "admin", generate_password_hash("changeme"), "admin", 1),
         )
 
