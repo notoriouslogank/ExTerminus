@@ -1,6 +1,6 @@
 # BUGS
 
-_Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.1.0)._
+_Source of truth for **open** bugs. Resolved items live in [Changelog](./CHANGELOG.md)._
 
 ## Legend
 
@@ -16,29 +16,17 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 | BUG-1005  | Multi-Day Arrows        | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1010  | Holidays not shown      | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1011  | Invalid Username/Passwo | P2       | Open          | 2025-08-09  |       | v0.1.1 |
-| BUG-1012  | Force Password Update   | P1       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1013  | Time Picker             | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1015  | Chronology              | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1016  | Chronology II           | P2       | Open          | 2025-08-09  |       | v0.1.1 |
-| BUG-1020  | Two Man Jobs            | P2       | Open          | 2025-08-09  |       | v0.1.1 |
-| BUG-1033  | Inconsistent Assignment | P1       | Open          | 2025-08-16  |       | v0.2.0 |
 | BUG-1034  | Remove Time Off         | P3       | Open          | 2025-08-16  |       | v0.2.0 |
-| BUG-1035  | Missing Time Off (Day V | P3       | Open          | 2025-08-16  |       | v0.2.0 |
 | BUG-1036  | MULTI-DAY ARROWS        | P1       | Open          | 2025-08-16  |       | v0.2.0 |
-| BUG-1037  | Two-Man Display         | P0       | Open          | 2025-08-16  |       | v0.2.0 |
 | BUG-1038  | Admin Delete Job        | P0       | Open          | 2025-08-16  |       | v0.2.0 |
 <!-- BUGS:SUMMARY END -->
 ---
 
 ## Details
 <!-- BUGS:DETAILS START -->
-
-### BUG-1020 — Two Man Jobs
-
-- **Severity:** P2 · **Status:** Open · **Affects:** job creation
-- **Repro:** Create a job that needs 2 techs → can’t select >1.
-- **Expected/Actual:** Toggle or multi-select / single tech only.
-- **Notes:** Likely needs `jobs_technicians` join table + UI multi-select.
 
 ### BUG-1016 — Chronology II
 
@@ -61,13 +49,6 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Expected/Actual:** Time widget / plain text box.
 - **Notes:** Use `<input type="time">` or a JS timepicker; validate server-side.
 
-### BUG-1012 — Force Password Update
-
-- **Severity:** P1 · **Status:** Open · **Affects:** auth
-- **Repro:** Create/reset user → no forced change on first login.
-- **Expected/Actual:** Redirect to change-password / normal flow.
-- **Notes:** Honor `force_password_change` flag after login.
-
 ### BUG-1011 — Invalid Username/Password
 
 - **Severity:** P2 · **Status:** Open · **Affects:** login UX
@@ -89,29 +70,11 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Expected/Actual:** Arrow on each day / first day only.
 - **Notes:** Render prefix/suffix arrows based on start/end.
 
-### BUG-1033 — Inconsistent Assignment Formatting
-
-- **Severity:** P1 · **Status:** Open · **Affects:** calendar
-- **Repro:** Assign a technician to a job via the day and/or calendar view, then view it on the calendar.
-- **Expected/Actual:** All technician names (except 'Two Man') should be in format F.Lastname / Some jobs show technician Firstname Lastname, some show F.Lastname
-- **Notes:** -
-- **Owner:**
-- **Target:** v0.2.0
-
 ### BUG-1034 — Remove Time Off
 
 - **Severity:** P3 · **Status:** Open · **Affects:** misc
 - **Repro:** Create Time Off for a technician.
 - **Expected/Actual:** Should have an option to REMOVE Time Off. / There is no method of removing Time Off once scheduled.
-- **Notes:** -
-- **Owner:**
-- **Target:** v0.2.0
-
-### BUG-1035 — Missing Time Off (Day View)
-
-- **Severity:** P3 · **Status:** Open · **Affects:** misc
-- **Repro:** View any day in Day View.
-- **Expected/Actual:** Should be able to 'Add Time Off' via day view / No option to 'Add Time Off' via Day View.
 - **Notes:** -
 - **Owner:**
 - **Target:** v0.2.0
@@ -125,43 +88,16 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Owner:**
 - **Target:** v0.2.0
 
-### BUG-1037 — Two-Man Display
-
-- **Severity:** P0 · **Status:** Open · **Affects:** calendar
-- **Repro:** Create a job on any date and assign "two man" as the technician(s)
-- **Expected/Actual:** Should show "Two Men" as the technician on the job card in both daily and calendar view. / Simply shows job title and price; no technician info.
-- **Notes:** -
-- **Owner:**
-- **Target:** v0.2.0
-
 ### BUG-1038 — Admin Delete Job
 
 - **Severity:** P0 · **Status:** Open · **Affects:** jobs
 - **Repro:** Login as admin and attempt to delete any job.
 - **Expected/Actual:** Should be able to successfully delete any job as admin. / "You are not allowed to do that."
 - **Notes:** -
-- **Owner:** 
+- **Owner:**
 - **Target:** v0.2.0
 
 <!-- BUGS:DETAILS END -->
 ---
 
-## Recently Resolved → see CHANGELOG.md (v0.1.0)
-
-- **BUG-1002** Job Edit Auth
-- **BUG-1003** Unauthorized Lock Toggle
-- **BUG-1004** Edit Job Crash
-- **BUG-1006** REIs
-- **BUG-1007** Clickable Days
-- **BUG-1009** Nameless Job
-- **BUG-1014** Time Off
-- **BUG-1018** End Before Start
-- **BUG-1019** Too Many Jobs
-- **BUG-1022** Bug Report Format
-- **BUG-1001** Type Abbreviations
-- **BUG-1026** Fail to Delete
-- **BUG-1031** Job Card Audit Log
-- **BUG-1017** Missing Audit Trail (duplicate of 1031)
-- **BUG-1032** REI Job Titles
-- **BUG-1027** REI Title (Unknown) (duplicate of 1032)
-- **BUG-1028** Bad Auth Notification
+## Recently Resolved → see CHANGELOG.md
