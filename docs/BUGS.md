@@ -100,4 +100,4 @@ _Source of truth for **open** bugs. Resolved items live in [Changelog](../CHANGE
 <!-- BUGS:DETAILS END -->
 ---
 
-## Recently Resolved → see CHANGELOG.md
+## Recently Resolved → see [CHANGELOG](../CHANGELOG.md)
