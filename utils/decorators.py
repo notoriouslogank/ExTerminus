@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import session, redirect, url_for, flash
+from flask import session, redirect, url_for, flash, request
 
 
 def role_required(*roles):
@@ -24,6 +24,11 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if "user" not in session:
             return redirect(url_for("auth.login"))
+
+        exempt = {"auth.force_password_reset", "auth.logout", "auth.login", "static"}
+        if session.get("must_change_pw") and request.endpoint not in exempt:
+            return redirect(url_for("auth.force_password_reset"))
+
         return f(*args, **kwargs)
 
     return decorated_function

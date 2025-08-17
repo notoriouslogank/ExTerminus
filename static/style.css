@@ -353,6 +353,31 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* === Cards === */
+.audit-block {
+    font-size: 0.9rem;
+    color: #bbb;
+    margin-top: .15rem;
+}
+
+.audit-block .sep {
+    opacity: .6;
+    padding: 0 .3rem;
+}
+
+.off-card {
+    border-left: 3px solid #d66;
+}
+
+.off-card .job-tag {
+    background: #d66;
+    color: #111;
+}
+
+.job-tech,
+.job-meta-light {
+    color: #bbb;
+}
+
 .card {
     background-color: #222;
     padding: 1em;

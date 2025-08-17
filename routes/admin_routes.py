@@ -80,7 +80,7 @@ def admin_users():
 
             hashed = generate_password_hash(password)
             cursor.execute(
-                """INSERT INTO users (first_name, last_name, username, password, role) VALUES (?, ?, ?, ?, ?)""",
+                """INSERT INTO users (first_name, last_name, username, password, role, must_reset_password) VALUES (?, ?, ?, ?, ?, 1)""",
                 (first, last, username, hashed, role),
             )
 
