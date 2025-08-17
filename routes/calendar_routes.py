@@ -47,14 +47,31 @@ def index():
 
     cur.execute(
         """
-        SELECT j.*,
+        SELECT
+            j.id,
+            j.title,
             j.job_type AS type,
+            j.price,
+            j.start_date,
+            j.end_date,
+            j.start_time,
+            j.end_time,
+            j.time_range,
             j.rei_quantity AS rei_quantity,
             j.rei_zip AS rei_zip,
             j.rei_city_name AS rei_city_name,
-            t.name AS technician_name
+            j.technician_id,
+            j.two_man,
+            t.name AS technician_name,
+            CASE
+                WHEN j.two_man = 1 THEN 'Two Man'
+                WHEN t.name IS NOT NULL THEN t.name
+                ELSE ''
+            END AS technician_label
         FROM jobs j
         LEFT JOIN technicians t ON t.id = j.technician_id
+        WHERE j.start_date <= ?
+            AND (j.end_date IS NULL OR j.end_date >= ?);
         """
     )
     for job in cur.fetchall():

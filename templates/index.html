@@ -82,8 +82,13 @@
                     {# BUG-1006: template expects 'rei' but code uses 'reis'. Normalize: #}
                     {% set job_type_clean = (job.type or job.job_type or "")|lower|trim %}
                     {% if job_type_clean in ["rei","reis"] %}
-                    {% set tech_parts = (job.technician_name or "").split(" ") %}
-                    {% set tech_display = tech_parts[0][0] ~ "." ~ tech_parts[1] if tech_parts | length > 1 else job.technician_name %}
+
+                    {% if job.two_man %}
+                        {% set tech_display = 'Two Men' %}
+                    {% else %}
+                        {% set tech_parts = (job.technician_name or "").split(" ") %}
+                        {% set tech_display = tech_parts[0][0] ~ "." ~ tech_parts[1] if tech_parts | length > 1 else (job.technician_name or "") %}
+                    {% endif %}
 
                     <div class="job-entry rei-entry" title="Reinspection">
                         <div class="job-header job-info-flex">
@@ -124,7 +129,11 @@
                             <span class="job-tag">{{ type_abbrv }}</span>
                             <span class="job-title">{{ display_name }}</span>
                         </div>
+                        {% set tech_label = 'Two Men' if job.two_man else (job.technician_name or '') %}
                         <div class="job-footer">
+                            {% if tech_label %}
+                                <span class="job-tech">{{ tech_label }}</span>
+                            {% endif %}
                             {% if show_price and price not in [None, '', 0] %}
                                 <span class="job-price">${{ ("%0.2f"|format(price|float)).rstrip('0').rstrip('.') }}</span>
                             {% else %}
