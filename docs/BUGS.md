@@ -25,6 +25,7 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 | BUG-1034  | Remove Time Off         | P3       | Open          | 2025-08-16  |       | v0.2.0 |
 | BUG-1035  | Missing Time Off (Day V | P3       | Open          | 2025-08-16  |       | v0.2.0 |
 | BUG-1036  | MULTI-DAY ARROWS        | P1       | Open          | 2025-08-16  |       | v0.2.0 |
+| BUG-1037  | Two-Man Display         | P0       | Open          | 2025-08-16  |       | v0.2.0 |
 <!-- BUGS:SUMMARY END -->
 ---
 
@@ -121,6 +122,15 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Expected/Actual:** Should show an arrow for each day except the last one. / Shows an arrow only on the FIRST day of a multi-day job.
 - **Notes:** -
 - **Owner:**
+- **Target:** v0.2.0
+
+### BUG-1037 — Two-Man Display
+
+- **Severity:** P0 · **Status:** Open · **Affects:** calendar
+- **Repro:** Create a job on any date and assign "two man" as the technician(s)
+- **Expected/Actual:** Should show "Two Men" as the technician on the job card in both daily and calendar view. / Simply shows job title and price; no technician info.
+- **Notes:** -
+- **Owner:** 
 - **Target:** v0.2.0
 
 <!-- BUGS:DETAILS END -->
