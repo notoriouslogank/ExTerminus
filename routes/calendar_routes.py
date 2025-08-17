@@ -1,7 +1,7 @@
 from ..utils.decorators import role_required, login_required
 from ..utils.holidays_util import holidays_for_month
 from datetime import date, datetime, timedelta
-from calendar import Calendar, month_name
+from calendar import Calendar, month_name, monthrange
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from ..db import get_database
 from ..utils.logger import setup_logger
@@ -30,6 +30,12 @@ def index():
     today = date.today()
     month = request.args.get("month", type=int, default=today.month)
     year = request.args.get("year", type=int, default=today.year)
+
+    month_start = date(year, month, 1)
+    month_end = date(year, month, monthrange(year, month)[1])
+
+    month_start_s = month_start.isoformat()
+    month_end_s = month_end.isoformat()
 
     weeks = _month_weeks(year, month)
 
@@ -72,8 +78,10 @@ def index():
         LEFT JOIN technicians t ON t.id = j.technician_id
         WHERE j.start_date <= ?
             AND (j.end_date IS NULL OR j.end_date >= ?);
-        """
+        """,
+        (month_end_s, month_start_s),
     )
+
     for job in cur.fetchall():
         for d in _expand_multi_day(job["start_date"], job["end_date"]):
             jobs_by_date.setdefault(d.isoformat(), []).append(job)
