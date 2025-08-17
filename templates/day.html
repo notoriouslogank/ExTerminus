@@ -28,23 +28,32 @@
     <a href="{{ url_for('calendar.index') }}" class="btn btn-yellow">← Calendar</a>
     {% if session.get("user") and not locked %}
     <a href="{{ url_for('job.add_job_for_date', date=selected_date.isoformat()) }}" class="btn btn-yellow">+ Add Job</a>
+    <a href=" {{ url_for('calendar.add_time_off', date=selected_date.isoformat()) }}" class="btn btn-yellow">+ Add Time Off</a>
     {% endif %}
 </div>
 
-{% if time_off_names %}
-<div style="max-width: 700px; margin: 0 auto;">
-    {% for name in time_off_names %}
-    <div class="time-off-box">
-        {{ name }} is off
-</div>
-{% endfor %}
-</div>
-{% endif %}
 {% if jobs %}
 <div style="max-width: 700px; margin: 0 auto;">
     {% for job in jobs %}
+        {% if time_off_names %}
+            {% for name in time_off_names %}
+                <div class="card off-card">
+                    <div class="job-header">
+                        <span class="job-tag">OFF</span>
+                        <span class="job-title">{{ name }}</span>
+                    </div>
+                    <div class="job-footer">
+                        <span class="job-meta-light">Unavailable all day.</span>
+                    </div>
+                </div>
+                    {% endfor %}
+                {% endif %}
     <div class="card">
+        {% set tech_label = 'Two Man' if job.two_man else (job.technician_name or 'Unassigne') %}
                 {% if job.type and job.type|lower in ['rei', 'reis'] %}
+                    {% if job.two_man or job.technician_name %}
+                        <p class="job-meta job-meta-light"> {{ tech_label }}</p>
+                    {% endif %}
                     <h3 class="job-heading">REIs</h3>
                     <p class="job-meta">
                     📋 REIs: <strong>{{ job.rei_quantity or "?" }}</strong>
@@ -57,6 +66,8 @@
                     {% endif %}
                 {% else %}
                     <h3 class="job-heading">{{ job.display_title or job.title or "(Untitled)" }}</h3>
+                {% if job.two_man or job.technician_name %}
+                    <p class="job-meta job-meta-light"> {{ tech_label }}</p>{% endif %}
                 {% if job.price %}
                 <p class="job-meta">💵 ${{ "%.2f"|format(job.price) }}</p>
                 {% endif %}
@@ -95,15 +106,14 @@
                 {% endif %}
 
                <!-- Audit Block -->
-                <div class="job-meta job-meta-light" style="margin-top:.25rem;">
-                    Job Created By: {{ job.created_by_name or 'Unknown' }}
-                    • {{ job.created_at|fmt_ts }}
+                <div class="audit-block">
+                    <span>Created by {{ job.created_by_name or 'Unknown' }}</span>
+                    {% if job.created_at %}<span class="sep">•</span><span>{{ job.created_at|fmt_ts }}</span>{% endif %}
                 </div>
-                <div class="job-meta job-meta-light">
-                    Last Modified By: {{ job.modified_by_name or (job.created_by_name or '-') }}
-                    {% if job.last_modified %} • {{ job.last_modified|fmt_ts }}{% endif %}
+                <div class="audit-block">
+                    <span>Last modified by {{ job.modified_by_name or (job.created_by_name or '-') }}</span>
+                    {% if job.last_modified %}<span class="sep">•</span><span>{{ job.last_modified|fmt_ts }}</span>
                 </div>
-
 
                 {% if not locked %}
                 <div class="flex-row mt-05 gap">
