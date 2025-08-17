@@ -1,6 +1,6 @@
 # BUGS
 
-_Source of truth for **open** bugs. Resolved items live in [Changelog](./CHANGELOG.md)._
+_Source of truth for **open** bugs. Resolved items live in [Changelog](../CHANGELOG.md)._
 
 ## Legend
 
