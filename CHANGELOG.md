@@ -16,6 +16,8 @@ All notable changes to this project will be documented here.
   Day view includes "+ Add Time Off" button and shows OFF entries as cards.
 - **BUG-1033 - Inconsistent Assignment Formatting**
   Technician display standardized: non-two-man jobs render **F.Lastname** consistently on calendar and day views; REI initials logic preserved; "Two Man" overrides initials where applicable.
+- Safer logout username logging (avoid constructing dict in `session.get` call).
+- Typo fixes and consistent flash messaging.
 
 ### Improvements
 
@@ -33,11 +35,72 @@ All notable changes to this project will be documented here.
 - Backend utility function `holidays_for_month(year, month)` in `utils/holidays_util.py` for retrieving holiday names/dates.
 - Integration of holiday data into `calendar_routes` so holidays are passed to the template.
 - When assigning technicians to a job, there is now an option to select 'Two Men' rather than an idividual technician
+- Google-style docstrings across core modules for clearer IDE hovers and internal docs:
+  - `utils/config.py`, `utils/decorators.py`, `utils/holidays_util.py`, `utils/logger.py`
+  - `routes/__init__.py`
+  - `app.py` (including `fmt_ts`, error handlers, context processors)
 
 ### Changed
 
 - Updated `index.html` calendar template to highlight holidays with a distinct style.
 - Updated `BUGS.md` to include more known issues
+- Standardize password-reset flag field name to `must_reset_password` (previously `force_password_change`) in code and DB DDL.
+  - Admin "reset password to changme" now explicitly sets `must_reset_password=1`.
+  - Aligns with session key `must_change_pw` and auth flow.
+
+### Developer Experience
+
+- isort + light import normalization in touched files.
+
+### Migration (SQLite)
+
+If your existing DB has **both** columns:
+
+```sql
+UPDATE users
+SET must_reset_password = COALESCE(must_reset_password, force_password_change, 0);
+
+ALTER TABLE users DROP COLUMN force_password_change; -- If this fails, use rebuild pattern below
+```
+
+If your DB only has the old column:
+
+```sql
+ALTER TABLE users RENAME COLUMN force_password_change TO must_reset_password;
+```
+
+If `DROP COLUMN` isn't supported, rebuild the table:
+
+```sql
+
+BEGIN TRANSACTION;
+
+CREATE TABLE users_new (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  first_name TEXT,
+  last_name TEXT,
+  username TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'tech',
+  must_reset_password INTEGER NOT NULL DEFAULT 0
+);
+
+INSERT INTO users_new (id, first_name, last_name, username, password, role, must_reset_password)
+SELECT id, first_name, last_name, username, password, role, COALESCE(must_reset_password, force_password_change, 0)
+FROM users;
+
+DROP TABLE users;
+ALTER TABLE users_new RENAME TO users;
+
+COMMIT;
+```
+
+After migration, verify:
+
+```sql
+PRAGMA table_info(users);
+SELECT id, username, must_reset_password FROM users LIMIT 10;
+```
 
 ### Open Issues
 
