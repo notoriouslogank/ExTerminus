@@ -130,7 +130,7 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Repro:** Create a job on any date and assign "two man" as the technician(s)
 - **Expected/Actual:** Should show "Two Men" as the technician on the job card in both daily and calendar view. / Simply shows job title and price; no technician info.
 - **Notes:** -
-- **Owner:** 
+- **Owner:**
 - **Target:** v0.2.0
 
 <!-- BUGS:DETAILS END -->
