@@ -27,7 +27,7 @@ def _parse_date(s: str | None) -> date | None:
 def _parse_technician(value: str | None, cur=None):
     if value == "__BOTH__":
         return None, 1
-    if value is None or str(value).strip == "":
+    if value is None or str(value).strip() == "":
         return None, 0
     try:
         tid = int(value)
@@ -38,7 +38,7 @@ def _parse_technician(value: str | None, cur=None):
         ok = cur.execute("SELECT 1 FROM technicians WHERE id=?", (tid,)).fetchone()
         if not ok:
             return None, 0
-        return tid, 0
+    return tid, 0
 
 
 def lookup_zipcode(zip: str) -> str | None:
@@ -77,6 +77,9 @@ def derive_time_range(start_hhmm: str | None, end_hhmm: str | None) -> str | Non
 @login_required
 @role_required("manager", "technician", "sales")
 def add_job():
+    conn = get_database()
+    cur = conn.cursor()
+
     if request.method == "POST":
         start_date_raw = request.form.get("start_date")
         rei_zip = (request.form.get("rei_zip") or "").strip()
@@ -110,7 +113,7 @@ def add_job():
         end_time = normalize_hhmm(end_time_raw)
         if start_time and end_time and end_time <= start_time:
             flash("End time must be after start time.", "error")
-            return redirect(url_for("calendar.day_view", selected_date=date))
+            return redirect(url_for("calendar.day_view", selected_date=start_date))
 
         time_range = derive_time_range(start_time, end_time) or (
             request.form.get("time_range", "").strip() or "any"
@@ -133,9 +136,6 @@ def add_job():
         price = request.form["price"]
         notes = request.form.get("notes", "")
 
-        conn = get_database()
-        cur = conn.cursor()
-
         uid = session.get("user", {}).get("user_id")
         row = cur.execute("SELECT id FROM users WHERE id=?", (uid,)).fetchone()
         if not row:
@@ -155,13 +155,12 @@ def add_job():
         if custom_pest:
             target_pest = custom_pest.strip()
 
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM locks WHERE date = ?", (start_date,))
-        if cursor.fetchone():
+        cur.execute("SELECT * FROM locks WHERE date = ?", (start_date,))
+        if cur.fetchone():
             flash("Date is locked. Cannot add job.", "error")
             return redirect(url_for("calendar.day_view", selected_date=start_date))
 
-        cursor.execute(
+        cur.execute(
             """INSERT INTO jobs (
             title, job_type, price, start_date, end_date, start_time, end_time, time_range, notes,
             created_by, technician_id, two_man, rei_quantity, rei_zip, rei_city_name, exclusion_subtype, fumigation_type, target_pest, custom_pest)
@@ -194,10 +193,8 @@ def add_job():
         )
         return redirect(url_for("calendar.index"))
     start_date = None
-    connection = get_database()
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM technicians")
-    technicians = cursor.fetchall()
+    cur.execute("SELECT * FROM technicians")
+    technicians = cur.fetchall()
 
     return render_template(
         "job_form.html",

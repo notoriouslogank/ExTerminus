@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask_wtf.csrf import generate_csrf
 from werkzeug.security import generate_password_hash, check_password_hash
 from ..utils.decorators import login_required
 from ..db import get_database
@@ -18,6 +19,10 @@ def login():
         cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
         user = cursor.fetchone()
         if user and check_password_hash(user["password"], password):
+            must_change = bool(user["must_reset_password"]) or check_password_hash(
+                user["password"], "changeme"
+            )
+
             session["user"] = {
                 "user_id": user["id"],
                 "first_name": user["first_name"],
@@ -25,10 +30,16 @@ def login():
                 "username": user["username"],
                 "role": user["role"],
             }
+            session["must_change_pw"] = must_change
+
+            if must_change:
+                flash("Please set a new password to continue.", "warning")
+                return redirect(url_for("auth.force_password_reset"))
             logger.info(f"User '{username}' logged in")
             return redirect(url_for("calendar.index"))
         flash("Invalid username or password")
         logger.warning(f"Failed login attempt for username: {username}")
+    generate_csrf()
     return render_template("login.html")
 
 
@@ -70,3 +81,42 @@ def change_password():
         flash("Password updated succesfully.")
         return redirect(url_for("calendar.index"))
     return render_template("change_password.html")
+
+
+@auth_bp.route("/force-password-reset", methods=["GET", "POST"])
+@login_required
+def force_password_reset():
+    if request.method == "POST":
+        new = (request.form.get("new_password") or "").strip()
+        confirm = (request.form.get("confirm_password") or "").strip()
+
+        if len(new) < 8:
+            flash("Password must be at least 8 characters in length.", "error")
+            return render_template("force_password_reset.html")
+        if new != confirm:
+            flash("Passwords do not match.", "error")
+            return render_template("force_password_reset.html")
+        if new.lower() == "changeme":
+            flash("Nice try. Pick something else.", "error")
+            return render_template("force_password_reset.html")
+
+        uid = session["user"]["user_id"]
+        conn = get_database()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            UPDATE users
+                SET password = ?,
+                    must_reset_password = 0,
+                    last_password_change = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """,
+            (generate_password_hash(new), uid),
+        )
+        conn.commit()
+
+        session["must_change_pw"] = False
+        flash("Password updated.  Welcome aboard.", "success")
+        return redirect(url_for("calendar.index"))
+    generate_csrf()
+    return render_template("force_password_reset.html")
