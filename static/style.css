@@ -39,9 +39,35 @@ a:hover {
     filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.2));
 }
 
-nav .user-info {
+.user-info {
     font-weight: bold;
     color: #7f7;
+}
+
+.top-bar {
+    text-align: right;
+    padding: 0.5em 1em;
+}
+
+.text-light {
+    color: #eee;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.py-3 {
+    padding-top: 1em;
+    padding-bottom: 1em;
+}
+
+.btn.green {
+    background-color: #007f00;
+    color: #fff;
+    border: none;
 }
 
 /* === Typography === */
@@ -229,7 +255,7 @@ label {
     padding: 2em;
     background-color: #111;
     border-radius: 8px;
-    box-shadow: 0 0 12px rgba(255, 255, 255, 0.05)
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
 }
 
 .flex-center {
@@ -495,7 +521,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* === Calendar === */
 .calendar-header {
     flex-direction: column;
-    gap: 0.3em;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -786,7 +811,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
     .calendar-nav .btn,
     .calendar-actions .btn {
-        padding: 6px 10 px;
+        padding: 6px 10px;
         font-size: .9rem;
     }
 
