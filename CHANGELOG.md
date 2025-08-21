@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented here.
 
-## [Unreleased]
+## [0.2.0] - 2025-08-19
 
 ### Fixed
 
@@ -16,6 +16,8 @@ All notable changes to this project will be documented here.
   Day view includes "+ Add Time Off" button and shows OFF entries as cards.
 - **BUG-1033 - Inconsistent Assignment Formatting**
   Technician display standardized: non-two-man jobs render **F.Lastname** consistently on calendar and day views; REI initials logic preserved; "Two Man" overrides initials where applicable.
+- **BUG-1041 - Multi-Day Arrow Alignment**
+  Fixed calendar rendering so multi-day jobs correctly span across cells without double and/or missing arrows or overflow glitches.
 - Safer logout username logging (avoid constructing dict in `session.get` call).
 - Typo fixes and consistent flash messaging.
 
@@ -23,6 +25,7 @@ All notable changes to this project will be documented here.
 
 - Day view job cards: consistent casing/spacing; standardized audit block styling.
 - Calendar view: non-REI cards show technician label in footer alongside price/arrow.
+- Version footer now displays across all templates; styled to be small, centered, and white.
 
 ### Internal
 

@@ -13,14 +13,11 @@ _Source of truth for **open** bugs. Resolved items live in [Changelog](../CHANGE
 <!-- BUGS:SUMMARY START -->
 | ID        | Title                   | Severity | Status        | Opened      | Owner | Target |
 |-----------|-------------------------|----------|---------------|-------------|-------|--------|
-| BUG-1005  | Multi-Day Arrows        | P2       | Open          | 2025-08-09  |       | v0.1.1 |
-| BUG-1010  | Holidays not shown      | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1011  | Invalid Username/Passwo | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1013  | Time Picker             | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1015  | Chronology              | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1016  | Chronology II           | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1034  | Remove Time Off         | P3       | Open          | 2025-08-16  |       | v0.2.0 |
-| BUG-1036  | MULTI-DAY ARROWS        | P1       | Open          | 2025-08-16  |       | v0.2.0 |
 | BUG-1038  | Admin Delete Job        | P0       | Open          | 2025-08-16  |       | v0.2.0 |
 <!-- BUGS:SUMMARY END -->
 ---
@@ -56,34 +53,11 @@ _Source of truth for **open** bugs. Resolved items live in [Changelog](../CHANGE
 - **Expected/Actual:** Prominent flash box / subtle text.
 - **Notes:** Style flash; consider small rate-limit.
 
-### BUG-1010 — Holidays
-
-- **Severity:** P2 · **Status:** Open · **Affects:** month view
-- **Repro:** View month with federal holiday → not shown.
-- **Expected/Actual:** Holiday label in cell / nothing.
-- **Notes:** Static list or `holidays` lib; render in cell header.
-
-### BUG-1005 — Multi-Day Arrows
-
-- **Severity:** P2 · **Status:** Open · **Affects:** month view UX
-- **Repro:** Multi-day job → arrow only on first day.
-- **Expected/Actual:** Arrow on each day / first day only.
-- **Notes:** Render prefix/suffix arrows based on start/end.
-
 ### BUG-1034 — Remove Time Off
 
 - **Severity:** P3 · **Status:** Open · **Affects:** misc
 - **Repro:** Create Time Off for a technician.
 - **Expected/Actual:** Should have an option to REMOVE Time Off. / There is no method of removing Time Off once scheduled.
-- **Notes:** -
-- **Owner:**
-- **Target:** v0.2.0
-
-### BUG-1036 — MULTI-DAY ARROWS
-
-- **Severity:** P1 · **Status:** Open · **Affects:** calendar
-- **Repro:** Create a multi-day job and go to Calendar View.
-- **Expected/Actual:** Should show an arrow for each day except the last one. / Shows an arrow only on the FIRST day of a multi-day job.
 - **Notes:** -
 - **Owner:**
 - **Target:** v0.2.0
@@ -101,3 +75,7 @@ _Source of truth for **open** bugs. Resolved items live in [Changelog](../CHANGE
 ---
 
 ## Recently Resolved → see [CHANGELOG](../CHANGELOG.md)
+
+- **BUG-1005 — Multi-Day Arrows** (fixed v0.2.0)
+- **BUG-1010 — Holidays not shown** (fixed v0.2.0)
+- **BUG-1036 — Multi-Day Arrows (dup)** (fixed v0.2.0)

@@ -114,12 +114,15 @@
                         {% set type_abbrv = (type_abbr|default).get(job_type_clean, (job_type_clean[:1])|upper) %}
                         {% set display_name = job.title or "Unknown" %}
                         {% set price = job.price %}
-                        {% set is_first_day = day_str == job.start_date %}
+                        {% set is_first_day = (day_str == job.start_date) %}
+                        {% set is_last_day = (day_str == job.end_date) %}
                         {% set is_multi_day = job.start_date != job.end_date %}
-                        {% set show_arrow = is_multi_day and is_first_day %}
+
+                        {% set cont_left = is_multi_day and not is_first_day %}
+                        {% set cont_right = is_multi_day and not is_last_day %}
                         {% set show_price = is_first_day %}
 
-                    <div class="job-entry" title="{{ display_name }}">
+                    <div class="job-entry" {{ 'continues-left' if cont_left}} {{ 'continues-right' if cont_right}} title="{{ display_name }}">
                         <div class="job-header">
                             {% set _display_time = job.time_range if job.time_range and job.time_range != 'any'
                                 else (job.start_time ~ '-' ~ job.end_time if job.start_time and job.end_time else None) %}
@@ -139,12 +142,11 @@
                             {% else %}
                                 <span class="job-price tbd">TBD</span>
                             {% endif %}
-                            {% if show_arrow %}
-                                <span class="job-arrow">→</span>
+                            {% if cont_left %}<span class="job-arrow job-arrow-left">⟵</span>{% endif %}
+                            {% if cont_right %}<span class="job-arrow job-arrow-right">⟶</span>{% endif %}
                             {% endif %}
                         </div>
                     </div>
-                    {% endif %}
                 {% endfor %}
             </div>
         </td>
