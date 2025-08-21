@@ -115,7 +115,7 @@
                         {% set display_name = job.title or "Unknown" %}
                         {% set price = job.price %}
                         {% set is_first_day = (day_str == job.start_date) %}
-                        {% set is_last_day = (day_str == job.end_date %}
+                        {% set is_last_day = (day_str == job.end_date) %}
                         {% set is_multi_day = job.start_date != job.end_date %}
 
                         {% set cont_left = is_multi_day and not is_first_day %}
