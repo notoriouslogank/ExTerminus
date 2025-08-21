@@ -20,7 +20,7 @@ from .db import ensure_pragmas, init_db
 from .routes import register_routes
 from .utils.config import Config
 from .utils.logger import setup_logger
-from .utils.version import APP_VERSION
+from .utils.version import __version__
 
 env_path = Path(__file__).resolve().parent / ".env"
 load_dotenv(dotenv_path=env_path)
@@ -141,7 +141,7 @@ def create_app():
     @app.context_processor
     def inject_app_version():
         """Provide ``app_version`` (semantic app version) to templates."""
-        return dict(app_version=APP_VERSION)
+        return {"APP_VERSION": __version__}
 
     register_routes(app)
 
