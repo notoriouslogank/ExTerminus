@@ -1,5 +1,7 @@
 # ExTerminus
 
+![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)
+
 Calendar-driven scheduling for pest control operations.  Fast to run, simple to deploy, opinionated where it counts.
 
 > TL;DR: Python + Flask + SQLite. Create jobs (incl. REIs), assign technicians, lock out dates, and view everything on a compact month/day UI.
@@ -28,6 +30,16 @@ Calendar-driven scheduling for pest control operations.  Fast to run, simple to 
   - SECRET_KEY enforcement via `.env`
   - Server-side role checks
   - Custom 404/500 error pages
+
+---
+
+## New in v0.2.0
+
+- Lock/unlock dates now show "Last edited by NAME at TIMESTAMP (EST)" display for better auditing
+- Forced password reset on first login
+- Two techs can be assigned to the same job, creating support for Two-Man jobs
+- Multi-day job fixes (calendar and day_views)
+- Better Time Off entries
 
 ---
 
@@ -101,6 +113,12 @@ export FLASK_ENV=development
 $env:FLASK_ENV="development"
 
 flask run
+
+# On first run, open http:127.0.0.1:5000
+# Default admin login:
+username: admin
+password: changeme # will require reset
+
 ```
 
 Open <http://127.0.0.1:5000>

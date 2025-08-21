@@ -284,7 +284,6 @@ def add_job_for_date(date):
         Response: GET renders the form with date fields prefilled/hidden.  POST redirects to ``calendar.day_view`` on success; otherwise re-renders with errors.
     """
     if request.method == "POST":
-
         conn = get_database()
         cursor = conn.cursor()
 

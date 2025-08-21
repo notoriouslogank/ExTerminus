@@ -856,9 +856,47 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     }
 
     .job-entry {
-        padding: 6px 8px;
-        margin-bottom: 6px;
-        border-radius: 6px;
+        position: relative;
+        border-radius: 8px;
+        padding: .35rem .5rem;
+    }
+
+    .job-entry.continues-left {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+
+    .job-entry.continues-right {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .job-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: .75;
+        font-size: .9rem;
+    }
+
+    .job-arrow-left {
+        left: 4px;
+    }
+
+    .job-arrow-right {
+        right: 4px;
+    }
+
+    .job-entry.continues-left::before,
+    .job-entry.continues-right::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        left: -6px;
+        right: -6px;
+        background: rgba(255, 255, 255, .06);
+        border-radius: 0;
+        z-index: -1;
     }
 
     .job-header,
