@@ -27,9 +27,12 @@
 
 <div class="calendar-wrapper">
   <table class="calendar-table">
+
     <tr>
-        {% for dow in ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] %}
-        <th class="calendar-day-label">{{ dow }}</th>
+        {% set dows = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] %}
+        {% set dows_mobile = ["S", "M", "T", "W", "T", "F", "S"] %}
+        {% for dow in dows %}
+            <th class="calendar-day-label" data-short="{{ dows_mobile[loop.index0] }}">{{ dow }}</th>
         {% endfor %}
     </tr>
 
@@ -38,7 +41,7 @@
         {% for day in week %}
         {% set day_str = day.isoformat() %}
         {% set is_past = day < today %}
-        {% set holiday = holidays.get(day) %}
+        {% set holiday = holidays.get(day_str) %}
         {% set is_locked = day_str in locks %}
 
         <td class="calendar-cell
@@ -52,6 +55,9 @@
                 <a href="{{ url_for('calendar.day_view', selected_date=day_str) }}" style="text-decoration: none; color: inherit;">
                     {{ day.day }}
                 </a>
+                {% if holiday %}
+                    <span class="holiday-badge">{{ holiday }}</span>
+                {% endif %}
             </div>
 
             {% if is_locked %}
@@ -76,8 +82,13 @@
                     {# BUG-1006: template expects 'rei' but code uses 'reis'. Normalize: #}
                     {% set job_type_clean = (job.type or job.job_type or "")|lower|trim %}
                     {% if job_type_clean in ["rei","reis"] %}
-                    {% set tech_parts = (job.technician_name or "").split(" ") %}
-                    {% set tech_display = tech_parts[0][0] ~ "." ~ tech_parts[1] if tech_parts | length > 1 else job.technician_name %}
+
+                    {% if job.two_man %}
+                        {% set tech_display = 'Two Men' %}
+                    {% else %}
+                        {% set tech_parts = (job.technician_name or "").split(" ") %}
+                        {% set tech_display = tech_parts[0][0] ~ "." ~ tech_parts[1] if tech_parts | length > 1 else (job.technician_name or "") %}
+                    {% endif %}
 
                     <div class="job-entry rei-entry" title="Reinspection">
                         <div class="job-header job-info-flex">
@@ -103,39 +114,41 @@
                         {% set type_abbrv = (type_abbr|default).get(job_type_clean, (job_type_clean[:1])|upper) %}
                         {% set display_name = job.title or "Unknown" %}
                         {% set price = job.price %}
-                        {% set is_first_day = day_str == job.start_date %}
+                        {% set is_first_day = (day_str == job.start_date) %}
+                        {% set is_last_day = (day_str == job.end_date) %}
                         {% set is_multi_day = job.start_date != job.end_date %}
-                        {% set show_arrow = is_multi_day and is_first_day %}
+
+                        {% set cont_left = is_multi_day and not is_first_day %}
+                        {% set cont_right = is_multi_day and not is_last_day %}
                         {% set show_price = is_first_day %}
 
-                    <div class="job-entry" title="{{ display_name }}">
+                    <div class="job-entry" {{ 'continues-left' if cont_left}} {{ 'continues-right' if cont_right}} title="{{ display_name }}">
                         <div class="job-header">
-                            {% if job.time_range and job.time_range != "any" %}
-                            <span class="job-time">{{ job.time_range }}</span>
+                            {% set _display_time = job.time_range if job.time_range and job.time_range != 'any'
+                                else (job.start_time ~ '-' ~ job.end_time if job.start_time and job.end_time else None) %}
+                            {% if _display_time %}
+                                <span class="job-time">{{ _display_time }}</span>
                             {% endif %}
                             <span class="job-tag">{{ type_abbrv }}</span>
                             <span class="job-title">{{ display_name }}</span>
                         </div>
+                        {% set tech_label = 'Two Men' if job.two_man else (job.technician_name or '') %}
                         <div class="job-footer">
+                            {% if tech_label %}
+                                <span class="job-tech">{{ tech_label }}</span>
+                            {% endif %}
                             {% if show_price and price not in [None, '', 0] %}
                                 <span class="job-price">${{ ("%0.2f"|format(price|float)).rstrip('0').rstrip('.') }}</span>
                             {% else %}
                                 <span class="job-price tbd">TBD</span>
                             {% endif %}
-                            {% if show_arrow %}
-                                <span class="job-arrow">→</span>
+                            {% if cont_left %}<span class="job-arrow job-arrow-left">⟵</span>{% endif %}
+                            {% if cont_right %}<span class="job-arrow job-arrow-right">⟶</span>{% endif %}
                             {% endif %}
                         </div>
                     </div>
-                    {% endif %}
                 {% endfor %}
             </div>
-
-            {% if holiday %}
-                <div class="holiday-label">
-                    {{ holiday }}
-                </div>
-            {% endif %}
         </td>
         {% endfor %}
     </tr>

@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta charset="UTF-8">
     <title>Termite Department Job Board</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
@@ -34,10 +33,14 @@
             {% endif %}
         {% endwith %}
 
-        <!-- Page-specific content goes here -->
-        {% block content %}
-        <p class="version-number">v{{ app_version }}</p>
-        {% endblock %}
+    <!-- Page content -->
+    {% block body%}
+        {% block content %}{% endblock %}
+    {% endblock %}
+
+    <!-- Footer -->
+    {% include "_footer.html" %}
+
     </div>
 
 </body>

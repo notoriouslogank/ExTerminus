@@ -1,8 +1,12 @@
 # ExTerminus
 
+![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)
+
 Calendar-driven scheduling for pest control operations.  Fast to run, simple to deploy, opinionated where it counts.
 
 > TL;DR: Python + Flask + SQLite. Create jobs (incl. REIs), assign technicians, lock out dates, and view everything on a compact month/day UI.
+
+**Docs:**[Quick Start](#quick-start-2-minutes) · [Common Tasks](#common-tasks) · [Configuration](#configuration) · [Known Limitations](#known-limitations) · [Bugs](./BUGS.md) · [Changelog](./CHANGELOG.md) · [Roadmap](#roadmap)
 
 ---
 
@@ -14,12 +18,28 @@ Calendar-driven scheduling for pest control operations.  Fast to run, simple to 
 - REI workflow
   - `rei_quantity` + `rei_zip` -> auto-resolves `rei_city_name`
   - Calendar badges: `REIs N - City [Tech]`
-- Technician assignment + basic technician management
-- Security hardening for v0.1.0
+- Technician assignment
+  - **Two-Man Jobs**: assign both technicians at once; visible to both; counted once; displays **"Two Man"**
+  - Consistent display: technicians shown as **F.Lastname**
+- Time Off
+  - Add Time Off from Day View
+  - OFF entries rendered on Day & Calendar views
+- Security hardening
   - CSRF protection on all POST forms
+  - Forced password reset on first login
   - SECRET_KEY enforcement via `.env`
   - Server-side role checks
   - Custom 404/500 error pages
+
+---
+
+## New in v0.2.0
+
+- Lock/unlock dates now show "Last edited by NAME at TIMESTAMP (EST)" display for better auditing
+- Forced password reset on first login
+- Two techs can be assigned to the same job, creating support for Two-Man jobs
+- Multi-day job fixes (calendar and day_views)
+- Better Time Off entries
 
 ---
 
@@ -93,6 +113,12 @@ export FLASK_ENV=development
 $env:FLASK_ENV="development"
 
 flask run
+
+# On first run, open http:127.0.0.1:5000
+# Default admin login:
+username: admin
+password: changeme # will require reset
+
 ```
 
 Open <http://127.0.0.1:5000>
@@ -124,6 +150,17 @@ INSERT INTO technicians (name) VALUES ('Alice');
 
 - Day view -> Lock/Unlock.  Locked dates reject new jobs.
 
+### Create a Two-Man Job
+
+1. **Add Job** -> choose a job type.
+2. In **Technician**, select **Two Man**.
+3. Save. The job appears for both techs and shows **Two Man** on cards.
+
+### Add Time Off from Day View
+
+- Open the Day view -> **+ Add Time Off** -> choose tech & date -> save.
+- Time Off shows as an **OFF** card on both Day & Calendar views.
+
 ---
 
 ## Configuration
@@ -141,15 +178,19 @@ INSERT INTO technicians (name) VALUES ('Alice');
 - CSRF is enabled via Flask-WTF; every POST form includes a hidden token.
 - SQLite pragmas set: `foreign_keys=ON`, `journal_mode=WAL`.
 - Schema (jobs): `rei_quantity (INT)`, `rei_zip (TEXT)`, `rei_city_name (TEXT)`.
+- Lightweight SQL migrations (plain `.sql` files) may be included; no tool-managed migrations yet.
 
 ---
 
-## Known Limitations (v0.1.0)
+## Known Limitations
 
+- Two-man is the ceiling (no 3+ tech assignment yet).
+- Time Off does not yet block assigning that tech to other jobs (planned).
 - No full-text search or advanced filtering yet.
 - No email/notification system.
-- No migration; schema changes require a rebuild of the SQLite DB.
+- Lightweight SQL migrations only; no Alembic tooling.
 - Basic login rate-limiting TBD.
+- Multi-day arrow behavior still being refinded - see [BUG-1036](./BUGS.md#bug-1036--multi-day-arrows).
 
 ---
 

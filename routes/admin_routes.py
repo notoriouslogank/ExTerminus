@@ -1,8 +1,16 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+"""Admin routes: user management (list/create/update role/reset password/delete).
+
+Notes:
+    - Access is restricted to role ``"admin"`` via ``@role_required("admin")``.
+    - Creating a user sets ``must_reset_password = 1`` so the first login forces a password change.
+"""
+
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 from werkzeug.security import generate_password_hash
+
 from ..db import get_database
-from ..utils.logger import setup_logger
 from ..utils.decorators import role_required
+from ..utils.logger import setup_logger
 
 admin_bp = Blueprint("admin", __name__)
 logger = setup_logger()
@@ -11,9 +19,23 @@ logger = setup_logger()
 @admin_bp.route("/admin/users", methods=["GET", "POST"])
 @role_required("admin")
 def admin_users():
-    if not session.get("user") or session["user"].get("role") != "admin":
-        flash("Access denied.", "error")
-        return redirect(url_for("calendar.index"))
+    """List and manage users (admin only).
+
+    Handles GET (render table + form) and POST (mutations). Supports:
+        - ``action == "update_role"``: Change a user's role; normalizes ``"tech"`` -> ``"technician"``.  If the rule becomes ``"technician"``, ensures a row in ``technicians`` (uses first/last or username).
+        - ``action == "reset_password"``: Set password to default ``"changeme"`` (auth layer forces reset).
+        - ``acton == "delete_user"``: Permanently remove the user.
+        - otherwise: Create a new user with ``must_reset_password = 1``; if role is technician, add to ``technicians``.
+
+    Form fields (vary by action):
+        - Common: ``action`` (str)
+        - Update/Delete/Reset: ``update_user_id`` (int as str)
+        - Update role: ``role`` (str: ``admin`` | ``manager`` | ``technician`` | ``sales`` | ``tech``)
+        Create: ``first_name`` (str), ``last_name`` (str), ``username`` (str), ``password`` (str, optional; default to ``"changeme"``), ``role`` (str)
+
+    Returns:
+        Response: On GET, render ``admin_users.html`` with the users list.  On POST, perform the action, flash a status, and redirect back to ``admin.admin_users`` (PRG pattern).
+    """
 
     conn = get_database()
     cursor = conn.cursor()
@@ -80,7 +102,7 @@ def admin_users():
 
             hashed = generate_password_hash(password)
             cursor.execute(
-                """INSERT INTO users (first_name, last_name, username, password, role) VALUES (?, ?, ?, ?, ?)""",
+                """INSERT INTO users (first_name, last_name, username, password, role, must_reset_password) VALUES (?, ?, ?, ?, ?, 1)""",
                 (first, last, username, hashed, role),
             )
 

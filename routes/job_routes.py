@@ -1,11 +1,18 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    flash,
+    Response,
+)
 from functools import wraps
 from datetime import datetime, date
 from ..utils.decorators import login_required, role_required
 from ..db import get_database
 from ..utils.logger import setup_logger
-from functools import wraps
-from datetime import datetime
 import zipcodes
 
 job_bp = Blueprint("job", __name__)
@@ -13,6 +20,16 @@ logger = setup_logger()
 
 
 def _parse_date(s: str | None) -> date | None:
+    """Parse a user-supplied date string into a `date`.
+
+    Accepts ISO ``YYYY-MM-DD`` or US ``MM/DD/YYYY``.  Returns ``None`` for blank or unparsable values.  Does not raise.
+
+    Args:
+        s (str | None): Raw date value from a form.
+
+    Returns:
+        date | None: Parsed date, or ``None`` if parsing fails.
+    """
     s = (s or "").strip()
     if not s:
         return None
@@ -24,9 +41,45 @@ def _parse_date(s: str | None) -> date | None:
     return None
 
 
-def lookup_zipcode(zip: str) -> str | None:
+def _parse_technician(value: str | None, cur=None) -> tuple[int | None, int]:
+    """Interpret the technician selector from the job form.
+
+    The form value may be an integer ID (as a string), the sentinel ``"__BOTH__"`` to indicate a Two-Man Job, or blank.  If a DB cursor is provided, the ID is validated against the ``technicians`` table.
+
+    Args:
+        value (str | None): Form value (``"__BOTH__"``, ``""``, or int-like string).
+        cur (optional): Optional SQLite cursor for existence check.
+
+    Returns:
+        tuple[int | None, int]: ``(technician_id, two_man)``. For ``"__BOTH__"`` returns ``(None, 1)``; for a valid technician ID returns ``(id, 0)``; otherwise ``(None, 0)``.
+    """
+    if value == "__BOTH__":
+        return None, 1
+    if value is None or str(value).strip() == "":
+        return None, 0
     try:
-        results = zipcodes.matching(str(zip).strip())
+        tid = int(value)
+    except (TypeError, ValueError):
+        return None, 0
+
+    if cur is not None:
+        ok = cur.execute("SELECT 1 FROM technicians WHERE id=?", (tid,)).fetchone()
+        if not ok:
+            return None, 0
+    return tid, 0
+
+
+def lookup_zipcode(zip_code: str) -> str | None:
+    """Resolve a 5-digit ZIP code to a city name using ``zipcodes``.
+
+    Args:
+        zip_code (str): ZIP code as entered (whitespace allowed).
+
+    Returns:
+        str | None: City name if found; otherwise ``None``.
+    """
+    try:
+        results = zipcodes.matching(str(zip_code).strip())
         if not results:
             return None
         return results[0].get("city")
@@ -34,10 +87,64 @@ def lookup_zipcode(zip: str) -> str | None:
         return None
 
 
+def normalize_hhmm(s: str | None) -> str | None:
+    """Normalize a loose time input to ``HH:MM``.
+
+    Accepts inputs like ``"9"``, ``"09"``, ``"9:30"``, ``"09:30"`` and returns canonical ``"09:00"`` or ``"09:30"``.  Returns ``None`` for blank/invalid.
+
+    Args:
+        s (str | None): Raw time string.
+
+    Returns:
+        str | None: Normalized time string, or ``None``.
+    """
+    if not s:
+        return None
+    s = s.strip()
+    if not s:
+        return None
+    if s.isdigit():
+        return f"{int(s):02d}:00"
+    if ":" in s:
+        h, m = s.split(":", 1)
+        return f"{int(h):02d}:{int(m):02d}"
+    return None
+
+
+def derive_time_range(start_hhmm: str | None, end_hhmm: str | None) -> str | None:
+    """Build a compact ``H-H`` label from start/end times.
+
+    Intended for teh calendar's small badges.  Minuts are intentionally dropped (e.g., ``"09:30"`` - ``"14:00"`` => ``"9-14"``).  Returns ``None`` if either time is missing.
+
+    Args:
+        start_hhmm (str | None): Start time like ``"HH:MM"``.
+        end_hhmm (str | None): End time like ``"HH:MM"``.
+
+    Returns:
+        str | None: A label like ``"9-14"`` or ``None``.
+    """
+    if not start_hhmm or not end_hhmm:
+        return None
+    sh, sm = map(int, start_hhmm.split(":"))
+    eh, em = map(int, end_hhmm.split(":"))
+    return f"{sh}-{eh}"
+
+
 @job_bp.route("/add_job", methods=["GET", "POST"])
 @login_required
 @role_required("manager", "technician", "sales")
 def add_job():
+    """Create a new job (GET shows form, POST submits).
+
+    Handles GET (render form) and POST (submit). Validates dates/times, supports REIs (ZIP -> city; ``end_date = start_date``), parses a single technician or ``"__BOTH__"`` for Two-Man, rejects locked days, inserts the job, and logs.
+
+    Returns:
+        Response: On success, redirect to ``calendar.index``.  On validation errors, redirect back to the form.  On GET, render the form.
+    """
+
+    conn = get_database()
+    cur = conn.cursor()
+
     if request.method == "POST":
         start_date_raw = request.form.get("start_date")
         rei_zip = (request.form.get("rei_zip") or "").strip()
@@ -50,10 +157,11 @@ def add_job():
                 rei_city_name = None
 
         if not start_date_raw:
-            flash("Start date is required.")
+            flash("Start date is required.", "error")
             return redirect(request.url)
 
-        # BUG-1018: correct fallback and validate dates
+        # Dates
+
         end_date_raw = request.form.get("end_date") or start_date_raw
         sd = _parse_date(start_date_raw)
         ed = _parse_date(end_date_raw) if end_date_raw else None
@@ -63,26 +171,35 @@ def add_job():
         start_date = sd.isoformat()
         end_date = ed.isoformat() if ed else None
 
+        # Times
+        start_time_raw = request.form.get("start_time")
+        end_time_raw = request.form.get("end_time")
+        start_time = normalize_hhmm(start_time_raw)
+        end_time = normalize_hhmm(end_time_raw)
+        if start_time and end_time and end_time <= start_time:
+            flash("End time must be after start time.", "error")
+            return redirect(url_for("calendar.day_view", selected_date=start_date))
+
+        time_range = derive_time_range(start_time, end_time) or (
+            request.form.get("time_range", "").strip() or "any"
+        )
+
+        # Job Fields
         title = (request.form.get("title") or "").strip()
         job_type = request.form["type"]
-
         if job_type == "reis":
             title = ""
             end_date = start_date
         if job_type == "custom":
             job_type = request.form.get("custom_type", "").strip()
 
-        # BUG-1009: require non-empty title for non-REI jobs
+        # Require non-empty title for non-REI jobs
         if job_type != "reis" and not title:
             flash("Title is required.", "error")
             return redirect(request.url)
 
         price = request.form["price"]
-        time_range = request.form.get("time_range", "").strip() or "any"
         notes = request.form.get("notes", "")
-
-        conn = get_database()
-        cur = conn.cursor()
 
         uid = session.get("user", {}).get("user_id")
         row = cur.execute("SELECT id FROM users WHERE id=?", (uid,)).fetchone()
@@ -91,46 +208,41 @@ def add_job():
             flash("Your session has expired.  Please log in again.", "error")
             return redirect(url_for("auth.login"))
         created_by = uid
+
         rei_quantity = request.form.get("rei_quantity")
         exclusion_subtype = request.form.get("exclusion_subtype")
-        technician_id = request.form.get("technician_id") or None
-        if technician_id == "":
-            technician_id = None
-        if technician_id is not None:
-            if not cur.execute(
-                "SELECT 1 FROM technicians WHERE id=?", (technician_id,)
-            ).fetchone():
-                technician_id = None
+        technician_raw = request.form.get("technician_id")
+        technician_id, two_man = _parse_technician(technician_raw, cur)
 
         fumigation_type = request.form.get("fumigation_type")
         target_pest = request.form.get("target_pest")
         custom_pest = request.form.get("custom_pest")
-
         if custom_pest:
             target_pest = custom_pest.strip()
 
-        conn = get_database()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM locks WHERE date = ?", (start_date,))
-        if cursor.fetchone():
+        cur.execute("SELECT * FROM locks WHERE date = ?", (start_date,))
+        if cur.fetchone():
             flash("Date is locked. Cannot add job.", "error")
             return redirect(url_for("calendar.day_view", selected_date=start_date))
 
-        cursor.execute(
+        cur.execute(
             """INSERT INTO jobs (
-            title, job_type, price, start_date, end_date, time_range, notes,
-            created_by, technician_id, rei_quantity, rei_zip, rei_city_name, exclusion_subtype, fumigation_type, target_pest, custom_pest)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            title, job_type, price, start_date, end_date, start_time, end_time, time_range, notes,
+            created_by, technician_id, two_man, rei_quantity, rei_zip, rei_city_name, exclusion_subtype, fumigation_type, target_pest, custom_pest)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 title,
                 job_type,
                 price,
                 start_date,
                 end_date,
+                start_time,
+                end_time,
                 time_range,
                 notes,
                 created_by,
                 technician_id,
+                two_man,
                 rei_quantity,
                 rei_zip,
                 rei_city_name,
@@ -146,10 +258,8 @@ def add_job():
         )
         return redirect(url_for("calendar.index"))
     start_date = None
-    connection = get_database()
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM technicians")
-    technicians = cursor.fetchall()
+    cur.execute("SELECT * FROM technicians")
+    technicians = cur.fetchall()
 
     return render_template(
         "job_form.html",
@@ -163,7 +273,19 @@ def add_job():
 @login_required
 @role_required("manager", "technician", "sales")
 def add_job_for_date(date):
+    """Create a job for a specific day.
+
+    Uses the URL date (``YYYY-MM-DD``) as both ``start_date`` and ``end_date``.  Applies the same validation rules as ``add_job`` and rejects locked days.
+
+    Args:
+        date (str): ISO date from the route segment (``YYYY-MM-DD``).
+
+    Returns:
+        Response: GET renders the form with date fields prefilled/hidden.  POST redirects to ``calendar.day_view`` on success; otherwise re-renders with errors.
+    """
     if request.method == "POST":
+        conn = get_database()
+        cursor = conn.cursor()
 
         start_date = end_date = date
 
@@ -172,7 +294,21 @@ def add_job_for_date(date):
         if job_type == "custom":
             job_type = request.form.get("custom_type", "").strip()
         price = request.form["price"]
-        time_range = request.form.get("time_range", "").strip() or "any"
+        # time fields
+        start_time_raw = request.form.get("start_time")
+        end_time_raw = request.form.get("end_time")
+
+        start_time = normalize_hhmm(start_time_raw)
+        end_time = normalize_hhmm(end_time_raw)
+
+        if start_time and end_time and end_time <= start_time:
+            flash("End time must be after start time.", "error")
+            return redirect(request.url)
+
+        time_range = derive_time_range(start_time, end_time) or (
+            request.form.get("time_range", "").strip() or "any"
+        )
+
         notes = request.form.get("notes", "")
         created_by = session["user"]["user_id"]
         rei_quantity = request.form.get("rei_quantity")
@@ -185,33 +321,41 @@ def add_job_for_date(date):
             except Exception:
                 rei_city_name = None
         exclusion_subtype = request.form.get("exclusion_subtype")
-        technician_id = request.form.get("technician_id") or None
-        if technician_id == "":
-            technician_id = None
+        technician_raw = request.form.get("technician_id")
+        technician_id, two_man = _parse_technician(technician_raw, cursor)
+        fumigation_type = request.form.get("fumigation_type")
+        target_pest = request.form.get("target_pest")
+        custom_pest = request.form.get("custom_pest")
+        if custom_pest:
+            target_pest = custom_pest.strip()
 
-        conn = get_database()
-        cursor = conn.cursor()
         cursor.execute("SELECT * FROM locks WHERE date = ?", (date,))
         if cursor.fetchone():
             flash("Date is locked. Cannot add job.", "error")
             return redirect(url_for("calendar.day_view", selected_date=date))
 
         cursor.execute(
-            """INSERT INTO jobs (title, job_type, price, start_date, end_date, time_range, notes, technician_id, created_by, rei_quantity, rei_zip, rei_city_name, exclusion_subtype)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO jobs (title, job_type, price, start_date, end_date, start_time, end_time, time_range, notes, technician_id, two_man, created_by, rei_quantity, rei_zip, rei_city_name, fumigation_type, target_pest, custom_pest, exclusion_subtype)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 title,
                 job_type,
                 price,
                 start_date,
                 end_date,
+                start_time,
+                end_time,
                 time_range,
                 notes,
                 technician_id,
+                two_man,
                 created_by,
                 rei_quantity,
                 rei_zip,
                 rei_city_name,
+                fumigation_type,
+                target_pest,
+                custom_pest,
                 exclusion_subtype,
             ),
         )
@@ -239,7 +383,17 @@ def add_job_for_date(date):
 @job_bp.route("/move_job/<int:job_id>", methods=["POST"])
 @login_required
 @role_required("manager", "technician", "sales")
-def move_job(job_id):
+def move_job(job_id: int):
+    """Move a job to a new start date, preserving its duration.
+
+    Reads the new start from the form field ``new_date``, computes the original span (``end_date - start_date``), applies the same duration from the new start, updates audit fields, and logs.
+
+    Args:
+        job_id (int): Identifier of the job to move.
+
+    Returns:
+        Response: Redirect to the referrer or ``calendar.index``.  Returns a 404 response if the job is not found.
+    """
     new_start = request.form["new_date"]
     conn = get_database()
     cur = conn.cursor()
@@ -286,6 +440,17 @@ def move_job(job_id):
 @login_required
 @role_required("manager", "sales")
 def delete_job(job_id):
+    """Delete a job permanently.
+
+    Removes the job from the ``jobs`` table and logs the action.
+
+    Args:
+        job_id (int): Identifier of the job to delete.
+
+    Returns:
+        Response: Redirect to the referrer or ``calendar.index``.
+
+    """
     if "user" not in session:
         return redirect(url_for("auth.login"))
     conn = get_database()
@@ -299,6 +464,16 @@ def delete_job(job_id):
 @login_required
 @role_required("manager", "sales")
 def edit_job(job_id):
+    """Edit an existing job.
+
+    On POST, validates and normalizes dates/times (end must be >= start), enforces title for non-REI jobs.parses technician or Two-Man selection via ``_parse_technicians``, updates price/notes/fumigation/target pest, and audit columns.
+
+    Args:
+        job_id (int): Identifier of the job to edit.
+
+    Returns:
+        Response: On success, redirect to ``calendar.index``.  On validation errors, re-render ``edit_job.html`` with the current job.
+    """
     if "user" not in session:
         return redirect(url_for("auth.login"))
 
@@ -308,24 +483,26 @@ def edit_job(job_id):
         fumigation_type = request.form.get("fumigation_type")
         target_pest = request.form.get("target_pest")
         custom_pest = request.form.get("custom_pest")
+        start_time_raw = request.form.get("start_time")
+        end_time_raw = request.form.get("end_time")
+
+        start_time = normalize_hhmm(start_time_raw)
+        end_time = normalize_hhmm(end_time_raw)
+
+        if start_time and end_time and end_time <= start_time:
+            flash("End time must be after start time.", "error")
+            return render_template(
+                "edit_job.html",
+                job=cur.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone(),
+            )
+
+        time_range = derive_time_range(start_time, end_time) or (
+            request.form.get("time_range", "").strip() or "any"
+        )
 
         if custom_pest:
             target_pest = custom_pest.strip()
 
-        cur.execute(
-            """UPDATE jobs SET title = ?, type = ?, price = ?, time_range = ?, notes = ?, fumigation_type = ?, target_pest = ?, last_modified = CURRENT_TIMESTAMP, last_modified_by = ? WHERE id = ?""",
-            (
-                request.form["title"],
-                request.form["type"],
-                request.form["price"],
-                request.form["time_range"],
-                request.form["notes"],
-                fumigation_type,
-                target_pest,
-                session["user"]["user_id"],
-                job_id,
-            ),
-        )
         # BUG-1018: validate and normalize dates on edit
         start_date_raw = request.form.get("start_date")
         end_date_raw = request.form.get("end_date") or start_date_raw
@@ -361,6 +538,9 @@ def edit_job(job_id):
                 ).fetchone(),
             )
 
+        technician_raw = request.form.get("technician_id")
+        technician_id, two_man = _parse_technician(technician_raw, cur)
+
         cur.execute(
             """
             UPDATE jobs
@@ -369,12 +549,16 @@ def edit_job(job_id):
                     price = ?,
                     start_date = ?,
                     end_date = ?,
+                    start_time = ?,
+                    end_time = ?,
                     time_range = ?,
                     notes = ?,
                     fumigation_type = ?,
                     target_pest = ?,
+                    technician_id = ?,
+                    two_man = ?,
                     last_modified = CURRENT_TIMESTAMP,
-                    last_modified_by = ?,
+                    last_modified_by = ?
             WHERE id = ?
             """,
             (
@@ -383,10 +567,14 @@ def edit_job(job_id):
                 request.form["price"],
                 sd.isoformat(),
                 ed.isoformat() if ed else None,
-                request.form.get("time_range", "").strip() or "any",
+                start_time,
+                end_time,
+                time_range,
                 request.form.get("notes", ""),
                 fumigation_type,
                 target_pest,
+                technician_id,
+                two_man,
                 session["user"]["user_id"],
                 job_id,
             ),

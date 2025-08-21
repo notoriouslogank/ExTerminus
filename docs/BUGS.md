@@ -1,6 +1,6 @@
 # BUGS
 
-_Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.1.0)._
+_Source of truth for **open** bugs. Resolved items live in [Changelog](../CHANGELOG.md)._
 
 ## Legend
 
@@ -13,26 +13,17 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 <!-- BUGS:SUMMARY START -->
 | ID        | Title                   | Severity | Status        | Opened      | Owner | Target |
 |-----------|-------------------------|----------|---------------|-------------|-------|--------|
-| BUG-1005  | Multi-Day Arrows        | P2       | Open          | 2025-08-09  |       | v0.1.1 |
-| BUG-1010  | Holidays not shown      | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1011  | Invalid Username/Passwo | P2       | Open          | 2025-08-09  |       | v0.1.1 |
-| BUG-1012  | Force Password Update   | P1       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1013  | Time Picker             | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1015  | Chronology              | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1016  | Chronology II           | P2       | Open          | 2025-08-09  |       | v0.1.1 |
-| BUG-1020  | Two Man Jobs            | P2       | Open          | 2025-08-09  |       | v0.1.1 |
+| BUG-1034  | Remove Time Off         | P3       | Open          | 2025-08-16  |       | v0.2.0 |
+| BUG-1038  | Admin Delete Job        | P0       | Open          | 2025-08-16  |       | v0.2.0 |
 <!-- BUGS:SUMMARY END -->
 ---
 
 ## Details
 <!-- BUGS:DETAILS START -->
-
-### BUG-1020 — Two Man Jobs
-
-- **Severity:** P2 · **Status:** Open · **Affects:** job creation
-- **Repro:** Create a job that needs 2 techs → can’t select >1.
-- **Expected/Actual:** Toggle or multi-select / single tech only.
-- **Notes:** Likely needs `jobs_technicians` join table + UI multi-select.
 
 ### BUG-1016 — Chronology II
 
@@ -55,13 +46,6 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Expected/Actual:** Time widget / plain text box.
 - **Notes:** Use `<input type="time">` or a JS timepicker; validate server-side.
 
-### BUG-1012 — Force Password Update
-
-- **Severity:** P1 · **Status:** Open · **Affects:** auth
-- **Repro:** Create/reset user → no forced change on first login.
-- **Expected/Actual:** Redirect to change-password / normal flow.
-- **Notes:** Honor `force_password_change` flag after login.
-
 ### BUG-1011 — Invalid Username/Password
 
 - **Severity:** P2 · **Status:** Open · **Affects:** login UX
@@ -69,39 +53,29 @@ _Source of truth for **open** bugs. Resolved items live in **CHANGELOG.md** (v0.
 - **Expected/Actual:** Prominent flash box / subtle text.
 - **Notes:** Style flash; consider small rate-limit.
 
-### BUG-1010 — Holidays
+### BUG-1034 — Remove Time Off
 
-- **Severity:** P2 · **Status:** Open · **Affects:** month view
-- **Repro:** View month with federal holiday → not shown.
-- **Expected/Actual:** Holiday label in cell / nothing.
-- **Notes:** Static list or `holidays` lib; render in cell header.
+- **Severity:** P3 · **Status:** Open · **Affects:** misc
+- **Repro:** Create Time Off for a technician.
+- **Expected/Actual:** Should have an option to REMOVE Time Off. / There is no method of removing Time Off once scheduled.
+- **Notes:** -
+- **Owner:**
+- **Target:** v0.2.0
 
-### BUG-1005 — Multi-Day Arrows
+### BUG-1038 — Admin Delete Job
 
-- **Severity:** P2 · **Status:** Open · **Affects:** month view UX
-- **Repro:** Multi-day job → arrow only on first day.
-- **Expected/Actual:** Arrow on each day / first day only.
-- **Notes:** Render prefix/suffix arrows based on start/end.
+- **Severity:** P0 · **Status:** Open · **Affects:** jobs
+- **Repro:** Login as admin and attempt to delete any job.
+- **Expected/Actual:** Should be able to successfully delete any job as admin. / "You are not allowed to do that."
+- **Notes:** -
+- **Owner:**
+- **Target:** v0.2.0
 
 <!-- BUGS:DETAILS END -->
 ---
 
-## Recently Resolved → see CHANGELOG.md (v0.1.0)
+## Recently Resolved → see [CHANGELOG](../CHANGELOG.md)
 
-- **BUG-1002** Job Edit Auth
-- **BUG-1003** Unauthorized Lock Toggle
-- **BUG-1004** Edit Job Crash
-- **BUG-1006** REIs
-- **BUG-1007** Clickable Days
-- **BUG-1009** Nameless Job
-- **BUG-1014** Time Off
-- **BUG-1018** End Before Start
-- **BUG-1019** Too Many Jobs
-- **BUG-1022** Bug Report Format
-- **BUG-1001** Type Abbreviations
-- **BUG-1026** Fail to Delete
-- **BUG-1031** Job Card Audit Log
-- **BUG-1017** Missing Audit Trail (duplicate of 1031)
-- **BUG-1032** REI Job Titles
-- **BUG-1027** REI Title (Unknown) (duplicate of 1032)
-- **BUG-1028** Bad Auth Notification
+- **BUG-1005 — Multi-Day Arrows** (fixed v0.2.0)
+- **BUG-1010 — Holidays not shown** (fixed v0.2.0)
+- **BUG-1036 — Multi-Day Arrows (dup)** (fixed v0.2.0)

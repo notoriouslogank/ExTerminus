@@ -3,7 +3,7 @@
    Dark Mode Default | Monospace Themed
    ========================================================================== */
 
-/* === Reset & Globals === */
+/* == 1) Reset & Globals ==================================================== */
 html,
 body {
     background-color: #111;
@@ -23,12 +23,44 @@ a:hover {
     text-decoration: underline;
 }
 
-.version-number {
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.py-3 {
+    padding-top: 1em;
+    padding-bottom: 1em;
+}
+
+.text-light {
+    color: #eee;
+}
+
+.site-footer {
+    /* global footer (mobile tweaks at bottom) */
     text-align: center;
-    font-family: monospace;
-    font-size: 0.7em;
-    color: #666;
-    margin-top: 1em;
+    margin-top: 1rem;
+    padding: 0.25rem 0;
+}
+
+.version-number {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+    letter-spacing: 0.5px;
+}
+
+/* == 2) Top Bar / Header =================================================== */
+.top-bar {
+    text-align: right;
+    padding: 0.5em 1em;
+}
+
+.user-info {
+    font-weight: bold;
+    color: #7f7;
 }
 
 .login-logo {
@@ -39,12 +71,7 @@ a:hover {
     filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.2));
 }
 
-nav .user-info {
-    font-weight: bold;
-    color: #7f7;
-}
-
-/* === Typography === */
+/* == 3) Typography ========================================================= */
 .text-center {
     text-align: center;
 }
@@ -58,7 +85,7 @@ nav .user-info {
     font-weight: bold;
 }
 
-/* === Margin & Padding Utilities === */
+/* == 4) Spacing Utilities ================================================== */
 .mt-1 {
     margin-top: 1em;
 }
@@ -75,7 +102,7 @@ nav .user-info {
     margin-right: 1em;
 }
 
-/* === Buttons === */
+/* == 5) Buttons ============================================================ */
 .btn {
     background-color: #333;
     color: #eee;
@@ -92,20 +119,11 @@ nav .user-info {
     filter: brightness(1.1);
 }
 
-.btn-red {
-    background-color: #aa0000;
+.btn.green {
+    background-color: #007f00;
     color: #fff;
     border: none;
-    border-radius: 4px;
-    padding: 0.4em 0.8em;
-    font-weight: bold;
-    font-family: inherit;
-    font-size: 0.9em;
-    cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
-
 
 .btn-cancel {
     background-color: #555;
@@ -123,9 +141,12 @@ nav .user-info {
     transition: background 0.2s ease-in-out;
 }
 
-.btn-yellow {
-    background-color: #fcd535;
-    color: #111;
+.btn-submit:hover {
+    background-color: #e5b600;
+}
+
+.btn-yellow,
+.btn-red {
     border: none;
     border-radius: 4px;
     padding: 0.4em 0.8em;
@@ -137,6 +158,11 @@ nav .user-info {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+.btn-yellow {
+    background-color: #fcd535;
+    color: #111;
+}
+
 .btn-yellow:hover {
     background-color: #e4be30;
 }
@@ -144,6 +170,11 @@ nav .user-info {
 .btn-yellow:active {
     transform: scale(0.98);
     background-color: #c9a916;
+}
+
+.btn-red {
+    background-color: #aa0000;
+    color: #fff;
 }
 
 .btn-red:hover {
@@ -155,10 +186,7 @@ nav .user-info {
     background-color: #c00000;
 }
 
-.btn-submit:hover {
-    background-color: #e5b600;
-}
-
+/* Badges */
 .badge {
     padding: 0.3em 0.6em;
     border-radius: 0.25em;
@@ -175,7 +203,7 @@ nav .user-info {
     color: #000;
 }
 
-/* === Forms & Inputs === */
+/* == 6) Forms & Inputs ===================================================== */
 input,
 select,
 textarea {
@@ -207,6 +235,27 @@ label {
     color: #ccc;
 }
 
+input[type="radio"] {
+    margin-right: 0.4em;
+}
+
+input[type="date"] {
+    background-color: #1b1b1b;
+    color: #eee;
+    border: 1px solid #333;
+    padding: 0.5em;
+    border-radius: 4px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+.hidden {
+    display: none;
+}
+
 .auth-form {
     max-width: 360px;
     margin: 2em auto;
@@ -229,30 +278,7 @@ label {
     padding: 2em;
     background-color: #111;
     border-radius: 8px;
-    box-shadow: 0 0 12px rgba(255, 255, 255, 0.05)
-}
-
-.flex-center {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1em;
-}
-
-.flex-row {
-    display: flex;
-    gap: 0.5em;
-    align-items: center;
-}
-
-.flex-row form {
-    margin: 0;
-}
-
-.flex-row .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
 }
 
 .form-section {
@@ -260,7 +286,6 @@ label {
     padding-bottom: 1em;
     border-bottom: 1px solid #2b2b2b;
 }
-
 
 .form-group {
     display: flex;
@@ -288,7 +313,7 @@ label {
 
 .form-group small {
     color: #777;
-    font-style: italics;
+    font-style: italic;
     margin-top: 0.25em;
     display: block;
 }
@@ -299,27 +324,6 @@ label {
     margin-bottom: 1em;
     text-transform: uppercase;
     letter-spacing: 1px;
-}
-
-input[type="radio"] {
-    margin-right: 0.4em;
-}
-
-input[type="date"] {
-    background-color: #1b1b1b;
-    color: #eee;
-    border: 1px solid #333;
-    padding: 0.5em;
-    border-radius: 4px;
-}
-
-input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-    cursor: pointer;
-}
-
-.hidden {
-    display: none;
 }
 
 .radio-group {
@@ -352,7 +356,31 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     }
 }
 
-/* === Cards === */
+/* == 7) Layout Helpers ===================================================== */
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1em;
+}
+
+.flex-row {
+    display: flex;
+    gap: 0.5em;
+    align-items: center;
+}
+
+.flex-row form {
+    margin: 0;
+}
+
+.flex-row .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* == 8) Cards & Job Meta =================================================== */
 .card {
     background-color: #222;
     padding: 1em;
@@ -373,6 +401,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     margin: 0.3em 0;
 }
 
+.job-meta-light,
+.job-tech {
+    color: #bbb;
+}
+
 .job-notes {
     background-color: #111;
     border-left: 4px solid #ffd700;
@@ -389,7 +422,27 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     margin-top: 0.4em;
 }
 
-/* === Tags === */
+.audit-block {
+    font-size: 0.9rem;
+    color: #bbb;
+    margin-top: .15rem;
+}
+
+.audit-block .sep {
+    opacity: .6;
+    padding: 0 .3rem;
+}
+
+.off-card {
+    border-left: 3px solid #d66;
+}
+
+.off-card .job-tag {
+    background: #d66;
+    color: #111;
+}
+
+/* == 9) Tags =============================================================== */
 .tag {
     display: inline-block;
     font-size: 0.75em;
@@ -438,8 +491,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border-radius: 4px;
 }
 
-
-/* === Day === */
+/* == 10) Day View ========================================================== */
 .status-banner {
     text-align: center;
     margin-bottom: 0.5em;
@@ -467,11 +519,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border: 1px solid #444;
 }
 
-/* === Calendar === */
+/* == 11) Calendar ========================================================== */
 .calendar-header {
-    flex-direction: column;
-    gap: 0.3em;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 1em;
@@ -523,7 +574,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     background-color: #2a2a2a;
 }
 
-
 .calendar-cell:hover::after {
     content: "+";
     position: absolute;
@@ -543,10 +593,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     position: relative;
     background-color: #1f1f0d;
     outline: 1px solid #fc3;
-
-    box-shadow:
-        inset 0 0 4px #fc3,
-        0 0 3px #fc3;
+    box-shadow: inset 0 0 4px #fc3, 0 0 3px #fc3;
     z-index: 2;
 }
 
@@ -566,10 +613,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     pointer-events: none;
 }
 
-.calendar-cell.holiday .holiday-label {
-    color: #c66;
-    font-size: 0.8em;
-    font-style: italic;
+.calendar-cell.holiday .holiday-badge {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 2px 4px;
+    font-size: 0.65em;
+    font-weight: bold;
+    background-color: #d9534f;
+    color: #fff;
+    border-radius: 3px;
+    vertical-align: middle;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 .calendar-cell.locked {
@@ -602,7 +657,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     z-index: 2;
 }
 
-/* === Job Entries === */
+/* == 12) Job Entries ======================================================= */
 .job-entry {
     display: flex;
     flex-direction: column;
@@ -614,6 +669,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     margin-bottom: 0.4em;
     border-left: 3px solid #fcd535;
     color: #eee;
+}
+
+.job-entry:hover {
+    background-color: #29290f;
+    box-shadow: 0 0 5px rgba(255, 204, 51, 0.3);
+    cursor: pointer;
 }
 
 .job-header,
@@ -685,12 +746,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     white-space: nowrap;
 }
 
-.job-entry:hover {
-    background-color: #29290f;
-    box-shadow: 0 0 5px rgba(255, 204, 51, 0.3);
-    cursor: pointer;
-}
-
 .off-entry {
     background-color: #222;
     border-left: 3px solid #888;
@@ -701,7 +756,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border-left: 3px solid #ccae00;
 }
 
-/* === Modals === */
+/* == 13) Modals ============================================================ */
 .modal {
     display: none;
     position: fixed;
@@ -722,4 +777,150 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     padding: 1em;
     width: 90%;
     max-width: 400px;
+}
+
+/* == 14) Mobile Polish (<640px) =========================================== */
+@media (max-width: 640px) {
+    .calendar-day-label {
+        font-size: 0;
+    }
+
+    .calendar-day-label::after {
+        content: attr(data-short);
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+    }
+
+    /* Compact header and controls */
+    .calendar-header {
+        gap: 6px;
+        margin-bottom: 0.5em;
+    }
+
+    .calendar-logo {
+        max-height: 36px;
+    }
+
+    .calendar-title {
+        font-size: 1.25rem;
+    }
+
+    .calendar-nav .btn,
+    .calendar-actions .btn {
+        padding: 6px 10px;
+        font-size: .9rem;
+    }
+
+    /* Bigger tap targets; reduce clutter */
+    .btn {
+        min-height: 44px;
+    }
+
+    input,
+    select,
+    textarea {
+        font-size: 16px;
+    }
+
+    /* Grid tuning */
+    .calendar-day-label {
+        font-size: .8rem;
+        padding: 6px 0;
+    }
+
+    .calendar-cell {
+        padding: 6px;
+        height: 110px;
+    }
+
+    .calendar-cell:hover::after {
+        content: none;
+    }
+
+    /* Keep whole cell tappable but content clickable */
+    .calendar-cell .cell-overlay {
+        z-index: 1;
+    }
+
+    .calendar-cell * {
+        z-index: 2;
+    }
+
+    /* Jobs list readability */
+    .calendar-cell .jobs {
+        max-height: 8.75rem;
+    }
+
+    /* Multi-day continuity visuals + arrows (mobile) */
+    .job-entry {
+        position: relative;
+        border-radius: 8px;
+        padding: .35rem .5rem;
+    }
+
+    .job-entry.continues-left {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+
+    .job-entry.continues-right {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .job-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: .75;
+        font-size: .9rem;
+    }
+
+    .job-arrow-left {
+        left: 4px;
+    }
+
+    .job-arrow-right {
+        right: 4px;
+    }
+
+    .job-entry.continues-left::before,
+    .job-entry.continues-right::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        left: -6px;
+        right: -6px;
+        background: rgba(255, 255, 255, .06);
+        border-radius: 0;
+        z-index: -1;
+    }
+
+    .job-header,
+    .job-footer {
+        gap: 6px;
+    }
+
+    .job-time,
+    .job-price {
+        font-size: .75rem;
+        opacity: .85;
+    }
+
+    /* Holiday badge fit */
+    .holiday-badge,
+    .calendar-cell.holiday .holiday-badge {
+        max-width: 70%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Footer spacing on mobile */
+    .site-footer {
+        text-align: center;
+        margin-top: 1rem;
+        padding: 0.25rem 0;
+    }
 }
