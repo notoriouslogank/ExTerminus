@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented here.
 
+## [Unreleased]
+
+### Changed
+
+- Centralized create-flow validation/normalization into `_compose_job_payload()` and applied it to both `POST /add_job` and `POST /add_job/<date>` to remove code duplication.
+
+### Fixed
+
+- Corrected `INSERT` column order in single-day create; `start_date` is now always persisted (no more `NOT NULL` constraint errors).
+- Enforced authoritative REI semantics on create:
+  - `job_type="rei"` -> `title="REIs"`, single-day (`end_date = start_date`), `price=NULL`.
+  - Required: `rei_quantity`, `rei_zip`, `rei_city_name` (auto-resolved from ZIP)
+- Normalized times to `HH:MM` and validate `end_time > start_time`; derive compact `time_range`.
+- Consistent technician assignment parsing (supports `__BOTH__` for two-man) with ID validation.
+- Unified `job_type` handling (supports `custom` via `custom_type`).
+
+### Developer Notes
+
+- Forms should post `job_type` (not `type`), and REI value should be `"rei"`.
+
 ## [0.2.0] - 2025-08-19
 
 ### Fixed
