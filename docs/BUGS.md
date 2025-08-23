@@ -19,6 +19,7 @@ _Source of truth for **open** bugs. Resolved items live in [Changelog](../CHANGE
 | BUG-1016  | Chronology II           | P2       | Open          | 2025-08-09  |       | v0.1.1 |
 | BUG-1034  | Remove Time Off         | P3       | Open          | 2025-08-16  |       | v0.2.0 |
 | BUG-1038  | Admin Delete Job        | P0       | Open          | 2025-08-16  |       | v0.2.0 |
+| BUG-1039  | REI Job Creation        | P1       | Open          | 2025-08-22  |       | v0.3.0 |
 <!-- BUGS:SUMMARY END -->
 ---
 
@@ -70,6 +71,15 @@ _Source of truth for **open** bugs. Resolved items live in [Changelog](../CHANGE
 - **Notes:** -
 - **Owner:**
 - **Target:** v0.2.0
+
+### BUG-1039 — REI Job Creation
+
+- **Severity:** P1 · **Status:** Open · **Affects:** jobs
+- **Repro:** Create a new REI job on any day
+- **Expected/Actual:** When job type "REI" is selected, the job form should automatically remove the "Job Name" and "Price" fields / Unused fields (Job Name, Price) remain despite selecting REI job type.
+- **Notes:** -
+- **Owner:** 
+- **Target:** v0.3.0
 
 <!-- BUGS:DETAILS END -->
 ---
