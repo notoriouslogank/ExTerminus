@@ -39,7 +39,6 @@ Calendar-driven scheduling for pest control operations.  Fast to run, simple to 
 - Forced password reset on first login
 - Two techs can be assigned to the same job, creating support for Two-Man jobs
 - Multi-day job fixes (calendar and day_views)
-- Better Time Off entries
 
 ---
 
@@ -161,6 +160,8 @@ INSERT INTO technicians (name) VALUES ('Alice');
 - Open the Day view -> **+ Add Time Off** -> choose tech & date -> save.
 - Time Off shows as an **OFF** card on both Day & Calendar views.
 
+> Please note that Time Off does not yet prevent scheduling jobs for the OFF tech
+
 ---
 
 ## Configuration
@@ -196,6 +197,11 @@ INSERT INTO technicians (name) VALUES ('Alice');
 
 ## Roadmap
 
+- Admin dashboard improvements (audit logs)
+- Technician time off: full workflow (approvals, restrictions, deletions, etc.)
+- Audit logging
+- Mobile polish
+- Support for photo attachments in job Notes
 - Search & filters (tech/date/type)
 - Notifications (daily digest, lock alerts)
 - Proper migration path (Alembic)
@@ -209,4 +215,18 @@ PRs welcome.  Keep commits scoped; prefer branches like `feat/*`, `fix/*`, `sec/
 
 ## License
 
-This project is proprietary and not licensed for redistribution.  Please contact the repository owner for usage rights.
+Copyright © 2025 Logan Aker (ExTerminus Project)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to view, study, and adapt portions of the Software for personal or educational purposes, subject to the following conditions:
+
+1. No Production / Commercial Use Without Consent
+   The Software may not be used, deployed, or distributed for commercial purposes -- including use in business operations -- without prior written permission from the copyright holder.
+
+2. Attribution
+   Derivative works or references to the Software must provide attribution to the ExTerminus Project.
+
+3. No Warranty
+   The Software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, or non-infringement.  In no even shall the authors or copyright holders be liable for any claim, damages, or other liability, arising from, out of, or in connection with the Software.
+
+4. Employer Disclaimer
+   This project was created independently and is not sponsored, endorsed, or owned by any employer or affiliated organization.  All rights remain with the author.

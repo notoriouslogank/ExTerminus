@@ -48,7 +48,7 @@
 
     <div class="form-group">
         <label for="type">Type:</label>
-        <select name="type" id="type-select" onchange="handleTypeChange(this)">
+        <select name="job_type" id="job_type" onchange="handleTypeChange(this)">
             <option value="termite">Termite</option>
             <option value="borate">Borate</option>
             <option value="pretreat">Pretreat</option>
@@ -63,14 +63,16 @@
         </select>
     </div>
 
-    <div class="form-group" id="job-name-wrapper">
-        <label for="title">Job Name:</label>
-        <input type="text" name="title" id="title-field">
-    </div>
+    <div id="generic-job-fields">
+        <div class="form-group" id="job-name-wrapper">
+            <label for="title">Job Name:</label>
+            <input type="text" name="title" id="title-field">
+        </div>
 
-    <div class="form-group" id="price-wrapper">
-        <label for="price">Price:</label>
-        <input type="number" name="price" id="price">
+        <div class="form-group" id="price-wrapper">
+            <label for="price">Price:</label>
+            <input type="number" name="price" id="price">
+        </div>
     </div>
 </div>
 
@@ -150,3 +152,30 @@
         <textarea name="notes" rows="4" placeholder="Optional site notes or special instructions."></textarea>
     </div>
 </div>
+
+<script>
+(function () {
+    const sel = document.getElementById('job_type');
+    const rei = document.getElementById('rei_options');
+    const gen = document.getElementById('generic-job-fields');
+
+    function setRequired(scope, on) {
+        if (!scope) return;
+        scope.querySelectorAll('input, select, textarea').forEach(el => {
+            if (on) el.setAttribute('required', 'required');
+            else el.removeAttribute('required');
+        });
+    }
+
+    function toggle() {
+        const isREI = (sel?.value || '').toLowerCase() === 'rei';
+        if (rei) rei.style.display = isREI ? '' : 'none';
+        if (gen) gen.style.display = isREI ? 'none' : '';
+        setRequired(rei, isREI);
+        setRequired(gen, !isREI);
+    }
+
+    sel?.addEventListener('change', toggle);
+    toggle(); // init
+})();
+</script>
