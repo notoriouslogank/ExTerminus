@@ -21,6 +21,7 @@ _Source of truth for **open** bugs. Resolved items live in [Changelog](../CHANGE
 | BUG-1038  | Admin Delete Job        | P0       | Open          | 2025-08-16  |       | v0.2.0 |
 | BUG-1039  | REI Job Creation        | P1       | Open          | 2025-08-22  |       | v0.3.0 |
 | BUG-1040  | Adjacent Month Entries  | P1       | Open          | 2025-08-22  |       | v0.3.0 |
+| BUG-1041  | Holiday Closures        | P1       | Open          | 2025-08-22  |       | v0.3.0 |
 <!-- BUGS:SUMMARY END -->
 ---
 
@@ -87,6 +88,15 @@ _Source of truth for **open** bugs. Resolved items live in [Changelog](../CHANGE
 - **Severity:** P1 · **Status:** Open · **Affects:** calendar
 - **Repro:** Create a job on the first date of the next month, and then view the current month on the calendar.
 - **Expected/Actual:** Jobs on the next/previous month should still appear when current month is selected / Even though jobs exist on the first date(s) of Next Month, they don't appear on This Month when there is bleed of the dates
+- **Notes:** -
+- **Owner:** 
+- **Target:** v0.3.0
+
+### BUG-1041 — Holiday Closures
+
+- **Severity:** P1 · **Status:** Open · **Affects:** calendar
+- **Repro:** Attempt to add a job on a Company Holiday
+- **Expected/Actual:** Jobs should be unable to be added on Company Holidays / On specific holidays (per company), the date should be shown as CLOSED and not allow job entries
 - **Notes:** -
 - **Owner:** 
 - **Target:** v0.3.0
