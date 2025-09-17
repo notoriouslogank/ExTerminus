@@ -4,6 +4,47 @@ All notable changes to this project will be documented here.
 
 ## [Unreleased]
 
+## [v0.3.1-dev] - 2025-09-16
+
+### Added
+
+- **Time Off CRUD**
+  - `POST /timeoff/add` (job blueprint): create time-off; techs can add self, managers/admin can add any tech.
+  - `POST /timeoff/delete/<id>` (job blueprint): remove time-off; techs can remove their own, managers/admin any.
+  - **Day view** now renders “OFF” cards with a 🗑 Remove button (RBAC enforced server-side).
+- **REI creation semantics (calendar & day views)**
+  - REI jobs now show **only**: Technician (optional), ZIP/City (optional), and Quantity (required).
+  - Client-side toggles disable/hide **Job Name** and **Price** when `job_type="rei"`.
+- **Calendar grid-range querying**
+  - Month view now queries **by the visible grid window** (including spillover days), expands multi-day jobs, and buckets them per date so jobs appear correctly on the first/last rows of a month.
+
+### Changed
+
+- **Templates**
+  - `_job_fields.html`: fixed `value="rei"` (was `"reis"`); aligned IDs; made non-REI title required; kept price optional.
+  - `day.html`: normalized `job_type` vs `type` with `jt`; REI display shows quantity + city/ZIP; cleaned nested conditionals; added OFF UI.
+  - `index.html`: robust REI tiles; multiday continuation classes (`continues-left/right`); safer initials for OFF pills; “+ Add Job” now uses the per-day route.
+- **Routes**
+  - `calendar.index`: uses grid start/end (Sunday-first weeks), **overlap logic** for jobs and time off, clamps expansion to grid; passes `next_month` to template.
+  - `calendar.day_view`: now passes a `time_off` list for that day.
+  - `calendar.toggle_lock`: unified session user id lookup (`user_id`/`id`) fallback.
+- **Abbreviations**
+  - Expanded `TYPE_ABBR` mapping (e.g., `BOR`, `PT`, `RT`, `MISC`, etc.); normalized `rei/reis` → `REI`.
+
+### Fixed
+
+- Month-boundary jobs were missing on visible edge days — **now shown**.
+- SQL alias typo in time-off JOIN (`JOIN technicians AS tech ...`) — fixed.
+- Stray/mismatched template tags and missing `next_month` in render context — fixed.
+- Minor form typos (`End Time (optional)` copy; missing `>` on a time input).
+
+### Performance
+
+- Added indexes for faster overlap queries:
+  - `jobs(start_date)`, `jobs(end_date)`
+  - `time_off(start_date)`, `time_off(end_date)`
+  - `locks(date)`
+
 ### Changed
 
 - Centralized create-flow validation/normalization into `_compose_job_payload()` and applied it to both `POST /add_job` and `POST /add_job/<date>` to remove code duplication.
