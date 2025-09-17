@@ -12,14 +12,16 @@ Notes:
 
 from collections import defaultdict
 from calendar import Calendar, month_name, monthrange
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 
-from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from flask import (Blueprint, flash, redirect, render_template, request,
+                   session, url_for)
 
-from ..db import get_database
-from ..utils.decorators import login_required, role_required
-from ..utils.holidays_util import holidays_for_month
-from ..utils.logger import setup_logger
+from db import get_database
+from utils.decorators import login_required, role_required
+from utils.holidays_util import holidays_for_month
+from utils.logger import setup_logger
 
 calendar_bp = Blueprint("calendar", __name__)
 log = setup_logger()

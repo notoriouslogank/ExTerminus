@@ -1,172 +1,173 @@
 {% extends "base.html" %}
-
 {% block content %}
 
 <div class="status-banner">
-    {% if locked %}
-        <span class="status-badge locked">Locked</span>
-    {% else %}
-        <span class="status-badge unlocked">Unlocked</span>
-    {% endif %}
+  {% if locked %}
+    <span class="status-badge locked">Locked</span>
+  {% else %}
+    <span class="status-badge unlocked">Unlocked</span>
+  {% endif %}
 </div>
 
 <h2 class="text-center heading">
-    Jobs for {{ selected_date.strftime('%A, %B %d, %Y') }}
+  Jobs for {{ selected_date.strftime('%A, %B %d, %Y') }}
 </h2>
 
 <div class="flex-center gap mb-1">
-    <form method="POST" action="{{ url_for('calendar.toggle_lock') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="date" value="{{ selected_date.isoformat() }}">
-        <button type="submit" class="btn btn-yellow">
-        {% if locked %}🔓 Unlock Day{% else %}🔒 Lock Day{% endif %}
-        </button>
-    </form>
+  <form method="POST" action="{{ url_for('calendar.toggle_lock') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="date" value="{{ selected_date.isoformat() }}">
+    <button type="submit" class="btn btn-yellow">
+      {% if locked %}🔓 Unlock Day{% else %}🔒 Lock Day{% endif %}
+    </button>
+  </form>
 </div>
 
 <div class="flex-center gap mb-1">
-    <a href="{{ url_for('calendar.index') }}" class="btn btn-yellow">← Calendar</a>
-    {% if session.get("user") and not locked %}
+  <a href="{{ url_for('calendar.index') }}" class="btn btn-yellow">← Calendar</a>
+  {% if session.get("user") and not locked %}
     <a href="{{ url_for('job.add_job_for_date', date=selected_date.isoformat()) }}" class="btn btn-yellow">+ Add Job</a>
-    <a href=" {{ url_for('calendar.add_time_off', date=selected_date.isoformat()) }}" class="btn btn-yellow">+ Add Time Off</a>
-    {% endif %}
+    <a href="{{ url_for('calendar.add_time_off', date=selected_date.isoformat()) }}" class="btn btn-yellow">+ Add Time Off</a>
+  {% endif %}
 </div>
 
 {% if jobs %}
-<div style="max-width: 700px; margin: 0 auto;">
-  {% for job in jobs %}
-  <div class="card">
-    {% set jt = (job.job_type or job.type or '')|lower %}
-    {% set tech_label = 'Two Man' if job.two_man else (job.technician_name or 'Unassigned') %}
+  <div style="max-width: 700px; margin: 0 auto;">
+    {% for job in jobs %}
+      <div class="card">
+        {# normalize job type and tech label #}
+        {% set jt = (job.job_type or job.type or '')|lower %}
+        {% set tech_label = 'Two Man' if job.two_man else (job.technician_name or 'Unassigned') %}
 
-    {% if jt in ['rei','reis'] %}
-      <h3 class="job-heading">REIs</h3>
-
-      <p class="job-meta">
-        REIs: <strong>{{ job.rei_quantity or "?" }}</strong>
-        {% if job.rei_city_name %} in {{ job.rei_city_name }}
-        {% elif job.rei_zip %} (ZIP {{ job.rei_zip }})
-        {% endif %}
-      </p>
-
-      {% if job.two_man or job.technician_name %}
-        <p class="job-meta job-meta-light">Technician: {{ tech_label }}</p>
-      {% endif %}
-    {% else %}
-      <h3 class="job-heading">{{ job.display_title or job.title or "(Untitled)" }}</h3>
-
-      {% if job.price %}
-        <p class="job-meta">${{ "%.2f"|format(job.price) }}</p>
-      {% endif %}
-
-      {% if job.time_range or (job.start_time and job.end_time) %}
-        <p class="job-meta">
-          🕒 {{ job.time_range or (job.start_time ~ '-' ~ job.end_time) }}
-        </p>
-      {% endif %}
-
-      {% if jt %}
-        <p class="job-meta">Type: <strong>{{ jt }}</strong></p>
-      {% endif %}
-
-      {% if job.two_man or job.technician_name %}
-        <p class="job-meta job-meta-light">🔧 {{ tech_label }}</p>
-      {% endif %}
-    {% endif %}
-
-
-    {% if job.notes %}
-      <p class="job-notes">📝 {{ job.notes }}</p>
-    {% endif %}
-
-    {% if job.type == "fumigation" %}
-      {% if job.fumigation_type %}
-        <p><strong>Fumigation Type:</strong> {{ job.fumigation_type }}</p>
-      {% endif %}
-      {% if job.target_pest %}
-        <p><strong>Target Pest:</strong>
-          {% if job.target_pest == "Other" and job.custom_pest %}
-            {{ job.custom_pest }}
-          {% else %}
-            {{ job.target_pest }}
+        {% if jt in ['rei','reis'] %}
+          <h3 class="job-heading">REIs</h3>
+          <p class="job-meta">
+            📋 REIs: <strong>{{ job.rei_quantity or "?" }}</strong>
+            {% if job.rei_city_name %} in {{ job.rei_city_name }}
+            {% elif job.rei_zip %} (ZIP {{ job.rei_zip }})
+            {% endif %}
+          </p>
+          {% if job.two_man or job.technician_name %}
+            <p class="job-meta job-meta-light">🔧 Technician: {{ tech_label }}</p>
           {% endif %}
-        </p>
-      {% endif %}
-    {% endif %}
+        {% else %}
+          <h3 class="job-heading">{{ job.display_title or job.title or "(Untitled)" }}</h3>
 
-    <div class="audit-block">
-      <span>Created by {{ job.created_by_name or 'Unknown' }}</span>
-      {% if job.created_at %}<span class="sep">•</span><span>{{ job.created_at|fmt_ts }}</span>{% endif %}
-    </div>
-    <div class="audit-block">
-      <span>Last modified by {{ job.modified_by_name or (job.created_by_name or '—') }}</span>
-      {% if job.last_modified %}<span class="sep">•</span><span>{{ job.last_modified|fmt_ts }}</span>{% endif %}
-    </div>
+          {% if job.price %}
+            <p class="job-meta">💵 ${{ "%.2f"|format(job.price) }}</p>
+          {% endif %}
 
-    {% if not locked %}
-    <div class="flex-row mt-05 gap">
-      <a href="{{ url_for('job.edit_job', job_id=job.id) }}" class="btn btn-yellow">✏️ Edit</a>
-      <form method="POST" action="{{ url_for('job.delete_job', job_id=job.id) }}" onsubmit="return confirm('Delete this job?');">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn btn-red">🗑 Delete</button>
-      </form>
-      <button onclick="openMoveModal({{ job.id }})" class="btn btn-yellow">📅 Move</button>
-    </div>
+          {% if job.time_range or (job.start_time and job.end_time) %}
+            <p class="job-meta">
+              🕒 {{ job.time_range or (job.start_time ~ '-' ~ job.end_time) }}
+            </p>
+          {% endif %}
+
+          {% if jt %}
+            <p class="job-meta">🏷️ Type: <strong>{{ jt }}</strong></p>
+          {% endif %}
+
+          {% if job.two_man or job.technician_name %}
+            <p class="job-meta job-meta-light">🔧 {{ tech_label }}</p>
+          {% endif %}
+        {% endif %}
+
+        {% if job.notes %}
+          <p class="job-notes">📝 {{ job.notes }}</p>
+        {% endif %}
+
+        {% if job.type == "fumigation" %}
+          {% if job.fumigation_type %}
+            <p><strong>Fumigation Type:</strong> {{ job.fumigation_type }}</p>
+          {% endif %}
+          {% if job.target_pest %}
+            <p><strong>Target Pest:</strong>
+              {% if job.target_pest == "Other" and job.custom_pest %}
+                {{ job.custom_pest }}
+              {% else %}
+                {{ job.target_pest }}
+              {% endif %}
+            </p>
+          {% endif %}
+        {% endif %}
+
+        <div class="audit-block">
+          <span>Created by {{ job.created_by_name or 'Unknown' }}</span>
+          {% if job.created_at %}<span class="sep">•</span><span>{{ job.created_at|fmt_ts }}</span>{% endif %}
+        </div>
+        <div class="audit-block">
+          <span>Last modified by {{ job.modified_by_name or (job.created_by_name or '—') }}</span>
+          {% if job.last_modified %}<span class="sep">•</span><span>{{ job.last_modified|fmt_ts }}</span>{% endif %}
+        </div>
+
+        {% if not locked %}
+          <div class="flex-row mt-05 gap">
+            <a href="{{ url_for('job.edit_job', job_id=job.id) }}" class="btn btn-yellow">✏️ Edit</a>
+            <form method="POST" action="{{ url_for('job.delete_job', job_id=job.id) }}"
+                  onsubmit="return confirm('Delete this job?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-red">🗑 Delete</button>
+            </form>
+            <button onclick="openMoveModal({{ job.id }})" class="btn btn-yellow">📅 Move</button>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    {# OFF cards (after jobs) #}
+    {% if time_off %}
+      {% for to in time_off %}
+        <div class="card off-card">
+          <div class="job-header">
+            <span class="job-tag">OFF</span>
+            <span class="job-title">{{ to.tech_name or 'Unknown Tech' }}</span>
+          </div>
+          <div class="job-footer">
+            <span class="job-meta-light">
+              Unavailable all day{% if to.reason %} • {{ to.reason }}{% endif %}
+            </span>
+            {% if not locked and session.get("user") %}
+              <form method="POST"
+                    action="{{ url_for('job.timeoff_delete', timeoff_id=to.id) }}"
+                    class="inline"
+                    onsubmit="return confirm('Remove this time off?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-red btn-sm">🗑 Remove</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
     {% endif %}
   </div>
-  {% endfor %}
-
-{% if time_off %}
-  {% for to in time_off %}
-    <div class="card off-card">
-      <div class="job-header">
-        <span class="job-tag">OFF</span>
-        <span class="job-title">{{ to.tech_name or 'Unknown Tech' }}</span>
-      </div>
-      <div class="job-footer">
-        <span class="job-meta-light">
-          Unavailable all day{% if to.reason %} • {{ to.reason }}{% endif %}
-        </span>
-
-        {% if not locked and session.get("user") %}
-          <form method="POST"
-                action="{{ url_for('job.timeoff_delete', timeoff_id=to.id) }}"
-                class="inline"
-                onsubmit="return confirm('Remove this time off?');">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-red btn-sm">🗑 Remove</button>
-          </form>
-        {% endif %}
-      </div>
-    </div>
-  {% endfor %}
+{% else %}
+  <p class="text-center" style="color: #888">No jobs scheduled for this day.</p>
 {% endif %}
-
 
 <!-- Move Modal -->
 <div id="moveModal" class="modal">
-    <div class="modal-content">
-        <form method="POST" id="moveForm" action="">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <label for="new_date">Select New Date:</label><br>
-            <input type="date" name="new_date" required class="mt-05">
-            <div class="flex-space-between mt-1">
-                <button type="submit" class="btn btn-green">Move</button>
-                <button type="button" onclick="closeMoveModal()" class="btn btn-cancel">Cancel</button>
-            </div>
-        </form>
-    </div>
+  <div class="modal-content">
+    <form method="POST" id="moveForm" action="">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="new_date">Select New Date:</label><br>
+      <input type="date" name="new_date" required class="mt-05">
+      <div class="flex-space-between mt-1">
+        <button type="submit" class="btn btn-green">Move</button>
+        <button type="button" onclick="closeMoveModal()" class="btn btn-cancel">Cancel</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
-    function openMoveModal(jobId) {
-        const form = document.getElementById('moveForm');
-        form.action = `/move_job/${jobId}`;
-        document.getElementById('moveModal').style.display = 'flex';
-    }
-    function closeMoveModal() {
-        document.getElementById('moveModal').style.display = 'none';
-    }
+  function openMoveModal(jobId) {
+    const form = document.getElementById('moveForm');
+    form.action = `/move_job/${jobId}`;
+    document.getElementById('moveModal').style.display = 'flex';
+  }
+  function closeMoveModal() {
+    document.getElementById('moveModal').style.display = 'none';
+  }
 </script>
-{% endblock %}
 
+{% endblock %}
