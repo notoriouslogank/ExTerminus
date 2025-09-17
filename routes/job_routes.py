@@ -83,7 +83,8 @@ def lookup_zipcode(zip_code: str) -> str | None:
         results = zipcodes.matching(str(zip_code).strip())
         if not results:
             return None
-        return results[0].get("city")
+        city = results[0].get("city")
+        return city.title() if city else None
     except Exception:
         return None
 
@@ -145,6 +146,16 @@ def _compose_job_payload(form, cur, start_date: date, end_date: date | None):
     technician_raw = form.get("technician_id")
     technician_id, two_man = _parse_technician(technician_raw, cur)
 
+    # REI Fields (ZIP or City or None; Quantity is required)
+    rei_quantity_raw = (form.get("rei_quantity") or "").strip()
+    rei_zip = (form.get("rei_quantity") or "").strip()
+    rei_city_free = (form.get("rei_city_name") or form.get("rei_city") or "").strip()
+    rei_city_name = None
+    if rei_city_free:
+        rei_city_name = rei_city_free
+    elif rei_zip and rei_zip.isdigit() and len(rei_zip) == 5:
+        rei_city_name = lookup_zipcode(rei_zip)
+
     # REI Fields
     rei_quantity = form.get("rei_quantity")
     rei_zip = (form.get("rei_zip") or "").strip()
@@ -175,15 +186,12 @@ def _compose_job_payload(form, cur, start_date: date, end_date: date | None):
         title = "REIs"
         price = None
         end_final = start_date
-        missing = []
-        if not (rei_quantity and str(rei_quantity).strip()):
-            missing.append("REI quantity")
-        if not (rei_zip and str(rei_zip).strip()):
-            missing.append("REI city name")
-        if not (rei_city_name and str(rei_city_name).strip()):
-            missing.append("REI city name")
-        if missing:
-            return None, f"Missing required REI field(s): {', '.join(missing)}."
+        try:
+            rei_quantity = int(rei_quantity_raw)
+        except ValueError:
+            return None, "Quantity required for REIs."
+        if rei_quantity <= 0:
+            return None, "Quantity required for REIs."
     else:
         if not title:
             return None, "Title is required."
@@ -200,7 +208,11 @@ def _compose_job_payload(form, cur, start_date: date, end_date: date | None):
         "notes": (form.get("notes", "") or ""),
         "technician_id": technician_id,
         "two_man": two_man,
-        "rei_quantity": rei_quantity,
+        "rei_quantity": (
+            int(rei_quantity_raw)
+            if (job_type == "rei" and rei_quantity_raw.isdigit())
+            else form.get("rei_quantity")
+        ),
         "rei_zip": rei_zip,
         "rei_city_name": rei_city_name,
         "exclusion_subtype": exclusion_subtype,
@@ -796,17 +808,27 @@ def edit_job(job_id):
             )
 
         title = (request.form.get("title") or "").strip()
-        job_type = request.form.get("type")
+        job_type = (
+            (request.form.get("job_type") or request.form.get("type") or "")
+            .strip()
+            .lower()
+        )
         if job_type == "custom":
             job_type = (request.form.get("custom_type") or "").strip()
-        if job_type != "reis" and not title:
-            flash("Title is required.", "error")
-            return render_template(
-                "edit_job.html",
-                job=cur.execute(
-                    "SELECT * FROM jobs WHERE id = ?", (job_id,)
-                ).fetchone(),
-            )
+        if job_type == "rei":
+            title = "REIs"
+            request_price = None
+            ed = sd
+        else:
+            if not title:
+                flash("Title is required.", "error")
+                return render_template(
+                    "edit_job.html",
+                    job=cur.execute(
+                        "SELECT * FROM jobs WHERE id = ?", (job_id,)
+                    ).fetchone(),
+                )
+            request_price = request.form.get("price")
 
         technician_raw = request.form.get("technician_id")
         technician_id, two_man = _parse_technician(technician_raw, cur)
@@ -834,7 +856,7 @@ def edit_job(job_id):
             (
                 title,
                 job_type,
-                request.form["price"],
+                request_price,
                 sd.isoformat(),
                 ed.isoformat() if ed else None,
                 start_time,
@@ -856,3 +878,65 @@ def edit_job(job_id):
 
     job = cur.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
     return render_template("edit_job.html", job=job)
+
+
+@job_bp.post("/timeoff/add")
+@login_required
+@role_required("manager", "technician")
+def timeoff_add():
+
+    conn = get_database()
+    cur = conn.cursor()
+    uid = session.get("user", {}).get("user_id")
+    role = cur.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
+    role_name = (role["role"] if role else "").lower()
+
+    tech_id_raw = request.form.get("technician_id")
+    tech_id = int(tech_id_raw) if tech_id_raw and tech_id_raw.isdigit() else uid
+    date_raw = request.form.get("date")
+    reason = request.form.get("reason")
+
+    if role_name not in ("manager", "admin"):
+        tech_id = uid
+
+    d = _parse_date(date_raw)
+    if not d:
+        flash("Invalid date for time off.", "error")
+        return redirect(request.referrer or url_for("calendar.index"))
+
+    cur.execute(
+        "INSERT INTO time_off (technician_id, date, reason, created_at, created_by) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)",
+        (tech_id, d.isoformat(), reason, uid),
+    )
+    conn.commit()
+    logger.info(f"time_off added for tech {tech_id} by user {uid} on {d.isoformat()}")
+    return redirect(request.referrer or url_for("calendar.index"))
+
+
+@job_bp.post("/timeoff/delete/<int:timeoff_id>")
+@login_required
+@role_required("manager", "technician")
+def timeoff_delete(timeoff_id: int):
+    conn = get_database()
+    cur = conn.cursor()
+    uid = session.get("user", {}).get("user_id")
+
+    row = cur.execute(
+        "SELECT technician_id FROM time_off WHERE id=?", (timeoff_id,)
+    ).fetchone()
+    if not row:
+        flash("Time off entry not found.", "error")
+        return redirect(request.referrer or url_for("calendar.index"))
+
+    owner_id = row["technician_id"]
+    role = cur.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
+    role_name = (role["role"] if role else "").lower()
+
+    if uid != owner_id and role_name not in ("manager", "admin"):
+        flash("Not authorized to remove this time off.", "error")
+        return redirect(request.referrer or url_for("calendar.index"))
+
+    cur.execute("DELETE FROM time_off WHERE id=?", (timeoff_id,))
+    conn.commit()
+    logger.info(f"time_off {timeoff_id} deleted by user {uid}")
+    return redirect(request.referrer or url_for("calendar.index"))
