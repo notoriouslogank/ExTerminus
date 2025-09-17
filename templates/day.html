@@ -36,16 +36,17 @@
 <div style="max-width: 700px; margin: 0 auto;">
   {% for job in jobs %}
   <div class="card">
-    {# one label to rule them all #}
+    {% set jt = (job.job_type or job.type or '')|lower %}
     {% set tech_label = 'Two Man' if job.two_man else (job.technician_name or 'Unassigned') %}
 
-    {# REIs vs everything else #}
-    {% if job.type and job.type|lower in ['rei', 'reis'] %}
+    {% if jt in ['rei','reis'] %}
       <h3 class="job-heading">REIs</h3>
 
       <p class="job-meta">
-        📋 REIs: <strong>{{ job.rei_quantity or "?" }}</strong>
-        {% if job.rei_city_name %} in {{ job.rei_city_name }}{% endif %}
+        REIs: <strong>{{ job.rei_quantity or "?" }}</strong>
+        {% if job.rei_city_name %} in {{ job.rei_city_name }}
+        {% elif job.rei_zip %} (ZIP {{ job.rei_zip }})
+        {% endif %}
       </p>
 
       {% if job.two_man or job.technician_name %}
@@ -55,26 +56,24 @@
       <h3 class="job-heading">{{ job.display_title or job.title or "(Untitled)" }}</h3>
 
       {% if job.price %}
-        <p class="job-meta">💵 ${{ "%.2f"|format(job.price) }}</p>
+        <p class="job-meta">${{ "%.2f"|format(job.price) }}</p>
       {% endif %}
 
-      {% if job.time_range and job.time_range != "" %}
+      {% if job.time_range or (job.start_time and job.end_time) %}
         <p class="job-meta">
-          🕒 {{ job.time_range or (job.start_time ~ '-' ~ job.end_time if job.start_time and job.end_time else '') }}
+          🕒 {{ job.time_range or (job.start_time ~ '-' ~ job.end_time) }}
         </p>
       {% endif %}
 
-      {% if job.type %}
-        <p class="job-meta">
-          🏷️ Type:
-          <strong>{{ 'rei' if job.type and (job.type|lower in ['rei','reis']) else job.type }}</strong>
-        </p>
+      {% if jt %}
+        <p class="job-meta">Type: <strong>{{ jt }}</strong></p>
       {% endif %}
 
       {% if job.two_man or job.technician_name %}
         <p class="job-meta job-meta-light">🔧 {{ tech_label }}</p>
       {% endif %}
     {% endif %}
+
 
     {% if job.notes %}
       <p class="job-notes">📝 {{ job.notes }}</p>
@@ -117,24 +116,32 @@
   </div>
   {% endfor %}
 
-  {# OFF cards (after jobs) #}
-  {% if time_off_names %}
-    {% for name in time_off_names %}
+{% if time_off %}
+  {% for to in time_off %}
     <div class="card off-card">
       <div class="job-header">
         <span class="job-tag">OFF</span>
-        <span class="job-title">{{ name }}</span>
+        <span class="job-title">{{ to.tech_name or 'Unknown Tech' }}</span>
       </div>
       <div class="job-footer">
-        <span class="job-meta-light">Unavailable all day</span>
+        <span class="job-meta-light">
+          Unavailable all day{% if to.reason %} • {{ to.reason }}{% endif %}
+        </span>
+
+        {% if not locked and session.get("user") %}
+          <form method="POST"
+                action="{{ url_for('job.timeoff_delete', timeoff_id=to.id) }}"
+                class="inline"
+                onsubmit="return confirm('Remove this time off?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-red btn-sm">🗑 Remove</button>
+          </form>
+        {% endif %}
       </div>
     </div>
-    {% endfor %}
-  {% endif %}
-</div>
-{% else %}
-<p class="text-center" style="color: #888">No jobs scheduled for this day.</p>
+  {% endfor %}
 {% endif %}
+
 
 <!-- Move Modal -->
 <div id="moveModal" class="modal">
