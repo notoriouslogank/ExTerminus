@@ -166,6 +166,12 @@ def init_db() -> None:
             ("Admin", "User", "admin", generate_password_hash("changeme"), "admin", 1),
         )
 
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_jobs_start ON jobs(start_date);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_jobs_end ON jobs(end_date);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_timeoff_start ON time_off(start_date);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_timeoff_end ON time_off(end_date);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_locks_date ON locks(date);")
+
     conn.commit()
     conn.close()
     logger.info("Database ready.")
