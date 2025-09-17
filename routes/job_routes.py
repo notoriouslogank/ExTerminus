@@ -1,20 +1,22 @@
+from datetime import date, datetime
+from functools import wraps
+
+import zipcodes
 from flask import (
     Blueprint,
+    Response,
+    flash,
+    redirect,
     render_template,
     request,
-    redirect,
-    url_for,
     session,
-    flash,
-    Response,
+    url_for,
 )
-from functools import wraps
-from datetime import datetime, date
-from ..utils.decorators import login_required, role_required
-from ..db import get_database
-from ..utils.logger import setup_logger
-from ..utils.holidays_util import is_holiday
-import zipcodes
+
+from db import get_database
+from utils.decorators import login_required, role_required
+from utils.holidays_util import is_holiday
+from utils.logger import setup_logger
 
 job_bp = Blueprint("job", __name__)
 logger = setup_logger()
@@ -899,44 +901,80 @@ def timeoff_add():
     if role_name not in ("manager", "admin"):
         tech_id = uid
 
-    d = _parse_date(date_raw)
+    d = (request.form.get("date") or "").strip()
     if not d:
         flash("Invalid date for time off.", "error")
         return redirect(request.referrer or url_for("calendar.index"))
 
     cur.execute(
         "INSERT INTO time_off (technician_id, date, reason, created_at, created_by) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)",
-        (tech_id, d.isoformat(), reason, uid),
+        (tech_id, d, d, reason),
     )
     conn.commit()
-    logger.info(f"time_off added for tech {tech_id} by user {uid} on {d.isoformat()}")
+    logger.info(f"time_off added for tech {tech_id} by user {uid} on {d}")
     return redirect(request.referrer or url_for("calendar.index"))
 
 
-@job_bp.post("/timeoff/delete/<int:timeoff_id>")
+@job_bp.post("/timeoff/delete/<int:timeoff_id>", endpoint="timeoff_delete")
 @login_required
-@role_required("manager", "technician")
+@role_required("admin", "manager", "technician")
 def timeoff_delete(timeoff_id: int):
     conn = get_database()
     cur = conn.cursor()
-    uid = session.get("user", {}).get("user_id")
 
-    row = cur.execute(
-        "SELECT technician_id FROM time_off WHERE id=?", (timeoff_id,)
+    toff = cur.execute(
+        """
+        SELECT t.id,
+                t.technician_id,
+                t.start_date,
+                t.end_date,
+                tech.name AS tech_name
+        FROM time_off AS t
+        LEFT JOIN technicians AS tech ON tech.id = t.technician_id
+        WHERE t.id = ?
+    """,
+        (timeoff_id,),
     ).fetchone()
-    if not row:
+
+    if not toff:
         flash("Time off entry not found.", "error")
         return redirect(request.referrer or url_for("calendar.index"))
 
-    owner_id = row["technician_id"]
-    role = cur.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
-    role_name = (role["role"] if role else "").lower()
+    # session
+    user = session.get("user") or {}
+    uid = user.get("user_id") or user.get("id")
+    if not uid:
+        flash("You must be logged in.", "error")
+        return redirect(url_for("auth.login"))
 
-    if uid != owner_id and role_name not in ("manager", "admin"):
-        flash("Not authorized to remove this time off.", "error")
+    urow = cur.execute(
+        "SELECT id, role, first_name, last_name FROM users WHERE id = ?", (uid,)
+    ).fetchone()
+    if not urow:
+        flash("Session user not found.", "error")
         return redirect(request.referrer or url_for("calendar.index"))
 
-    cur.execute("DELETE FROM time_off WHERE id=?", (timeoff_id,))
+    role = (urow["role"] or "").lower()
+    allowed = False
+
+    if role in ("admin", "manager"):
+        allowed = True
+    elif role in ("technician", "tech"):
+        full_name = f"{(urow['first_name'] or '').strip()} {(urow['last_name'] or '').strip()}".strip()
+        match = cur.execute(
+            " SELECT id FROM technicians WHERE lower(trim(name)) = lower(trim(?))",
+            (full_name,),
+        ).fetchone()
+        if match and match["id"] == toff["technician_id"]:
+            allowed = True
+
+    if not allowed:
+        flash("Not authorized to remove this time off.", "error")
+        target_day = toff["start_date"]
+        return redirect(url_for("calendar.day_view", selected_date=target_day))
+
+    cur.execute("DELETE FROM time_off WHERE id = ?", (timeoff_id,))
     conn.commit()
-    logger.info(f"time_off {timeoff_id} deleted by user {uid}")
-    return redirect(request.referrer or url_for("calendar.index"))
+    flash("Time off is removed.", "success")
+    target_day = toff["start_date"]
+    return redirect(url_for("calendar.day_view", selected_date=target_day))
