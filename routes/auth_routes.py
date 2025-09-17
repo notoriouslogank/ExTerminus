@@ -6,13 +6,14 @@ Notes:
     - Uses CSRF tokens on GET pages that render forms.
 """
 
-from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from flask import (Blueprint, flash, redirect, render_template, request,
+                   session, url_for)
 from flask_wtf.csrf import generate_csrf
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from ..db import get_database
-from ..utils.decorators import login_required
-from ..utils.logger import setup_logger
+from db import get_database
+from utils.decorators import login_required
+from utils.logger import setup_logger
 
 auth_bp = Blueprint("auth", __name__)
 logger = setup_logger()

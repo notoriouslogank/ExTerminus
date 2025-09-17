@@ -5,12 +5,13 @@ Notes:
     - Creating a user sets ``must_reset_password = 1`` so the first login forces a password change.
 """
 
-from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from flask import (Blueprint, flash, redirect, render_template, request,
+                   session, url_for)
 from werkzeug.security import generate_password_hash
 
-from ..db import get_database
-from ..utils.decorators import role_required
-from ..utils.logger import setup_logger
+from db import get_database
+from utils.decorators import role_required
+from utils.logger import setup_logger
 
 admin_bp = Blueprint("admin", __name__)
 logger = setup_logger()
