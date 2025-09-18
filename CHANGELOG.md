@@ -4,7 +4,9 @@ All notable changes to this project will be documented here.
 
 ## [Unreleased]
 
-## [v0.3.1-dev] - 2025-09-16
+(nothing yet)
+
+## [v0.3.0-dev] - 2025-09-17
 
 ### Added
 
@@ -17,6 +19,8 @@ All notable changes to this project will be documented here.
   - Client-side toggles disable/hide **Job Name** and **Price** when `job_type="rei"`.
 - **Calendar grid-range querying**
   - Month view now queries **by the visible grid window** (including spillover days), expands multi-day jobs, and buckets them per date so jobs appear correctly on the first/last rows of a month.
+- **Password Peek**
+  - Accessible "show/hide password" toggles on Login, Change Password, and Force Password Reset.
 
 ### Changed
 
@@ -30,13 +34,23 @@ All notable changes to this project will be documented here.
   - `calendar.toggle_lock`: unified session user id lookup (`user_id`/`id`) fallback.
 - **Abbreviations**
   - Expanded `TYPE_ABBR` mapping (e.g., `BOR`, `PT`, `RT`, `MISC`, etc.); normalized `rei/reis` → `REI`.
+- Centralized create-flow validation/normalization into `_compose_job_payload()` and applied it to both `POST /add_job` and `POST /add_job/<date>` to remove code duplication.
 
 ### Fixed
 
+- Correct `autocomplete` tokens (current-password/new-password).
+- Restore submit button on Force Password Reset page.
 - Month-boundary jobs were missing on visible edge days — **now shown**.
 - SQL alias typo in time-off JOIN (`JOIN technicians AS tech ...`) — fixed.
 - Stray/mismatched template tags and missing `next_month` in render context — fixed.
 - Minor form typos (`End Time (optional)` copy; missing `>` on a time input).
+- Corrected `INSERT` column order in single-day create; `start_date` is now always persisted (no more `NOT NULL` constraint errors).
+- Enforced authoritative REI semantics on create:
+  - `job_type="rei"` -> `title="REIs"`, single-day (`end_date = start_date`), `price=NULL`.
+  - Required: `rei_quantity`, `rei_zip`, `rei_city_name` (auto-resolved from ZIP)
+- Normalized times to `HH:MM` and validate `end_time > start_time`; derive compact `time_range`.
+- Consistent technician assignment parsing (supports `__BOTH__` for two-man) with ID validation.
+- Unified `job_type` handling (supports `custom` via `custom_type`).
 
 ### Performance
 
@@ -45,19 +59,9 @@ All notable changes to this project will be documented here.
   - `time_off(start_date)`, `time_off(end_date)`
   - `locks(date)`
 
-### Changed
+### Security
 
-- Centralized create-flow validation/normalization into `_compose_job_payload()` and applied it to both `POST /add_job` and `POST /add_job/<date>` to remove code duplication.
-
-### Fixed
-
-- Corrected `INSERT` column order in single-day create; `start_date` is now always persisted (no more `NOT NULL` constraint errors).
-- Enforced authoritative REI semantics on create:
-  - `job_type="rei"` -> `title="REIs"`, single-day (`end_date = start_date`), `price=NULL`.
-  - Required: `rei_quantity`, `rei_zip`, `rei_city_name` (auto-resolved from ZIP)
-- Normalized times to `HH:MM` and validate `end_time > start_time`; derive compact `time_range`.
-- Consistent technician assignment parsing (supports `__BOTH__` for two-man) with ID validation.
-- Unified `job_type` handling (supports `custom` via `custom_type`).
+- No change to storage; no plaintext logged.
 
 ### Developer Notes
 
