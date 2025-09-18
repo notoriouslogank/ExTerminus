@@ -6,6 +6,31 @@ All notable changes to this project will be documented here.
 
 (nothing yet)
 
+## [0.3.1] - 2025-09-17
+
+### Fixed
+
+- **Time Off:** "Remove" is visible again and permissioned correctly -- admins/managers or the entry owner can delete, even on locked days.
+- **Defaults:** `end_date` now defaults to `start_date`.
+- **Day View:** Adding time off from a day page pre-fills `start_date` to that day (fallback to today).
+
+### Added
+
+- **UX:** End date auto-syncs to start until the user edits it (`static/js/timeoff-form.js`).
+- **Month View:** OFF pills support removal when the item includes an `id` (tiny x control for permitted users).
+
+### UI
+
+- CSS helpers: `.btn-xxs`, `.inline`; small header flex tidy on OFF cards.
+
+### Security
+
+- All delete actions use CSRF; lock semantics for jobs unchanged.  Only permitted roles bypass locked days.
+
+### Database
+
+- No schema changes.
+
 ## [v0.3.0] - 2025-09-17
 
 ### Added
