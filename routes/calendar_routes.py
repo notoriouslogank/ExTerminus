@@ -15,8 +15,7 @@ from calendar import Calendar, month_name, monthrange
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 
-from flask import (Blueprint, flash, redirect, render_template, request,
-                   session, url_for)
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 from db import get_database
 from utils.decorators import login_required, role_required
@@ -197,135 +196,6 @@ def index():
     )
 
 
-# @calendar_bp.route("/", endpoint="index")
-# def index():
-#     """Render the month (calendar) view.
-
-#     Query args:
-#         month (int, optional): 1-12; defaults to current month.
-#         year (int, optional): Four-digit year; defaults to current year.
-
-#     Behavior:
-#         - Computes month boundaries and week grid.
-#         - Loads day locks and jobs spanning the month (inclusive).
-#         - Expands multi-day jobs to each date for rendering.
-#         - Loads technician time off and expands to each date.
-#         - Computes holiday map for the month (state ``"VA"``).
-#         - Passes type abbreviations to the template.
-
-#     Returns:
-#         Response: Rendered ``index.html`` with calendar context.
-#     """
-#     today = date.today()
-#     month = request.args.get("month", type=int, default=today.month)
-#     year = request.args.get("year", type=int, default=today.year)
-
-#     month_start = date(year, month, 1)
-#     month_end = date(year, month, monthrange(year, month)[1])
-
-#     month_start_s = month_start.isoformat()
-#     month_end_s = month_end.isoformat()
-
-#     weeks = _month_weeks(year, month)
-
-#     prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
-#     next_month, next_year = (1, year + 1) if month == 12 else (month + 1, year)
-
-#     conn = get_database()
-#     cur = conn.cursor()
-
-#     cur.execute("SELECT date FROM locks")
-#     locks = {row["date"] for row in cur.fetchall()}
-
-#     jobs_by_date = {}
-#     time_off_by_date = {}
-
-#     cur.execute(
-#         """
-#         SELECT
-#             j.id,
-#             j.title,
-#             j.job_type AS type,
-#             j.price,
-#             j.start_date,
-#             j.end_date,
-#             j.start_time,
-#             j.end_time,
-#             j.time_range,
-#             j.rei_quantity AS rei_quantity,
-#             j.rei_zip AS rei_zip,
-#             j.rei_city_name AS rei_city_name,
-#             j.technician_id,
-#             j.two_man,
-#             t.name AS technician_name,
-#             CASE
-#                 WHEN j.two_man = 1 THEN 'Two Man'
-#                 WHEN t.name IS NOT NULL THEN t.name
-#                 ELSE ''
-#             END AS technician_label
-#         FROM jobs j
-#         LEFT JOIN technicians t ON t.id = j.technician_id
-#         WHERE j.start_date <= ?
-#             AND (j.end_date IS NULL OR j.end_date >= ?);
-#         """,
-#         (month_end_s, month_start_s),
-#     )
-
-#     for job in cur.fetchall():
-#         for d in _expand_multi_day(job["start_date"], job["end_date"]):
-#             jobs_by_date.setdefault(d.isoformat(), []).append(job)
-
-#     cur.execute(
-#         """
-#         SELECT toff.start_date, toff.end_date, tech.name AS technician_name
-#         FROM time_off toff
-#         JOIN technicians tech ON tech.id = toff.technician_id
-#         """
-#     )
-#     time_off_by_date: dict[str, list[str]] = {}
-#     for row in cur.fetchall():
-#         for d in _expand_multi_day(row["start_date"], row["end_date"]):
-#             time_off_by_date.setdefault(d.isoformat(), []).append(
-#                 row["technician_name"]
-#             )
-
-#     conn.close()
-
-#     holidays = {}
-
-#     TYPE_ABBR = {
-#         "fumigation": "F",
-#         "insulation": "I",
-#         "exclusion": "EX",
-#         "rei": "REIs",
-#         "borate": "B",
-#         "bird work": "BW",
-#         "poly": "P",
-#         "power spray": "PS",
-#     }
-
-#     STATE_CODE = "VA"
-#     holidays_map = holidays_for_month(year, month, state=STATE_CODE)
-
-#     return render_template(
-#         "index.html",
-#         weeks=weeks,
-#         month=month,
-#         year=year,
-#         month_name=month_name[month],
-#         prev_month=prev_month,
-#         prev_year=prev_year,
-#         next_month=next_month,
-#         next_year=next_year,
-#         locks=locks,
-#         jobs_by_date=jobs_by_date,
-#         time_off_by_date=time_off_by_date,
-#         today=today,
-#         type_abbr=TYPE_ABBR,
-#         holidays=holidays_map,
-#     )
-
-
 @calendar_bp.route("/day/<selected_date>", endpoint="day_view")
 def day_view(selected_date: str):
     """Render the day view for a specific date.
@@ -400,49 +270,121 @@ def day_view(selected_date: str):
 
     conn.close()
     return render_template(
-        "day.html", selected_date=dt, locked=locked, jobs=jobs, time_off=time_off
+        "day.html",
+        default_date=request.args.get("date") or date.today().isoformat(),
+        selected_date=dt,
+        locked=locked,
+        jobs=jobs,
+        time_off=time_off,
     )
 
 
-@calendar_bp.route("/timeoff/add", methods=["GET", "POST"], endpoint="add_time_off")
+# @calendar_bp.route("/timeoff/add", methods=["GET", "POST"], endpoint="add_time_off")
+# @login_required
+# @role_required("admin", "manager", "technician")
+# def add_time_off():
+#     """Create a time off entry for a technician.
+
+#     Handles GET (render form) and POST (submit).  Requires role admin/manage/technician.  On POST, validates fields and inserts into ``time_off``.
+
+#     Returns:
+#         Response: On success, redirect to ``calendar.index``.  On validation errors, redirect back to ``calendar.add_time_off``.  On GET, render form.
+#     """
+#     if "user" not in session:
+#         return redirect(url_for("auth.login"))
+
+#     conn = get_database()
+#     cur = conn.cursor()
+
+#     if request.method == "POST":
+#         technician_id = request.form.get("technician_id")
+#         start_date = request.form.get("start_date")
+#         end_date = request.form.get("end_date")
+#         reason = request.form.get("reason")
+
+#         if not technician_id or not start_date or not end_date:
+#             flash("All fields are required.", "error")
+#             return redirect(url_for("calendar.add_time_off"))
+
+#         cur.execute(
+#             "INSERT INTO time_off (technician_id, start_date, end_date, reason) VALUES (?, ?, ?, ?)",
+#             (technician_id, start_date, end_date, reason),
+#         )
+#         conn.commit()
+#         flash("Time off added.", "success")
+#         return redirect(url_for("calendar.index"))
+
+#     cur.execute("SELECT id, name FROM technicians ORDER BY name")
+#     technicians = cur.fetchall()
+#     conn.close()
+#     return render_template("add_time_off.html", technicians=technicians)
+
+
+@calendar_bp.route("/time_off/add", methods=["POST"])
 @login_required
-@role_required("admin", "manager", "technician")
 def add_time_off():
-    """Create a time off entry for a technician.
+    """Add time off. Defaults: end_date=start_date; start_date=today if missing."""
+    user = session["user"]
+    start = (request.form.get("start_date") or "").strip()
+    end = (request.form.get("end_date") or "").strip()
+    notes = (request.form.get("notes") or "").strip()
 
-    Handles GET (render form) and POST (submit).  Requires role admin/manage/technician.  On POST, validates fields and inserts into ``time_off``.
-
-    Returns:
-        Response: On success, redirect to ``calendar.index``.  On validation errors, redirect back to ``calendar.add_time_off``.  On GET, render form.
-    """
-    if "user" not in session:
-        return redirect(url_for("auth.login"))
+    if not start:
+        start = date.today().isoformat()
+    if not end:
+        end = start
 
     conn = get_database()
     cur = conn.cursor()
-
-    if request.method == "POST":
-        technician_id = request.form.get("technician_id")
-        start_date = request.form.get("start_date")
-        end_date = request.form.get("end_date")
-        reason = request.form.get("reason")
-
-        if not technician_id or not start_date or not end_date:
-            flash("All fields are required.", "error")
-            return redirect(url_for("calendar.add_time_off"))
-
+    # Adjust column names to your schema:
+    # Common options: user_id/technician_id ; notes optional
+    try:
         cur.execute(
-            "INSERT INTO time_off (technician_id, start_date, end_date, reason) VALUES (?, ?, ?, ?)",
-            (technician_id, start_date, end_date, reason),
+            "INSERT INTO time_off (user_id, start_date, end_date, notes) VALUES (?, ?, ?, ?)",
+            (user["user_id"], start, end, notes),
         )
-        conn.commit()
-        flash("Time off added.", "success")
-        return redirect(url_for("calendar.index"))
+    except Exception:
+        # Fallback if your schema uses technician_id instead of user_id
+        cur.execute(
+            "INSERT INTO time_off (technician_id, start_date, end_date, notes) VALUES (?, ?, ?, ?)",
+            (user["user_id"], start, end, notes),
+        )
+    conn.commit()
+    flash("Time off added.", "success")
+    return redirect(request.referrer or url_for("calendar.index"))
 
-    cur.execute("SELECT id, name FROM technicians ORDER BY name")
-    technicians = cur.fetchall()
-    conn.close()
-    return render_template("add_time_off.html", technicians=technicians)
+
+@calendar_bp.route("/time_off/<int:time_off_id>/delete", methods=["POST"])
+@login_required
+def delete_time_off(time_off_id: int):
+    """Remove a time-off entry. Allow admin/manager or owner to delete."""
+    user = session["user"]
+    is_admin = str(user.get("role", "")).lower() in {"admin", "manager"}
+
+    conn = get_database()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM time_off WHERE id = ?", (time_off_id,))
+    row = cur.fetchone()
+    if not row:
+        flash("Time off not found.", "error")
+        return redirect(request.referrer or url_for("calendar.index"))
+
+    # Try to detect owner column
+    owner_id = None
+    for key in ("user_id", "technician_id", "created_by"):
+        if key in row.keys():
+            owner_id = row[key]
+            break
+
+    is_owner = owner_id == user.get("user_id")
+    if not (is_admin or is_owner):
+        flash("You don't have permission to remove this time off.", "error")
+        return redirect(request.referrer or url_for("calendar.index"))
+
+    cur.execute("DELETE FROM time_off WHERE id = ?", (time_off_id,))
+    conn.commit()
+    flash("Time off removed.", "success")
+    return redirect(request.referrer or url_for("calendar.index"))
 
 
 @calendar_bp.route("/lock/toggle", methods=["POST"], endpoint="toggle_lock")

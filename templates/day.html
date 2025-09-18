@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
+{% set _u = session.get('user') or {} %}
+{% set _role = (_u.get('role', '') | lower) %}
+{% set _uid = _u.get('user_id') %}
 
 <div class="status-banner">
   {% if locked %}
@@ -126,15 +129,20 @@
             <span class="job-meta-light">
               Unavailable all day{% if to.reason %} • {{ to.reason }}{% endif %}
             </span>
-            {% if not locked and session.get("user") %}
+
+            {% set _owner = to.user_id or to.technician_id or to.created_by %}
+            {% set _can_remove = (not locked) or (_role in ['admin','manager']) or (_owner == _uid) %}
+
+            {% if _can_remove %}
               <form method="POST"
-                    action="{{ url_for('job.timeoff_delete', timeoff_id=to.id) }}"
+                    action="{{ url_for('calendar.delete_time_off', time_off_id=to.id) }}"
                     class="inline"
                     onsubmit="return confirm('Remove this time off?');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-red btn-sm">🗑 Remove</button>
               </form>
             {% endif %}
+
           </div>
         </div>
       {% endfor %}
