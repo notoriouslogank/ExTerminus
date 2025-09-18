@@ -3,7 +3,7 @@
 Exposes:
 - GET  /                    -> month view (index)
 - GET  /day/<date>          -> day view
-- GET/POST /timeoff/add     -> add time off
+- POST /time_off/add        -> add time off
 - POST /lock/toggle         -> lock/unlock a day
 
 Notes:
@@ -11,8 +11,7 @@ Notes:
 """
 
 from collections import defaultdict
-from calendar import Calendar, month_name, monthrange
-from collections import defaultdict
+from calendar import Calendar, month_name
 from datetime import date, datetime, timedelta
 
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
@@ -27,33 +26,14 @@ log = setup_logger()
 
 
 def _month_weeks(year: int, month: int, firstweekday: int = 6) -> list[list[date]]:
-    """Return a month as a list of week rows, each a list of 7 dates.
-
-    Wraps ``calendar.Calendar.itermonthdates`` and chunks into 70day rows.  ``firstweekday=6`` means weeks start on Sunday.
-
-    Args:
-        year (int): Four-digit year.
-        month (int): Month number (1-12).
-        firstweekday (int, optional): 0=Monday ... 6=Sunday. Defaults to 6.
-
-    Returns:
-        list[list[date]]: Weeks covering the requested month (spillover days from adjacent months included to fill full weeks).
-    """
+    """Return a month as a list of week rows, each a list of 7 dates (Sunday-first by default)."""
     cal = Calendar(firstweekday=firstweekday)
     days = list(cal.itermonthdates(year, month))
     return [days[i : i + 7] for i in range(0, len(days), 7)]
 
 
 def _expand_multi_day(sd_str: str, ed_str: str | None):
-    """Yield each date in a job's inclusive span.
-
-    Args:
-        sd_str (str): Start date in ISO ``YYYY-MM-DD``.
-        ed_str (str | None): End date in ISO ``YYYY-MM-DD`` (or None for single-day jobs).
-
-    Yields:
-        date: Each date from start through end (inclusive).
-    """
+    """Yield each date in a job's inclusive span."""
     sd = datetime.fromisoformat(sd_str).date()
     ed = datetime.fromisoformat(ed_str).date() if ed_str else sd
     d = sd
@@ -80,12 +60,14 @@ def index():
     conn = get_database()
     cur = conn.cursor()
 
+    # Locks spanning the visible grid
     cur.execute(
         "SELECT date FROM locks WHERE date BETWEEN ? AND ?",
         (grid_start_s, grid_end_s),
     )
     locks = {row["date"] for row in cur.fetchall()}
 
+    # Jobs spanning the visible grid
     cur.execute(
         """
         SELECT
@@ -128,12 +110,15 @@ def index():
             jobs_by_date[d.isoformat()].append(job)
             d += timedelta(days=1)
 
+    # --- Time off for the grid (OBJECTS, not just names) ---
     cur.execute(
         """
         SELECT
+          toff.id,
+          toff.technician_id AS owner_id,
           toff.start_date,
-          toff.end_date,
-          tech.name AS technician_name
+          COALESCE(toff.end_date, toff.start_date) AS end_date,
+          tech.name AS name
         FROM time_off AS toff
         JOIN technicians AS tech ON tech.id = toff.technician_id
         WHERE date(toff.start_date) <= date(:grid_end)
@@ -142,15 +127,17 @@ def index():
         {"grid_start": grid_start_s, "grid_end": grid_end_s},
     )
 
-    time_off_by_date: dict[str, list[str]] = defaultdict(list)
+    time_off_by_date: dict[str, list[dict]] = defaultdict(list)
     for row in cur.fetchall():
         sd = datetime.fromisoformat(row["start_date"]).date()
-        ed = datetime.fromisoformat(row["end_date"]).date() if row["end_date"] else sd
+        ed = datetime.fromisoformat(row["end_date"]).date()
         start = sd if sd >= grid_start else grid_start
         end = ed if ed <= grid_end else grid_end
         d = start
         while d <= end:
-            time_off_by_date[d.isoformat()].append(row["technician_name"])
+            time_off_by_date[d.isoformat()].append(
+                {"id": row["id"], "owner_id": row["owner_id"], "name": row["name"]}
+            )
             d += timedelta(days=1)
 
     conn.close()
@@ -198,50 +185,37 @@ def index():
 
 @calendar_bp.route("/day/<selected_date>", endpoint="day_view")
 def day_view(selected_date: str):
-    """Render the day view for a specific date.
-
-    Args:
-        selected_date (str): ISO date (``YYYY-MM-DD``) from the route segment.
-
-    Behavior:
-        - Redirects to month view if the date is invalid.
-        - Loads lock status and all jobs overlapping the date.
-        - Joins creator/modifier usernames for the audit block.
-        - Normalizes REI titles to display label ``"REIs"``.
-
-    Returns:
-        Response: Rendered ``day.html`` with jobs and lock status.
-    """
+    """Render the day view for a specific date."""
     try:
         dt = datetime.fromisoformat(selected_date).date()
     except Exception:
         return redirect(url_for("calendar.index"))
 
     conn = get_database()
-    import sqlite3
-
-    conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
     cur.execute("SELECT 1 FROM locks WHERE date = ?", (selected_date,))
     locked = cur.fetchone() is not None
 
+    # Day-specific time off (list of rows)
     cur.execute(
         """
-    SELECT toff.id,
-        toff.technician_id,
-        tech.name AS tech_name,
-        toff.reason
-    FROM time_off AS toff
-    LEFT JOIN technicians AS tech ON tech.id = toff.technician_id
-    WHERE date(:sel) BETWEEN date(toff.start_date)
-                        AND date(COALESCE(toff.end_date, toff.start_date))
-    ORDER BY tech.name
-    """,
+        SELECT
+          toff.id,
+          toff.technician_id AS owner_id,
+          tech.name AS tech_name,
+          toff.reason
+        FROM time_off AS toff
+        LEFT JOIN technicians AS tech ON tech.id = toff.technician_id
+        WHERE date(:sel) BETWEEN date(toff.start_date)
+                            AND date(COALESCE(toff.end_date, toff.start_date))
+        ORDER BY tech.name
+        """,
         {"sel": selected_date},
     )
     time_off = cur.fetchall()
 
+    # Jobs overlapping the day
     cur.execute(
         """
         SELECT
@@ -279,47 +253,6 @@ def day_view(selected_date: str):
     )
 
 
-# @calendar_bp.route("/timeoff/add", methods=["GET", "POST"], endpoint="add_time_off")
-# @login_required
-# @role_required("admin", "manager", "technician")
-# def add_time_off():
-#     """Create a time off entry for a technician.
-
-#     Handles GET (render form) and POST (submit).  Requires role admin/manage/technician.  On POST, validates fields and inserts into ``time_off``.
-
-#     Returns:
-#         Response: On success, redirect to ``calendar.index``.  On validation errors, redirect back to ``calendar.add_time_off``.  On GET, render form.
-#     """
-#     if "user" not in session:
-#         return redirect(url_for("auth.login"))
-
-#     conn = get_database()
-#     cur = conn.cursor()
-
-#     if request.method == "POST":
-#         technician_id = request.form.get("technician_id")
-#         start_date = request.form.get("start_date")
-#         end_date = request.form.get("end_date")
-#         reason = request.form.get("reason")
-
-#         if not technician_id or not start_date or not end_date:
-#             flash("All fields are required.", "error")
-#             return redirect(url_for("calendar.add_time_off"))
-
-#         cur.execute(
-#             "INSERT INTO time_off (technician_id, start_date, end_date, reason) VALUES (?, ?, ?, ?)",
-#             (technician_id, start_date, end_date, reason),
-#         )
-#         conn.commit()
-#         flash("Time off added.", "success")
-#         return redirect(url_for("calendar.index"))
-
-#     cur.execute("SELECT id, name FROM technicians ORDER BY name")
-#     technicians = cur.fetchall()
-#     conn.close()
-#     return render_template("add_time_off.html", technicians=technicians)
-
-
 @calendar_bp.route("/time_off/add", methods=["POST"])
 @login_required
 def add_time_off():
@@ -327,28 +260,36 @@ def add_time_off():
     user = session["user"]
     start = (request.form.get("start_date") or "").strip()
     end = (request.form.get("end_date") or "").strip()
-    notes = (request.form.get("notes") or "").strip()
+    reason = (request.form.get("reason") or request.form.get("notes") or "").strip()
 
     if not start:
         start = date.today().isoformat()
     if not end:
         end = start
 
+    # Prefer explicit technician_id from the form; fall back to session user id.
+    tech_id = (request.form.get("technician_id") or "").strip() or None
     conn = get_database()
     cur = conn.cursor()
-    # Adjust column names to your schema:
-    # Common options: user_id/technician_id ; notes optional
-    try:
+
+    if tech_id:
         cur.execute(
-            "INSERT INTO time_off (user_id, start_date, end_date, notes) VALUES (?, ?, ?, ?)",
-            (user["user_id"], start, end, notes),
+            "INSERT INTO time_off (technician_id, start_date, end_date, reason) VALUES (?, ?, ?, ?)",
+            (tech_id, start, end, reason),
         )
-    except Exception:
-        # Fallback if your schema uses technician_id instead of user_id
-        cur.execute(
-            "INSERT INTO time_off (technician_id, start_date, end_date, notes) VALUES (?, ?, ?, ?)",
-            (user["user_id"], start, end, notes),
-        )
+    else:
+        # Try user_id first; fallback to technician_id with the same value if schema uses technicians only.
+        try:
+            cur.execute(
+                "INSERT INTO time_off (user_id, start_date, end_date, reason) VALUES (?, ?, ?, ?)",
+                (user["user_id"], start, end, reason),
+            )
+        except Exception:
+            cur.execute(
+                "INSERT INTO time_off (technician_id, start_date, end_date, reason) VALUES (?, ?, ?, ?)",
+                (user["user_id"], start, end, reason),
+            )
+
     conn.commit()
     flash("Time off added.", "success")
     return redirect(request.referrer or url_for("calendar.index"))
@@ -369,10 +310,10 @@ def delete_time_off(time_off_id: int):
         flash("Time off not found.", "error")
         return redirect(request.referrer or url_for("calendar.index"))
 
-    # Try to detect owner column
+    # Detect owner column
     owner_id = None
-    for key in ("user_id", "technician_id", "created_by"):
-        if key in row.keys():
+    for key in ("user_id", "technician_id", "created_by", "owner_id"):
+        if key in row.keys() and row[key] is not None:
             owner_id = row[key]
             break
 
@@ -391,13 +332,7 @@ def delete_time_off(time_off_id: int):
 @login_required
 @role_required("admin", "manager", "technician")
 def toggle_lock():
-    """Toggle the lock status for a specific date.
-
-    Reads the target date from form field ``date``.  If locked, unlocks it; if unlocked, inserts a lock with the current user's ID.
-
-    Returns:
-        Response: Redirect to ``calendar.day_view`` for the selected date.  On missing date, redirects to ``calendar.index`` with a flash error.
-    """
+    """Toggle the lock status for a specific date."""
     selected_date = request.form.get("date")
     if not selected_date:
         flash("No date provided.", "error")
