@@ -43,6 +43,9 @@
 
     </div>
 
+    {% block scripts %}
+        <script defer src="{{ url_for('static', filename='js/password-peek.js') }}"></script>
+    {% endblock %}
 </body>
 </html>
 
