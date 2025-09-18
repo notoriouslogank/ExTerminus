@@ -15,9 +15,25 @@
     </div>
 
     <div class="form-group">
-        <label for="password">Password:</label>
-        <input type="password" name="password" required>
+        <label for="password">Password</label>
+        <div class="field-with-action">
+            <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                autocomplete="current-password"
+                aria-describedby="password-help">
+            <button
+                type="button"
+                class="btn-icon password-toggle"
+                aria-label="Show password"
+                aria-pressed="false"
+                data-target="password"
+                title="Show/Hide password">
+            <span class="sr-only">Show</span><span aria-hidden="true">👁️</span></button>
     </div>
+    <small id="password-help" class="form-help">Never share it; sometimes even with yourself.</small>
 
     <div class="text-center mt-1">
         <button type="submit" class="btn green">Login</button>
