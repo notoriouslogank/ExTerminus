@@ -29,6 +29,44 @@ a:hover {
     margin: 0 auto;
 }
 
+.field-with-action {
+    position: relative;
+    display: grid;
+}
+
+.field-with-action input {
+    padding-right: 2.75rem;
+}
+
+.field-with-action .btn-icon {
+    position: absolute;
+    right: .5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.btn-icon:focus {
+    outline: 2px solid var(--accent, #6cf);
+    outline-offset: 2px;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 .py-3 {
     padding-top: 1em;
     padding-bottom: 1em;
