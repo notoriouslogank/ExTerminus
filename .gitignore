@@ -22,3 +22,4 @@ mkbug.py
 .gitmessage.txt
 # Logs
 logs/
+*.bak

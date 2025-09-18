@@ -17,7 +17,7 @@
 
 {% if session.get("user") %}
 <div class="calendar-actions">
-    <a href="{{ url_for('job.add_job', date=today.isoformat()) }}" class="btn btn-yellow">
+    <a href="{{ url_for('job.add_job_for_date', date=today.isoformat()) }}" class="btn btn-yellow">
         + Add Job
     </a>
     <a href="{{ url_for('calendar.add_time_off') }}" class="btn btn-yellow">+ Add Time Off
@@ -65,89 +65,79 @@
             {% endif %}
 
             <div class="jobs">
-                {% if time_off_by_date.get(day_str) %}
-                    {% for tech_name in time_off_by_date[day_str] %}
-
-                    <div class="job-entry off-entry" title="{{ tech_name }} is off">
-                        <div class="job-header">
-                            <span class="job-tag">OFF</span>
-                            <span class="job-title">{{ tech_name.split()[0][0] }}.{{ tech_name.split()[1] }}</span>
-                        </div>
+  {# Time Off pills (names only) #}
+              {% if time_off_by_date.get(day_str) %}
+                {% for tech_name in time_off_by_date[day_str] %}
+                  <div class="job-entry off-entry" title="{{ tech_name }} is off">
+                    <div class="job-header">
+                      <span class="job-tag">OFF</span>
+                      {# initials + last name fallback #}
+                      {% set parts = (tech_name or '').split() %}
+                      {% set short = (parts[0][0] ~ '.' ~ (parts[1] if parts|length>1 else '')) if parts|length>=1 else tech_name %}
+                      <span class="job-title">{{ short }}</span>
                     </div>
-
-                    {% endfor %}
-                {% endif %}
-                    {% for job in (jobs_by_date.get(day_str, []) | sort
-                    (attribute='time_range')) %}
-                    {# BUG-1006: template expects 'rei' but code uses 'reis'. Normalize: #}
-                    {% set job_type_clean = (job.type or job.job_type or "")|lower|trim %}
-                    {% if job_type_clean in ["rei","reis"] %}
-
-                    {% if job.two_man %}
-                        {% set tech_display = 'Two Men' %}
-                    {% else %}
-                        {% set tech_parts = (job.technician_name or "").split(" ") %}
-                        {% set tech_display = tech_parts[0][0] ~ "." ~ tech_parts[1] if tech_parts | length > 1 else (job.technician_name or "") %}
-                    {% endif %}
-
-                    <div class="job-entry rei-entry" title="Reinspection">
-                        <div class="job-header job-info-flex">
-                            <div class="job-left">
-                                <span class="job-tag">REIs</span>
-                                <span class="job-qty">{{ job.rei_quantity }}</span>
-                                {% if job.rei_city_name or job.rei_zip %}
-                                    <span class="job-city">{{ job.rei_city_name or job.rei_zip }}</span>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        {% if tech_display %}
-                        <div class="job-footer">
-                            <span class="job-title">{{ tech_display }}</span>
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    {# removed stray </div> that prematurely closed jobs-wrapper #}
-                    {% else %}
-                        {% set job_type_clean = (job.type or "")|lower|trim %}
-                        {% set type_abbrv = (type_abbr|default).get(job_type_clean, (job_type_clean[:1])|upper) %}
-                        {% set display_name = job.title or "Unknown" %}
-                        {% set price = job.price %}
-                        {% set is_first_day = (day_str == job.start_date) %}
-                        {% set is_last_day = (day_str == job.end_date) %}
-                        {% set is_multi_day = job.start_date != job.end_date %}
-
-                        {% set cont_left = is_multi_day and not is_first_day %}
-                        {% set cont_right = is_multi_day and not is_last_day %}
-                        {% set show_price = is_first_day %}
-
-                    <div class="job-entry" {{ 'continues-left' if cont_left}} {{ 'continues-right' if cont_right}} title="{{ display_name }}">
-                        <div class="job-header">
-                            {% set _display_time = job.time_range if job.time_range and job.time_range != 'any'
-                                else (job.start_time ~ '-' ~ job.end_time if job.start_time and job.end_time else None) %}
-                            {% if _display_time %}
-                                <span class="job-time">{{ _display_time }}</span>
-                            {% endif %}
-                            <span class="job-tag">{{ type_abbrv }}</span>
-                            <span class="job-title">{{ display_name }}</span>
-                        </div>
-                        {% set tech_label = 'Two Men' if job.two_man else (job.technician_name or '') %}
-                        <div class="job-footer">
-                            {% if tech_label %}
-                                <span class="job-tech">{{ tech_label }}</span>
-                            {% endif %}
-                            {% if show_price and price not in [None, '', 0] %}
-                                <span class="job-price">${{ ("%0.2f"|format(price|float)).rstrip('0').rstrip('.') }}</span>
-                            {% else %}
-                                <span class="job-price tbd">TBD</span>
-                            {% endif %}
-                            {% if cont_left %}<span class="job-arrow job-arrow-left">⟵</span>{% endif %}
-                            {% if cont_right %}<span class="job-arrow job-arrow-right">⟶</span>{% endif %}
-                            {% endif %}
-                        </div>
-                    </div>
+                  </div>
                 {% endfor %}
+              {% endif %}
+
+              {# Jobs, sorted by time_range #}
+              {% for job in (jobs_by_date.get(day_str, []) | sort(attribute='time_range')) %}
+                {% set jt = (job.job_type or job.type or '')|lower %}
+                {% if jt in ['rei','reis'] %}
+                  {# REI tile #}
+                  <div class="job-entry rei-entry" title="Reinspection">
+                    <div class="job-header job-info-flex">
+                      <div class="job-left">
+                        <span class="job-tag">REIs</span>
+                        <span class="job-qty">{{ job.rei_quantity or 0 }}</span>
+                        {% if job.rei_city_name or job.rei_zip %}
+                          <span class="job-city">{{ job.rei_city_name or job.rei_zip }}</span>
+                        {% endif %}
+                      </div>
+                    </div>
+                    {% set tech_display = 'Two Men' if job.two_man else (job.technician_name or '') %}
+                    {% if tech_display %}
+                      <div class="job-footer">
+                        <span class="job-title">{{ tech_display }}</span>
+                      </div>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  {# Generic job tile with multiday continuation markers #}
+                  {% set display_name  = job.title or "Unknown" %}
+                  {% set price         = job.price %}
+                  {% set is_first_day  = (day_str == job.start_date) %}
+                  {% set is_last_day   = (day_str == job.end_date) %}
+                  {% set is_multi_day  = job.start_date and job.end_date and (job.start_date != job.end_date) %}
+                  {% set cont_left     = is_multi_day and not is_first_day %}
+                  {% set cont_right    = is_multi_day and not is_last_day %}
+                  {% set _display_time = job.time_range if job.time_range and job.time_range != 'any'
+                                          else (job.start_time ~ '-' ~ job.end_time if job.start_time and job.end_time else None) %}
+                  {% set jtc = jt %}
+                  {% set type_abbrv = (type_abbr|default({})).get(jtc, (jtc[:1]|upper) if jtc else '?') %}
+                  {% set tech_label = 'Two Men' if job.two_man else (job.technician_name or '') %}
+
+                  <div class="job-entry {% if cont_left %}continues-left{% endif %} {% if cont_right %}continues-right{% endif %}" title="{{ display_name }}">
+                    <div class="job-header">
+                      {% if _display_time %}<span class="job-time">{{ _display_time }}</span>{% endif %}
+                      <span class="job-tag">{{ type_abbrv }}</span>
+                      <span class="job-title">{{ display_name }}</span>
+                    </div>
+                    <div class="job-footer">
+                      {% if tech_label %}<span class="job-tech">{{ tech_label }}</span>{% endif %}
+                      {% if is_first_day and price not in [None, '', 0] %}
+                        <span class="job-price">
+                          ${{ ("%0.2f"|format(price|float)).rstrip('0').rstrip('.') }}
+                        </span>
+                      {% else %}
+                        <span class="job-price tbd">TBD</span>
+                      {% endif %}
+                      {% if cont_left %}<span class="job-arrow job-arrow-left">⟵</span>{% endif %}
+                      {% if cont_right %}<span class="job-arrow job-arrow-right">⟶</span>{% endif %}
+                    </div>
+                  </div>
+                {% endif %}
+              {% endfor %}
             </div>
         </td>
         {% endfor %}

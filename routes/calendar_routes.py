@@ -10,15 +10,18 @@ Notes:
     Uses state code ``VA`` for holidays via ``holidays_for_month``.
 """
 
+from collections import defaultdict
 from calendar import Calendar, month_name, monthrange
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 
-from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from flask import (Blueprint, flash, redirect, render_template, request,
+                   session, url_for)
 
-from ..db import get_database
-from ..utils.decorators import login_required, role_required
-from ..utils.holidays_util import holidays_for_month
-from ..utils.logger import setup_logger
+from db import get_database
+from utils.decorators import login_required, role_required
+from utils.holidays_util import holidays_for_month
+from utils.logger import setup_logger
 
 calendar_bp = Blueprint("calendar", __name__)
 log = setup_logger()
@@ -62,34 +65,15 @@ def _expand_multi_day(sd_str: str, ed_str: str | None):
 
 @calendar_bp.route("/", endpoint="index")
 def index():
-    """Render the month (calendar) view.
-
-    Query args:
-        month (int, optional): 1-12; defaults to current month.
-        year (int, optional): Four-digit year; defaults to current year.
-
-    Behavior:
-        - Computes month boundaries and week grid.
-        - Loads day locks and jobs spanning the month (inclusive).
-        - Expands multi-day jobs to each date for rendering.
-        - Loads technician time off and expands to each date.
-        - Computes holiday map for the month (state ``"VA"``).
-        - Passes type abbreviations to the template.
-
-    Returns:
-        Response: Rendered ``index.html`` with calendar context.
-    """
     today = date.today()
     month = request.args.get("month", type=int, default=today.month)
     year = request.args.get("year", type=int, default=today.year)
 
-    month_start = date(year, month, 1)
-    month_end = date(year, month, monthrange(year, month)[1])
-
-    month_start_s = month_start.isoformat()
-    month_end_s = month_end.isoformat()
-
-    weeks = _month_weeks(year, month)
+    # build week grid
+    weeks = _month_weeks(year, month, firstweekday=6)
+    grid_start = weeks[0][0]
+    grid_end = weeks[-1][-1]
+    grid_start_s, grid_end_s = grid_start.isoformat(), grid_end.isoformat()
 
     prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
     next_month, next_year = (1, year + 1) if month == 12 else (month + 1, year)
@@ -97,11 +81,11 @@ def index():
     conn = get_database()
     cur = conn.cursor()
 
-    cur.execute("SELECT date FROM locks")
+    cur.execute(
+        "SELECT date FROM locks WHERE date BETWEEN ? AND ?",
+        (grid_start_s, grid_end_s),
+    )
     locks = {row["date"] for row in cur.fetchall()}
-
-    jobs_by_date = {}
-    time_off_by_date = {}
 
     cur.execute(
         """
@@ -128,47 +112,71 @@ def index():
             END AS technician_label
         FROM jobs j
         LEFT JOIN technicians t ON t.id = j.technician_id
-        WHERE j.start_date <= ?
-            AND (j.end_date IS NULL OR j.end_date >= ?);
+        WHERE date(j.start_date) <= date(:grid_end)
+          AND date(COALESCE(j.end_date, j.start_date)) >= date(:grid_start)
         """,
-        (month_end_s, month_start_s),
+        {"grid_start": grid_start_s, "grid_end": grid_end_s},
     )
 
+    jobs_by_date: dict[str, list] = defaultdict(list)
     for job in cur.fetchall():
-        for d in _expand_multi_day(job["start_date"], job["end_date"]):
-            jobs_by_date.setdefault(d.isoformat(), []).append(job)
+        sd = datetime.fromisoformat(job["start_date"]).date()
+        ed = datetime.fromisoformat(job["end_date"]).date() if job["end_date"] else sd
+        start = sd if sd >= grid_start else grid_start
+        end = ed if ed <= grid_end else grid_end
+        d = start
+        while d <= end:
+            jobs_by_date[d.isoformat()].append(job)
+            d += timedelta(days=1)
 
     cur.execute(
         """
-        SELECT toff.start_date, toff.end_date, tech.name AS technician_name
-        FROM time_off toff
-        JOIN technicians tech ON tech.id = toff.technician_id
-        """
+        SELECT
+          toff.start_date,
+          toff.end_date,
+          tech.name AS technician_name
+        FROM time_off AS toff
+        JOIN technicians AS tech ON tech.id = toff.technician_id
+        WHERE date(toff.start_date) <= date(:grid_end)
+          AND date(COALESCE(toff.end_date, toff.start_date)) >= date(:grid_start)
+        """,
+        {"grid_start": grid_start_s, "grid_end": grid_end_s},
     )
-    time_off_by_date: dict[str, list[str]] = {}
+
+    time_off_by_date: dict[str, list[str]] = defaultdict(list)
     for row in cur.fetchall():
-        for d in _expand_multi_day(row["start_date"], row["end_date"]):
-            time_off_by_date.setdefault(d.isoformat(), []).append(
-                row["technician_name"]
-            )
+        sd = datetime.fromisoformat(row["start_date"]).date()
+        ed = datetime.fromisoformat(row["end_date"]).date() if row["end_date"] else sd
+        start = sd if sd >= grid_start else grid_start
+        end = ed if ed <= grid_end else grid_end
+        d = start
+        while d <= end:
+            time_off_by_date[d.isoformat()].append(row["technician_name"])
+            d += timedelta(days=1)
 
     conn.close()
 
-    holidays = {}
-
-    TYPE_ABBR = {
-        "fumigation": "F",
-        "insulation": "I",
-        "exclusion": "EX",
-        "rei": "REIs",
-        "borate": "B",
-        "bird work": "BW",
-        "poly": "P",
-        "power spray": "PS",
-    }
-
     STATE_CODE = "VA"
     holidays_map = holidays_for_month(year, month, state=STATE_CODE)
+
+    TYPE_ABBR = {
+        "termite": "T",
+        "borate": "BOR",
+        "pretreat": "PT",
+        "retreat": "RT",
+        "bird work": "BRD",
+        "power spray": "PS",
+        "fumigation": "FUME",
+        "insulation": "INSU",
+        "exclusion": "EXC",
+        "rei": "REIs",
+        "reis": "REIs",
+        "pest control special service": "PCSS",
+        "vapor barrier": "VAPR",
+        "shop work": "SHOP",
+        "misc": "MISC",
+        "miscellaneous": "MISC",
+    }
 
     return render_template(
         "index.html",
@@ -177,8 +185,8 @@ def index():
         year=year,
         month_name=month_name[month],
         prev_month=prev_month,
-        prev_year=prev_year,
         next_month=next_month,
+        prev_year=prev_year,
         next_year=next_year,
         locks=locks,
         jobs_by_date=jobs_by_date,
@@ -187,6 +195,135 @@ def index():
         type_abbr=TYPE_ABBR,
         holidays=holidays_map,
     )
+
+
+# @calendar_bp.route("/", endpoint="index")
+# def index():
+#     """Render the month (calendar) view.
+
+#     Query args:
+#         month (int, optional): 1-12; defaults to current month.
+#         year (int, optional): Four-digit year; defaults to current year.
+
+#     Behavior:
+#         - Computes month boundaries and week grid.
+#         - Loads day locks and jobs spanning the month (inclusive).
+#         - Expands multi-day jobs to each date for rendering.
+#         - Loads technician time off and expands to each date.
+#         - Computes holiday map for the month (state ``"VA"``).
+#         - Passes type abbreviations to the template.
+
+#     Returns:
+#         Response: Rendered ``index.html`` with calendar context.
+#     """
+#     today = date.today()
+#     month = request.args.get("month", type=int, default=today.month)
+#     year = request.args.get("year", type=int, default=today.year)
+
+#     month_start = date(year, month, 1)
+#     month_end = date(year, month, monthrange(year, month)[1])
+
+#     month_start_s = month_start.isoformat()
+#     month_end_s = month_end.isoformat()
+
+#     weeks = _month_weeks(year, month)
+
+#     prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
+#     next_month, next_year = (1, year + 1) if month == 12 else (month + 1, year)
+
+#     conn = get_database()
+#     cur = conn.cursor()
+
+#     cur.execute("SELECT date FROM locks")
+#     locks = {row["date"] for row in cur.fetchall()}
+
+#     jobs_by_date = {}
+#     time_off_by_date = {}
+
+#     cur.execute(
+#         """
+#         SELECT
+#             j.id,
+#             j.title,
+#             j.job_type AS type,
+#             j.price,
+#             j.start_date,
+#             j.end_date,
+#             j.start_time,
+#             j.end_time,
+#             j.time_range,
+#             j.rei_quantity AS rei_quantity,
+#             j.rei_zip AS rei_zip,
+#             j.rei_city_name AS rei_city_name,
+#             j.technician_id,
+#             j.two_man,
+#             t.name AS technician_name,
+#             CASE
+#                 WHEN j.two_man = 1 THEN 'Two Man'
+#                 WHEN t.name IS NOT NULL THEN t.name
+#                 ELSE ''
+#             END AS technician_label
+#         FROM jobs j
+#         LEFT JOIN technicians t ON t.id = j.technician_id
+#         WHERE j.start_date <= ?
+#             AND (j.end_date IS NULL OR j.end_date >= ?);
+#         """,
+#         (month_end_s, month_start_s),
+#     )
+
+#     for job in cur.fetchall():
+#         for d in _expand_multi_day(job["start_date"], job["end_date"]):
+#             jobs_by_date.setdefault(d.isoformat(), []).append(job)
+
+#     cur.execute(
+#         """
+#         SELECT toff.start_date, toff.end_date, tech.name AS technician_name
+#         FROM time_off toff
+#         JOIN technicians tech ON tech.id = toff.technician_id
+#         """
+#     )
+#     time_off_by_date: dict[str, list[str]] = {}
+#     for row in cur.fetchall():
+#         for d in _expand_multi_day(row["start_date"], row["end_date"]):
+#             time_off_by_date.setdefault(d.isoformat(), []).append(
+#                 row["technician_name"]
+#             )
+
+#     conn.close()
+
+#     holidays = {}
+
+#     TYPE_ABBR = {
+#         "fumigation": "F",
+#         "insulation": "I",
+#         "exclusion": "EX",
+#         "rei": "REIs",
+#         "borate": "B",
+#         "bird work": "BW",
+#         "poly": "P",
+#         "power spray": "PS",
+#     }
+
+#     STATE_CODE = "VA"
+#     holidays_map = holidays_for_month(year, month, state=STATE_CODE)
+
+#     return render_template(
+#         "index.html",
+#         weeks=weeks,
+#         month=month,
+#         year=year,
+#         month_name=month_name[month],
+#         prev_month=prev_month,
+#         prev_year=prev_year,
+#         next_month=next_month,
+#         next_year=next_year,
+#         locks=locks,
+#         jobs_by_date=jobs_by_date,
+#         time_off_by_date=time_off_by_date,
+#         today=today,
+#         type_abbr=TYPE_ABBR,
+#         holidays=holidays_map,
+#     )
 
 
 @calendar_bp.route("/day/<selected_date>", endpoint="day_view")
@@ -221,6 +358,22 @@ def day_view(selected_date: str):
 
     cur.execute(
         """
+    SELECT toff.id,
+        toff.technician_id,
+        tech.name AS tech_name,
+        toff.reason
+    FROM time_off AS toff
+    LEFT JOIN technicians AS tech ON tech.id = toff.technician_id
+    WHERE date(:sel) BETWEEN date(toff.start_date)
+                        AND date(COALESCE(toff.end_date, toff.start_date))
+    ORDER BY tech.name
+    """,
+        {"sel": selected_date},
+    )
+    time_off = cur.fetchall()
+
+    cur.execute(
+        """
         SELECT
             j.*,
             j.job_type AS type,
@@ -246,7 +399,9 @@ def day_view(selected_date: str):
     jobs = cur.fetchall()
 
     conn.close()
-    return render_template("day.html", selected_date=dt, locked=locked, jobs=jobs)
+    return render_template(
+        "day.html", selected_date=dt, locked=locked, jobs=jobs, time_off=time_off
+    )
 
 
 @calendar_bp.route("/timeoff/add", methods=["GET", "POST"], endpoint="add_time_off")
@@ -306,9 +461,8 @@ def toggle_lock():
         flash("No date provided.", "error")
         return redirect(url_for("calendar.index"))
 
-    user = session.get("user")
-    user_id = user["id"] if isinstance(user, dict) and "id" in user else None
-
+    user = session.get("user") or {}
+    user_id = user.get("user_id") or user.get("id")
     conn = get_database()
     cur = conn.cursor()
 

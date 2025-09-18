@@ -1,19 +1,22 @@
+from datetime import date, datetime
+from functools import wraps
+
+import zipcodes
 from flask import (
     Blueprint,
+    Response,
+    flash,
+    redirect,
     render_template,
     request,
-    redirect,
-    url_for,
     session,
-    flash,
-    Response,
+    url_for,
 )
-from functools import wraps
-from datetime import datetime, date
-from ..utils.decorators import login_required, role_required
-from ..db import get_database
-from ..utils.logger import setup_logger
-import zipcodes
+
+from db import get_database
+from utils.decorators import login_required, role_required
+from utils.holidays_util import is_holiday
+from utils.logger import setup_logger
 
 job_bp = Blueprint("job", __name__)
 logger = setup_logger()
@@ -82,7 +85,8 @@ def lookup_zipcode(zip_code: str) -> str | None:
         results = zipcodes.matching(str(zip_code).strip())
         if not results:
             return None
-        return results[0].get("city")
+        city = results[0].get("city")
+        return city.title() if city else None
     except Exception:
         return None
 
@@ -130,6 +134,97 @@ def derive_time_range(start_hhmm: str | None, end_hhmm: str | None) -> str | Non
     return f"{sh}-{eh}"
 
 
+def _compose_job_payload(form, cur, start_date: date, end_date: date | None):
+    # Times
+    start_time = normalize_hhmm(form.get("start_time"))
+    end_time = normalize_hhmm(form.get("end_time"))
+    if start_time and end_time and end_time <= start_time:
+        return None, "End time must be after start time."
+    time_range = derive_time_range(start_time, end_time) or (
+        form.get("time_range", "").strip() or "any"
+    )
+
+    # Technicians
+    technician_raw = form.get("technician_id")
+    technician_id, two_man = _parse_technician(technician_raw, cur)
+
+    # REI Fields (ZIP or City or None; Quantity is required)
+    rei_quantity_raw = (form.get("rei_quantity") or "").strip()
+    rei_zip = (form.get("rei_quantity") or "").strip()
+    rei_city_free = (form.get("rei_city_name") or form.get("rei_city") or "").strip()
+    rei_city_name = None
+    if rei_city_free:
+        rei_city_name = rei_city_free
+    elif rei_zip and rei_zip.isdigit() and len(rei_zip) == 5:
+        rei_city_name = lookup_zipcode(rei_zip)
+
+    # REI Fields
+    rei_quantity = form.get("rei_quantity")
+    rei_zip = (form.get("rei_zip") or "").strip()
+    rei_city_name = None
+    if rei_zip and rei_zip.isdigit() and len(rei_zip) == 5:
+        rei_city_name = lookup_zipcode(rei_zip)
+
+    # Other Fields
+    exclusion_subtype = form.get("exclusion_subtype")
+    fumigation_type = form.get("fumigation_type")
+    target_pest = form.get("target_pest")
+    custom_pest = form.get("custom_pest")
+    if custom_pest:
+        target_pest = custom_pest.strip()
+
+    # Core
+    title = (form.get("title") or "").strip()
+    job_type = (form.get("job_type") or "").strip().lower()
+    if job_type == "custom":
+        job_type = (form.get("custom_type") or "").strip()
+    price = form.get("price")
+
+    # End date normalization for REIs
+    end_final = end_date
+
+    # REI authoritative rules
+    if job_type == "rei":
+        title = "REIs"
+        price = None
+        end_final = start_date
+        try:
+            rei_quantity = int(rei_quantity_raw)
+        except ValueError:
+            return None, "Quantity required for REIs."
+        if rei_quantity <= 0:
+            return None, "Quantity required for REIs."
+    else:
+        if not title:
+            return None, "Title is required."
+
+    payload = {
+        "title": title,
+        "job_type": job_type,
+        "price": price,
+        "start_date": start_date.isoformat(),
+        "end_date": end_final.isoformat() if end_final else None,
+        "start_time": start_time,
+        "end_time": end_time,
+        "time_range": time_range,
+        "notes": (form.get("notes", "") or ""),
+        "technician_id": technician_id,
+        "two_man": two_man,
+        "rei_quantity": (
+            int(rei_quantity_raw)
+            if (job_type == "rei" and rei_quantity_raw.isdigit())
+            else form.get("rei_quantity")
+        ),
+        "rei_zip": rei_zip,
+        "rei_city_name": rei_city_name,
+        "exclusion_subtype": exclusion_subtype,
+        "fumigation_type": fumigation_type,
+        "target_pest": target_pest,
+        "custom_pest": custom_pest,
+    }
+    return payload, None
+
+
 @job_bp.route("/add_job", methods=["GET", "POST"])
 @login_required
 @role_required("manager", "technician", "sales")
@@ -146,127 +241,229 @@ def add_job():
     cur = conn.cursor()
 
     if request.method == "POST":
-        start_date_raw = request.form.get("start_date")
-        rei_zip = (request.form.get("rei_zip") or "").strip()
-        rei_city_name = None
-        if rei_zip and rei_zip.isdigit() and len(rei_zip) == 5:
-            try:
-                match = zipcodes.matching(rei_zip)
-                rei_city_name = match[0]["city"] if match else None
-            except Exception:
-                rei_city_name = None
 
+        # Dates (route-level)
+
+        start_date_raw = request.form.get("start_date")
         if not start_date_raw:
             flash("Start date is required.", "error")
             return redirect(request.url)
-
-        # Dates
-
         end_date_raw = request.form.get("end_date") or start_date_raw
-        sd = _parse_date(start_date_raw)
-        ed = _parse_date(end_date_raw) if end_date_raw else None
-        if not sd:
-            flash("Start date is invalid.", "error")
-            return redirect(request.url)
-        start_date = sd.isoformat()
-        end_date = ed.isoformat() if ed else None
 
-        # Times
-        start_time_raw = request.form.get("start_time")
-        end_time_raw = request.form.get("end_time")
-        start_time = normalize_hhmm(start_time_raw)
-        end_time = normalize_hhmm(end_time_raw)
-        if start_time and end_time and end_time <= start_time:
-            flash("End time must be after start time.", "error")
-            return redirect(url_for("calendar.day_view", selected_date=start_date))
-
-        time_range = derive_time_range(start_time, end_time) or (
-            request.form.get("time_range", "").strip() or "any"
-        )
-
-        # Job Fields
-        title = (request.form.get("title") or "").strip()
-        job_type = request.form["type"]
-        if job_type == "reis":
-            title = ""
-            end_date = start_date
-        if job_type == "custom":
-            job_type = request.form.get("custom_type", "").strip()
-
-        # Require non-empty title for non-REI jobs
-        if job_type != "reis" and not title:
-            flash("Title is required.", "error")
+        start_date = _parse_date(start_date_raw)
+        end_date = _parse_date(end_date_raw) if end_date_raw else None
+        if not start_date:
+            flash("Start date is required.", "error")
             return redirect(request.url)
 
-        price = request.form["price"]
-        notes = request.form.get("notes", "")
+        # Validate/normalize
+
+        payload, err = _compose_job_payload(request.form, cur, start_date, end_date)
+        if err:
+            flash(err, "error")
+            return redirect(
+                url_for("calendar.day_view", selected_date=start_date.isoformat())
+            )
+
+        # Locks/auth
+        cur.execute("SELECT 1 FROM locks WHERE date = ?", (payload["start_date"],))
+        if cur.fetchone():
+            flash("Date is locked.  Cannot add job.", "error")
+            return redirect(
+                url_for("calendar.day_view", selected_date=payload["start_date"])
+            )
 
         uid = session.get("user", {}).get("user_id")
-        row = cur.execute("SELECT id FROM users WHERE id=?", (uid,)).fetchone()
-        if not row:
+        if not cur.execute("SELECT 1 FROM users WHERE id = ?", (uid,)).fetchone():
             session.clear()
             flash("Your session has expired.  Please log in again.", "error")
             return redirect(url_for("auth.login"))
-        created_by = uid
 
-        rei_quantity = request.form.get("rei_quantity")
-        exclusion_subtype = request.form.get("exclusion_subtype")
-        technician_raw = request.form.get("technician_id")
-        technician_id, two_man = _parse_technician(technician_raw, cur)
-
-        fumigation_type = request.form.get("fumigation_type")
-        target_pest = request.form.get("target_pest")
-        custom_pest = request.form.get("custom_pest")
-        if custom_pest:
-            target_pest = custom_pest.strip()
-
-        cur.execute("SELECT * FROM locks WHERE date = ?", (start_date,))
-        if cur.fetchone():
-            flash("Date is locked. Cannot add job.", "error")
-            return redirect(url_for("calendar.day_view", selected_date=start_date))
+        # Insert
 
         cur.execute(
-            """INSERT INTO jobs (
-            title, job_type, price, start_date, end_date, start_time, end_time, time_range, notes,
-            created_by, technician_id, two_man, rei_quantity, rei_zip, rei_city_name, exclusion_subtype, fumigation_type, target_pest, custom_pest)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (
-                title,
-                job_type,
-                price,
-                start_date,
-                end_date,
-                start_time,
-                end_time,
-                time_range,
-                notes,
-                created_by,
-                technician_id,
-                two_man,
-                rei_quantity,
-                rei_zip,
-                rei_city_name,
+            """
+            INSERT INTO jobs (
+                title, job_type, price, start_date, end_date,
+                start_time, end_time, time_range, notes,
+                created_by, technician_id, two_man,
+                rei_quantity, rei_zip, rei_city_name,
                 exclusion_subtype,
-                fumigation_type,
-                target_pest,
-                custom_pest,
+                fumigation_type, target_pest, custom_pest
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                payload["title"],
+                payload["job_type"],
+                payload["price"],
+                payload["start_date"],
+                payload["end_date"],
+                payload["start_time"],
+                payload["end_time"],
+                payload["time_range"],
+                payload["notes"],
+                uid,
+                payload["technician_id"],
+                payload["two_man"],
+                payload["rei_quantity"],
+                payload["rei_zip"],
+                payload["rei_city_name"],
+                payload["exclusion_subtype"],
+                payload["fumigation_type"],
+                payload["target_pest"],
+                payload["custom_pest"],
             ),
         )
         conn.commit()
         logger.info(
-            f"Job added by user ID {created_by}: {job_type} from {start_date} to {end_date} at {time_range}"
+            f"Job added by user ID {uid}: {payload['job_type']} from {payload['start_date']} to {payload['end_date']} @ {payload['time_range']}"
         )
         return redirect(url_for("calendar.index"))
-    start_date = None
+
+    # GET: render form
     cur.execute("SELECT * FROM technicians")
     technicians = cur.fetchall()
-
     return render_template(
-        "job_form.html",
-        date=start_date,
-        technicians=technicians,
-        hide_date_fields=False,
+        "job_form.html", date=None, technicians=technicians, hide_date_fields=False
     )
+    # conn = get_database()
+    # cur = conn.cursor()
+
+    # if request.method == "POST":
+    #     start_date_raw = request.form.get("start_date")
+    #     rei_quantity = request.form.get("rei_quantity")
+    #     rei_zip = (request.form.get("rei_zip") or "").strip()
+    #     rei_city_name = None
+    #     if rei_zip and rei_zip.isdigit() and len(rei_zip) == 5:
+    #         try:
+    #             match = zipcodes.matching(rei_zip)
+    #             rei_city_name = match[0]["city"] if match else None
+    #         except Exception:
+    #             rei_city_name = None
+
+    #     if not start_date_raw:
+    #         flash("Start date is required.", "error")
+    #         return redirect(request.url)
+
+    #     # Dates
+
+    #     end_date_raw = request.form.get("end_date") or start_date_raw
+    #     sd = _parse_date(start_date_raw)
+    #     ed = _parse_date(end_date_raw) if end_date_raw else None
+    #     if not sd:
+    #         flash("Start date is invalid.", "error")
+    #         return redirect(request.url)
+    #     start_date = sd.isoformat()
+    #     end_date = ed.isoformat() if ed else None
+
+    #     # Times
+    #     start_time_raw = request.form.get("start_time")
+    #     end_time_raw = request.form.get("end_time")
+    #     start_time = normalize_hhmm(start_time_raw)
+    #     end_time = normalize_hhmm(end_time_raw)
+    #     if start_time and end_time and end_time <= start_time:
+    #         flash("End time must be after start time.", "error")
+    #         return redirect(url_for("calendar.day_view", selected_date=start_date))
+
+    #     time_range = derive_time_range(start_time, end_time) or (
+    #         request.form.get("time_range", "").strip() or "any"
+    #     )
+
+    #     # Job Fields
+    #     title = (request.form.get("title") or "").strip()
+    #     job_type = (request.form.get("job_type") or "").strip().lower()
+    #     # Normalize Custom Type
+    #     if job_type == "custom":
+    #         job_type = (request.form.get("custom_type") or "").strip()
+    #     # Enforce REI semantics
+    #     if job_type == "rei":
+    #         title = "REIs"
+    #         price = None
+    #         end_date = start_date
+    #         missing = []
+    #         if not (rei_quantity and str(rei_quantity).strip()):
+    #             missing.append("REI quantity")
+    #         if not (rei_zip and str(rei_zip).strip()):
+    #             missing.append("REI ZIP")
+    #         if not (rei_city_name and str(rei_city_name).strip()):
+    #             missing.append("REI city name")
+    #         if missing:
+    #             flash(f"Missing required REI field(s): {', '.join(missing)}.", "error")
+    #             return redirect(url_for("calendar.day_view", selected_date=start_date))
+    #     else:
+    #         # Non-REI jobs require a title and can have a price
+    #         if not title:
+    #             flash("Title is required.", "error")
+    #             return redirect(request.url)
+    #         price = request.form.get("price")
+    #         notes = request.form.get("notes", "")
+
+    #     uid = session.get("user", {}).get("user_id")
+    #     row = cur.execute("SELECT id FROM users WHERE id=?", (uid,)).fetchone()
+    #     if not row:
+    #         session.clear()
+    #         flash("Your session has expired.  Please log in again.", "error")
+    #         return redirect(url_for("auth.login"))
+    #     created_by = uid
+
+    #     exclusion_subtype = request.form.get("exclusion_subtype")
+    #     technician_raw = request.form.get("technician_id")
+    #     technician_id, two_man = _parse_technician(technician_raw, cur)
+
+    #     fumigation_type = request.form.get("fumigation_type")
+    #     target_pest = request.form.get("target_pest")
+    #     custom_pest = request.form.get("custom_pest")
+    #     if custom_pest:
+    #         target_pest = custom_pest.strip()
+
+    #     cur.execute("SELECT * FROM locks WHERE date = ?", (start_date,))
+    #     if cur.fetchone():
+    #         flash("Date is locked. Cannot add job.", "error")
+    #         return redirect(url_for("calendar.day_view", selected_date=start_date))
+
+    #     cur.execute(
+    #         """INSERT INTO jobs (
+    #         title, job_type, price, start_date, end_date, start_time, end_time, time_range, notes,
+    #         created_by, technician_id, two_man, rei_quantity, rei_zip, rei_city_name, exclusion_type, exclusion_subtype, fumigation_type, target_pest, custom_pest)
+    #            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+    #         (
+    #             title,
+    #             job_type,
+    #             price,
+    #             start_date,
+    #             end_date,
+    #             start_time,
+    #             end_time,
+    #             time_range,
+    #             notes,
+    #             created_by,
+    #             technician_id,
+    #             two_man,
+    #             rei_quantity,
+    #             rei_zip,
+    #             rei_city_name,
+    #             request.form.get("exclusion_type"),
+    #             exclusion_subtype,
+    #             fumigation_type,
+    #             target_pest,
+    #             custom_pest,
+    #         ),
+    #     )
+    #     conn.commit()
+    #     logger.info(
+    #         f"Job added by user ID {created_by}: {job_type} from {start_date} to {end_date} at {time_range}"
+    #     )
+    #     return redirect(url_for("calendar.index"))
+    # start_date = None
+    # cur.execute("SELECT * FROM technicians")
+    # technicians = cur.fetchall()
+
+    # return render_template(
+    #     "job_form.html",
+    #     date=start_date,
+    #     technicians=technicians,
+    #     hide_date_fields=False,
+    # )
 
 
 @job_bp.route("/add_job/<date>", methods=["GET", "POST"])
@@ -285,99 +482,186 @@ def add_job_for_date(date):
     """
     if request.method == "POST":
         conn = get_database()
-        cursor = conn.cursor()
+        cur = conn.cursor()
 
-        start_date = end_date = date
+        try:
+            sd = datetime.strptime(date, "%Y-%m-%d").date()
+        except ValueError:
+            flash("Invalid date.", "error")
+            return redirect(url_for("calendar.index"))
+        ed = sd
 
-        title = request.form["title"]
-        job_type = request.form["type"]
-        if job_type == "custom":
-            job_type = request.form.get("custom_type", "").strip()
-        price = request.form["price"]
-        # time fields
-        start_time_raw = request.form.get("start_time")
-        end_time_raw = request.form.get("end_time")
+        payload, err = _compose_job_payload(request.form, cur, sd, ed)
+        if err:
+            flash(err, "error")
+            return redirect(url_for("calendar.day_view", selected_date=date))
 
-        start_time = normalize_hhmm(start_time_raw)
-        end_time = normalize_hhmm(end_time_raw)
-
-        if start_time and end_time and end_time <= start_time:
-            flash("End time must be after start time.", "error")
-            return redirect(request.url)
-
-        time_range = derive_time_range(start_time, end_time) or (
-            request.form.get("time_range", "").strip() or "any"
-        )
-
-        notes = request.form.get("notes", "")
-        created_by = session["user"]["user_id"]
-        rei_quantity = request.form.get("rei_quantity")
-        rei_zip = (request.form.get("rei_zip") or "").strip()
-        rei_city_name = None
-        if rei_zip and rei_zip.isdigit() and len(rei_zip) == 5:
-            try:
-                match = zipcodes.matching(rei_zip)
-                rei_city_name = match[0]["city"] if match else None
-            except Exception:
-                rei_city_name = None
-        exclusion_subtype = request.form.get("exclusion_subtype")
-        technician_raw = request.form.get("technician_id")
-        technician_id, two_man = _parse_technician(technician_raw, cursor)
-        fumigation_type = request.form.get("fumigation_type")
-        target_pest = request.form.get("target_pest")
-        custom_pest = request.form.get("custom_pest")
-        if custom_pest:
-            target_pest = custom_pest.strip()
-
-        cursor.execute("SELECT * FROM locks WHERE date = ?", (date,))
-        if cursor.fetchone():
+        # Locks
+        cur.execute("SELECT 1 FROM locks WHERE date = ?", (payload["start_date"],))
+        if cur.fetchone():
             flash("Date is locked. Cannot add job.", "error")
             return redirect(url_for("calendar.day_view", selected_date=date))
 
-        cursor.execute(
-            """INSERT INTO jobs (title, job_type, price, start_date, end_date, start_time, end_time, time_range, notes, technician_id, two_man, created_by, rei_quantity, rei_zip, rei_city_name, fumigation_type, target_pest, custom_pest, exclusion_subtype)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        uid = session.get("user", {}).get("user_id")
+
+        cur.execute(
+            """
+            INSERT INTO jobs (
+                title, job_type, price, start_date, end_date, start_time, end_time, time_range, notes, technician_id, two_man, created_by, rei_quantity, rei_zip, rei_city_name, exclusion_subtype, fumigation_type, target_pest, custom_pest) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """,
             (
-                title,
-                job_type,
-                price,
-                start_date,
-                end_date,
-                start_time,
-                end_time,
-                time_range,
-                notes,
-                technician_id,
-                two_man,
-                created_by,
-                rei_quantity,
-                rei_zip,
-                rei_city_name,
-                fumigation_type,
-                target_pest,
-                custom_pest,
-                exclusion_subtype,
+                payload["title"],
+                payload["job_type"],
+                payload["price"],
+                payload["start_date"],
+                payload["end_date"],
+                payload["start_time"],
+                payload["end_time"],
+                payload["time_range"],
+                payload["notes"],
+                payload["technician_id"],
+                payload["two_man"],
+                uid,
+                payload["rei_quantity"],
+                payload["rei_zip"],
+                payload["rei_city_name"],
+                payload["exclusion_subtype"],
+                payload["fumigation_type"],
+                payload["target_pest"],
+                payload["custom_pest"],
             ),
         )
         conn.commit()
         logger.info(
-            f"Job added by user ID {created_by}: {job_type} from {start_date} to {end_date} at {time_range}"
+            f"Job added by user ID {uid}: {payload['job_type']} on {date} @ {payload['time_range']}"
         )
         return redirect(url_for("calendar.day_view", selected_date=date))
 
-    # ✅ This block only runs on GET
-    connection = get_database()
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM technicians")
-    technicians = cursor.fetchall()
+    if request.method == "GET":
+        conn = get_database()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM technicians")
+        technicians = cur.fetchall()
 
-    parsed_date = datetime.strptime(date, "%Y-%m-%d").date()
-    return render_template(
-        "job_form.html",
-        date=parsed_date,
-        technicians=technicians,
-        hide_date_fields=True,
-    )
+        parsed_date = datetime.strptime(date, "%Y-%m-%d").date()
+        return render_template(
+            "job_form.html",
+            date=parsed_date,
+            technicians=technicians,
+            hide_date_fields=True,
+        )
+    # if request.method == "POST":
+    #     conn = get_database()
+    #     cursor = conn.cursor()
+
+    #     start_date = end_date = date
+
+    #     title = (request.form.get("title") or "").strip()
+    #     job_type = (request.form.get("job_type") or "").strip().lower()
+    #     if job_type == "custom":
+    #         job_type = (request.form.get("custom_type") or "").strip()
+    #     if job_type == "rei":
+    #         title = "REIs"
+    #         price = None
+    #         missing = []
+    #         if not (rei_quantity and str(rei_quantity).strip()):
+    #             missing.append("REI quantity")
+    #         if not (rei_zip and str(rei_zip).strip()):
+    #             missing.append("REI ZIP")
+    #         if missing:
+    #             flash(f"Missing required REI field(s): {', '.join(missing)}.", "error")
+    #             return redirect(url_for("calendar.day_view", selected_date=date))
+
+    #     # title = request.form["title"]
+    #     # job_type = request.form["type"]
+    #     # if job_type == "custom":
+    #     #    job_type = request.form.get("custom_type", "").strip()
+    #     # price = request.form["price"]
+
+    #     # time fields
+    #     start_time_raw = request.form.get("start_time")
+    #     end_time_raw = request.form.get("end_time")
+
+    #     start_time = normalize_hhmm(start_time_raw)
+    #     end_time = normalize_hhmm(end_time_raw)
+
+    #     if start_time and end_time and end_time <= start_time:
+    #         flash("End time must be after start time.", "error")
+    #         return redirect(request.url)
+
+    #     time_range = derive_time_range(start_time, end_time) or (
+    #         request.form.get("time_range", "").strip() or "any"
+    #     )
+
+    #     notes = request.form.get("notes", "")
+    #     created_by = session["user"]["user_id"]
+    #     rei_quantity = request.form.get("rei_quantity")
+    #     rei_zip = (request.form.get("rei_zip") or "").strip()
+    #     rei_city_name = None
+    #     if rei_zip and rei_zip.isdigit() and len(rei_zip) == 5:
+    #         try:
+    #             match = zipcodes.matching(rei_zip)
+    #             rei_city_name = match[0]["city"] if match else None
+    #         except Exception:
+    #             rei_city_name = None
+    #     exclusion_subtype = request.form.get("exclusion_subtype")
+    #     technician_raw = request.form.get("technician_id")
+    #     technician_id, two_man = _parse_technician(technician_raw, cursor)
+    #     fumigation_type = request.form.get("fumigation_type")
+    #     target_pest = request.form.get("target_pest")
+    #     custom_pest = request.form.get("custom_pest")
+    #     if custom_pest:
+    #         target_pest = custom_pest.strip()
+
+    #     cursor.execute("SELECT * FROM locks WHERE date = ?", (date,))
+    #     if cursor.fetchone():
+    #         flash("Date is locked. Cannot add job.", "error")
+    #         return redirect(url_for("calendar.day_view", selected_date=date))
+
+    #     cursor.execute(
+    #         """INSERT INTO jobs (title, job_type, price, start_date, end_date, start_time, end_time, time_range, notes, technician_id, two_man, created_by, rei_quantity, rei_zip, rei_city_name, fumigation_type, target_pest, custom_pest, exclusion_subtype)
+    #            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+    #         (
+    #             title,
+    #             job_type,
+    #             price,
+    #             start_date,
+    #             end_date,
+    #             start_time,
+    #             end_time,
+    #             time_range,
+    #             notes,
+    #             technician_id,
+    #             two_man,
+    #             created_by,
+    #             rei_quantity,
+    #             rei_zip,
+    #             rei_city_name,
+    #             fumigation_type,
+    #             target_pest,
+    #             custom_pest,
+    #             exclusion_subtype,
+    #         ),
+    #     )
+    #     conn.commit()
+    #     logger.info(
+    #         f"Job added by user ID {created_by}: {job_type} from {start_date} to {end_date} at {time_range}"
+    #     )
+    #     return redirect(url_for("calendar.day_view", selected_date=date))
+
+    # # ✅ This block only runs on GET
+    # connection = get_database()
+    # cursor = connection.cursor()
+    # cursor.execute("SELECT * FROM technicians")
+    # technicians = cursor.fetchall()
+
+    # parsed_date = datetime.strptime(date, "%Y-%m-%d").date()
+    # return render_template(
+    #     "job_form.html",
+    #     date=parsed_date,
+    #     technicians=technicians,
+    #     hide_date_fields=True,
+    # )
 
 
 @job_bp.route("/move_job/<int:job_id>", methods=["POST"])
@@ -526,17 +810,27 @@ def edit_job(job_id):
             )
 
         title = (request.form.get("title") or "").strip()
-        job_type = request.form.get("type")
+        job_type = (
+            (request.form.get("job_type") or request.form.get("type") or "")
+            .strip()
+            .lower()
+        )
         if job_type == "custom":
             job_type = (request.form.get("custom_type") or "").strip()
-        if job_type != "reis" and not title:
-            flash("Title is required.", "error")
-            return render_template(
-                "edit_job.html",
-                job=cur.execute(
-                    "SELECT * FROM jobs WHERE id = ?", (job_id,)
-                ).fetchone(),
-            )
+        if job_type == "rei":
+            title = "REIs"
+            request_price = None
+            ed = sd
+        else:
+            if not title:
+                flash("Title is required.", "error")
+                return render_template(
+                    "edit_job.html",
+                    job=cur.execute(
+                        "SELECT * FROM jobs WHERE id = ?", (job_id,)
+                    ).fetchone(),
+                )
+            request_price = request.form.get("price")
 
         technician_raw = request.form.get("technician_id")
         technician_id, two_man = _parse_technician(technician_raw, cur)
@@ -564,7 +858,7 @@ def edit_job(job_id):
             (
                 title,
                 job_type,
-                request.form["price"],
+                request_price,
                 sd.isoformat(),
                 ed.isoformat() if ed else None,
                 start_time,
@@ -586,3 +880,101 @@ def edit_job(job_id):
 
     job = cur.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
     return render_template("edit_job.html", job=job)
+
+
+@job_bp.post("/timeoff/add")
+@login_required
+@role_required("manager", "technician")
+def timeoff_add():
+
+    conn = get_database()
+    cur = conn.cursor()
+    uid = session.get("user", {}).get("user_id")
+    role = cur.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
+    role_name = (role["role"] if role else "").lower()
+
+    tech_id_raw = request.form.get("technician_id")
+    tech_id = int(tech_id_raw) if tech_id_raw and tech_id_raw.isdigit() else uid
+    date_raw = request.form.get("date")
+    reason = request.form.get("reason")
+
+    if role_name not in ("manager", "admin"):
+        tech_id = uid
+
+    d = (request.form.get("date") or "").strip()
+    if not d:
+        flash("Invalid date for time off.", "error")
+        return redirect(request.referrer or url_for("calendar.index"))
+
+    cur.execute(
+        "INSERT INTO time_off (technician_id, date, reason, created_at, created_by) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)",
+        (tech_id, d, d, reason),
+    )
+    conn.commit()
+    logger.info(f"time_off added for tech {tech_id} by user {uid} on {d}")
+    return redirect(request.referrer or url_for("calendar.index"))
+
+
+@job_bp.post("/timeoff/delete/<int:timeoff_id>", endpoint="timeoff_delete")
+@login_required
+@role_required("admin", "manager", "technician")
+def timeoff_delete(timeoff_id: int):
+    conn = get_database()
+    cur = conn.cursor()
+
+    toff = cur.execute(
+        """
+        SELECT t.id,
+                t.technician_id,
+                t.start_date,
+                t.end_date,
+                tech.name AS tech_name
+        FROM time_off AS t
+        LEFT JOIN technicians AS tech ON tech.id = t.technician_id
+        WHERE t.id = ?
+    """,
+        (timeoff_id,),
+    ).fetchone()
+
+    if not toff:
+        flash("Time off entry not found.", "error")
+        return redirect(request.referrer or url_for("calendar.index"))
+
+    # session
+    user = session.get("user") or {}
+    uid = user.get("user_id") or user.get("id")
+    if not uid:
+        flash("You must be logged in.", "error")
+        return redirect(url_for("auth.login"))
+
+    urow = cur.execute(
+        "SELECT id, role, first_name, last_name FROM users WHERE id = ?", (uid,)
+    ).fetchone()
+    if not urow:
+        flash("Session user not found.", "error")
+        return redirect(request.referrer or url_for("calendar.index"))
+
+    role = (urow["role"] or "").lower()
+    allowed = False
+
+    if role in ("admin", "manager"):
+        allowed = True
+    elif role in ("technician", "tech"):
+        full_name = f"{(urow['first_name'] or '').strip()} {(urow['last_name'] or '').strip()}".strip()
+        match = cur.execute(
+            " SELECT id FROM technicians WHERE lower(trim(name)) = lower(trim(?))",
+            (full_name,),
+        ).fetchone()
+        if match and match["id"] == toff["technician_id"]:
+            allowed = True
+
+    if not allowed:
+        flash("Not authorized to remove this time off.", "error")
+        target_day = toff["start_date"]
+        return redirect(url_for("calendar.day_view", selected_date=target_day))
+
+    cur.execute("DELETE FROM time_off WHERE id = ?", (timeoff_id,))
+    conn.commit()
+    flash("Time off is removed.", "success")
+    target_day = toff["start_date"]
+    return redirect(url_for("calendar.day_view", selected_date=target_day))

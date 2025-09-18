@@ -1,152 +1,227 @@
 <!-- Schedule -->
 <div class="form-section">
-    <h3 class="section-heading">Schedule</h3>
+  <h3 class="section-heading">Schedule</h3>
 
-    {% if not hide_date_fields %}
-        <div class="form-group">
-            <label for="start_date">Start Date</label>
-            <input type="date" name="start_date" id="start_date" required>
-        </div>
-        <div class="form-group">
-            <label for="end_date">End Date (optional)</label>
-            <input type="date" name="end_date" id="end_date">
-        </div>
-    {% else %}
-        <div class="form-group">
-            <label for="start_date">Start Date</label>
-            <input type="date" name="start_date" id="start_date" required value="{{ date.isoformat() }}">
-        </div>
-        <div class="form-group">
-            <label for="end_date">End Date</label>
-            <input type="date" name="end_date" id="end_date" required value="{{ date.isoformat() }}">
-        </div>
-    {% endif %}
-        <div class="form-group">
-            <label for="start_time">Start Time (optional)</label>
-            <input type="time" name="start_time" id="start_time" value="{{ (job.start_time if job is defined else '') }}"
-        </div>
-        <div class="form-group">
-            <label for="end_time">End Time (opional)</label>
-            <input type="time" name="end_time" id="end_time" value="{{ (job.end_time if job is defined else '') }}">
-        </div>
+  {% if not hide_date_fields %}
+    <div class="form-group">
+      <label for="start_date">Start Date</label>
+      <input type="date" name="start_date" id="start_date" required>
+    </div>
+    <div class="form-group">
+      <label for="end_date">End Date (optional)</label>
+      <input type="date" name="end_date" id="end_date">
+    </div>
+  {% else %}
+    <div class="form-group">
+      <label for="start_date">Start Date</label>
+      <input type="date" name="start_date" id="start_date" required value="{{ date.isoformat() }}">
+    </div>
+    <div class="form-group">
+      <label for="end_date">End Date</label>
+      <input type="date" name="end_date" id="end_date" required value="{{ date.isoformat() }}">
+    </div>
+  {% endif %}
 
-        <div class="form-group">
-            <label for="technician_id">Assign Technician</label>
-            <select id="technician_id" name="technician_id">
-                <option value="">-- Unassigned --</option>
-                {% for t in technicians %}
-                    <option value="{{ t.id }}"> {{ t.name }}</option>
-                {% endfor %}
-                <option value="__BOTH__">Two Man</option>
-            </select>
-        </div>
+  <div class="form-group">
+    <label for="start_time">Start Time (optional)</label>
+    <input type="time" name="start_time" id="start_time" value="{{ (job.start_time if job is defined else '') }}">
+  </div>
+  <div class="form-group">
+    <label for="end_time">End Time (optional)</label>
+    <input type="time" name="end_time" id="end_time" value="{{ (job.end_time if job is defined else '') }}">
+  </div>
+
+  <div class="form-group">
+    <label for="technician_id">Assign Technician</label>
+    <select id="technician_id" name="technician_id">
+      <option value="">-- Unassigned --</option>
+      {% for t in technicians %}
+        <option value="{{ t.id }}" {% if job is defined and job.technician_id == t.id %}selected{% endif %}>{{ t.name }}</option>
+      {% endfor %}
+      <option value="__BOTH__" {% if job is defined and job.two_man %}selected{% endif %}>Two-Man</option>
+    </select>
+  </div>
 </div>
 
 <!-- Job Details -->
 <div class="form-section">
-    <h3 class="section-heading">Job Details</h3>
+  <h3 class="section-heading">Job Details</h3>
 
-    <div class="form-group">
-        <label for="type">Type:</label>
-        <select name="type" id="type-select" onchange="handleTypeChange(this)">
-            <option value="termite">Termite</option>
-            <option value="borate">Borate</option>
-            <option value="pretreat">Pretreat</option>
-            <option value="retreat">Retreat</option>
-            <option value="bird work">Bird Work</option>
-            <option value="reis">REIs</option>
-            <option value="power spray">Power Spray</option>
-            <option value="fumigation">Fumigation</option>
-            <option value="insulation">Insulation</option>
-            <option value="exclusion">Exclusion</option>
-            <option value="custom">Custom...</option>
-        </select>
-    </div>
+  <div class="form-group">
+    <label for="job_type">Type:</label>
+    <select name="job_type" id="job_type">
+      {% set jt = (job.job_type|lower if job is defined and job.job_type else '') %}
+      <option value="termite"      {% if jt=='termite' %}selected{% endif %}>Termite</option>
+      <option value="borate"       {% if jt=='borate' %}selected{% endif %}>Borate</option>
+      <option value="pretreat"     {% if jt=='pretreat' %}selected{% endif %}>Pretreat</option>
+      <option value="retreat"      {% if jt=='retreat' %}selected{% endif %}>Retreat</option>
+      <option value="bird work"    {% if jt=='bird work' %}selected{% endif %}>Bird Work</option>
+      <option value="rei"          {% if jt=='rei' %}selected{% endif %}>REIs</option> <!-- fixed value -->
+      <option value="power spray"  {% if jt=='power spray' %}selected{% endif %}>Power Spray</option>
+      <option value="fumigation"   {% if jt=='fumigation' %}selected{% endif %}>Fumigation</option>
+      <option value="insulation"   {% if jt=='insulation' %}selected{% endif %}>Insulation</option>
+      <option value="exclusion"    {% if jt=='exclusion' %}selected{% endif %}>Exclusion</option>
+      <option value="custom"       {% if jt=='custom' %}selected{% endif %}>Custom...</option>
+    </select>
+  </div>
 
+  <div id="generic-job-fields">
     <div class="form-group" id="job-name-wrapper">
-        <label for="title">Job Name:</label>
-        <input type="text" name="title" id="title-field">
+      <label for="title">Job Name:</label>
+      <input type="text" name="title" id="title-field" value="{{ (job.title if job is defined else '') }}">
     </div>
 
     <div class="form-group" id="price-wrapper">
-        <label for="price">Price:</label>
-        <input type="number" name="price" id="price">
+      <label for="price">Price:</label>
+      <input type="number" name="price" id="price" step="0.01" value="{{ (job.price if job is defined else '') }}">
     </div>
+  </div>
 </div>
 
-
 <!-- Fumigation Options -->
-<div class="form-section hidden" id="fumigation-section">
-    <h3 class="section-heading">Fumigation Details</h3>
+<div class="form-section {% if jt != 'fumigation' %}hidden{% endif %}" id="fumigation-section">
+  <h3 class="section-heading">Fumigation Details</h3>
+  <div class="form-group">
+    <label><strong>Fumigation Type:</strong></label>
+    <div class="radio-group">
+      <label><input type="radio" name="fumigation_type" value="Tape and Seal"
+        {% if job is defined and job.fumigation_type == 'Tape and Seal' %}checked{% endif %}> Tape &amp; Seal</label>
+      <label><input type="radio" name="fumigation_type" value="Tent"
+        {% if job is defined and job.fumigation_type == 'Tent' %}checked{% endif %}> Tent</label>
+    </div>
+  </div>
 
-        <div class="form-group">
-            <label><strong>Fumigation Type:</strong></label>
-
-            <div class="radio-group">
-                <label><input type="radio" name="fumigation_type" value="Tape and Seal"> Tape & Seal</label>
-                <label><input type="radio" name="fumigation_type" value="Tent"> Tent</label>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label for="target_pest"><strong>Target Pest:</strong></label>
-            <select name="target_pest" id="target_pest_select" onchange="toggleCustomPestField(this)">
-                <option value="">-- Select a target pest --</option>
-                <option value="Bedbugs">Bedbugs</option>
-                <option value="Powder Post Beetles">Powder Post Beetles</option>
-                <option value="Old House Borers">Old House Borers</option>
-                <option value="Carpenter Ants">Carpenter Ants</option>
-                <option value="Other">Other (please specify)</option>
-            </select>
-            <input type="text" name="custom_pest" id="custom_pest_input" class="hidden" placeholder="Enter custom target">
-        </div>
+  <div class="form-group">
+    <label for="target_pest"><strong>Target Pest:</strong></label>
+    <select name="target_pest" id="target_pest_select">
+      {% set tp = (job.target_pest if job is defined else '') %}
+      <option value="">-- Select a target pest --</option>
+      <option value="Bedbugs"              {% if tp=='Bedbugs' %}selected{% endif %}>Bedbugs</option>
+      <option value="Powder Post Beetles"  {% if tp=='Powder Post Beetles' %}selected{% endif %}>Powder Post Beetles</option>
+      <option value="Old House Borers"     {% if tp=='Old House Borers' %}selected{% endif %}>Old House Borers</option>
+      <option value="Carpenter Ants"       {% if tp=='Carpenter Ants' %}selected{% endif %}>Carpenter Ants</option>
+      <option value="Other"                {% if tp=='Other' %}selected{% endif %}>Other (please specify)</option>
+    </select>
+    <input type="text" name="custom_pest" id="custom_pest_input" class="{% if tp!='Other' %}hidden{% endif %}" placeholder="Enter custom target" value="{{ (job.custom_pest if job is defined else '') }}">
+  </div>
 </div>
 
 <!-- REI Options -->
-<div class="form-section hidden" id="rei-options">
-    <h3 class="section-heading">Reinspections (REIs)</h3>
+<div class="form-section {% if jt != 'rei' %}hidden{% endif %}" id="rei-options">
+  <h3 class="section-heading">Reinspections (REIs)</h3>
 
-    <div class="form-group">
-        <label for="rei_quantity">Quantity</label>
-        <input type="number" id="rei_quantity" name="rei_quantity" min="1" step="1" placeholder="e.g., 12">
-    </div>
+  <div class="form-group">
+    <label for="rei_quantity">Quantity*</label>
+    <input type="number" id="rei_quantity" name="rei_quantity" min="1" step="1"
+           value="{{ (job.rei_quantity if job is defined else '1') }}" required>
+  </div>
 
-    <div class="form-group">
-        <label for="rei_zip">ZIP (5 digits):</label>
-        <input type="text" id="rei_zip" name="rei_zip" maxlength="5" pattern="\d{5}" placeholder="e.g., 90210">
-    </div>
+  <div class="form-group">
+    <label for="rei_zip">ZIP (optional, 5 digits):</label>
+    <input type="text" id="rei_zip" name="rei_zip" maxlength="5" pattern="\d{5}"
+           value="{{ (job.rei_zip if job is defined else '') }}" placeholder="e.g., 90210">
+  </div>
 
-    <p class="hint">City name will auto-populate from ZIP and be stored as <code>rei_city_name</code>.</p>
+  <div class="form-group">
+    <label for="rei_city_name">City (optional):</label>
+    <input type="text" id="rei_city_name" name="rei_city_name"
+           value="{{ (job.rei_city_name if job is defined else '') }}" placeholder="e.g., Roanoke">
+  </div>
+
+  <p class="hint">Provide a ZIP or City (or leave blank). City is auto-derived from ZIP when possible.</p>
 </div>
 
 <!-- Custom Job Type -->
-<div class="form-section hidden" id="custom-type-div">
-    <h3 class="section-heading sm">Custom Type:</h3>
-    <div class="form-group">
-        <label for="custom_type">Custom Type:</label>
-        <input type="text" name="custom_type">
-    </div>
+<div class="form-section {% if jt != 'custom' %}hidden{% endif %}" id="custom-type-div">
+  <h3 class="section-heading sm">Custom Type:</h3>
+  <div class="form-group">
+    <label for="custom_type">Custom Type:</label>
+    <input type="text" name="custom_type" value="{{ (job.custom_type if job is defined else '') }}">
+  </div>
 </div>
 
 <!-- Exclusion Options -->
-<div class="form-section hidden" id="exclusion-options">
-    <h3 class="section-heading">Exclusion Options</h3>
-    <div class="form-group">
-        <label for="exclusion_subtype">Exclusion Type:</label>
-        <select name="exclusion_subtype">
-            <option value="">-- Select Subtype --</option>
-            <option value="Bats">Bats</option>
-            <option value="Birds">Birds</option>
-            <option value="Mice">Mice</option>
-        </select>
-    </div>
+<div class="form-section {% if jt != 'exclusion' %}hidden{% endif %}" id="exclusion-options">
+  <h3 class="section-heading">Exclusion Options</h3>
+  <div class="form-group">
+    <label for="exclusion_subtype">Exclusion Type:</label>
+    <select name="exclusion_subtype">
+      {% set ex = (job.exclusion_subtype if job is defined else '') %}
+      <option value="">-- Select Subtype --</option>
+      <option value="Bats"  {% if ex=='Bats' %}selected{% endif %}>Bats</option>
+      <option value="Birds" {% if ex=='Birds' %}selected{% endif %}>Birds</option>
+      <option value="Mice"  {% if ex=='Mice' %}selected{% endif %}>Mice</option>
+    </select>
+  </div>
 </div>
 
 <!-- Notes -->
 <div class="form-section">
-    <h3 class="section-heading">Notes</h3>
-    <div class="form-group">
-        <label for="notes">Additional Information:</label><br>
-        <textarea name="notes" rows="4" placeholder="Optional site notes or special instructions."></textarea>
-    </div>
+  <h3 class="section-heading">Notes</h3>
+  <div class="form-group">
+    <label for="notes">Additional Information:</label><br>
+    <textarea name="notes" rows="4" placeholder="Optional site notes or special instructions.">{{ (job.notes if job is defined else '') }}</textarea>
+  </div>
 </div>
+
+<script>
+(function () {
+  const sel = document.getElementById('job_type');
+  const rei = document.getElementById('rei-options');           // fixed id
+  const gen = document.getElementById('generic-job-fields');
+  const fum = document.getElementById('fumigation-section');
+  const exc = document.getElementById('exclusion-options');
+  const cus = document.getElementById('custom-type-div');
+  const tpSel = document.getElementById('target_pest_select');
+  const customPest = document.getElementById('custom_pest_input');
+  const titleField = document.getElementById('title-field');
+  const priceField = document.getElementById('price');
+
+  function show(el, on) { if (!el) return; el.classList.toggle('hidden', !on); el.style.display = on ? '' : 'none'; }
+  function req(el, on)  { if (!el) return; el.toggleAttribute('required', !!on); }
+  function setRequiredIn(scope, on) {
+    if (!scope) return;
+    scope.querySelectorAll('input, select, textarea').forEach(el => el.toggleAttribute('required', !!on));
+  }
+
+  function toggleByType() {
+    const val = (sel?.value || '').toLowerCase();
+    const isREI = (val === 'rei');
+    const isFum = (val === 'fumigation');
+    const isExc = (val === 'exclusion');
+    const isCus = (val === 'custom');
+
+    // sections
+    show(rei, isREI);
+    show(fum, isFum);
+    show(exc, isExc);
+    show(cus, isCus);
+
+    // REI: hide/disable generic fields; require quantity only
+    show(gen, !isREI);
+    if (titleField) titleField.disabled = isREI;
+    if (priceField) priceField.disabled = isREI;
+
+    // client-side requireds (server remains source of truth)
+    setRequiredIn(gen, !isREI);                 // require Job Name for non-REI
+    req(titleField, !isREI);
+    // Price is optional always; do not require
+
+    // Quantity required only for REI
+    const qty = document.getElementById('rei_quantity');
+    req(qty, isREI);
+  }
+
+  function toggleCustomPest() {
+    const v = (tpSel?.value || '');
+    show(customPest, v === 'Other');
+  }
+
+  sel?.addEventListener('change', toggleByType);
+  tpSel?.addEventListener('change', toggleCustomPest);
+
+  // init
+  toggleByType();
+  toggleCustomPest();
+})();
+</script>

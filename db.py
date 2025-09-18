@@ -12,8 +12,10 @@ Notes:
 
 import sqlite3
 from pathlib import Path
-from .utils.logger import setup_logger
+
 from werkzeug.security import generate_password_hash
+
+from utils.logger import setup_logger
 
 logger = setup_logger(level=0)
 BASE_DIR = Path(__file__).parent
@@ -82,7 +84,8 @@ def init_db() -> None:
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'tech',
-        must_reset_password INTEGER NOT NULL DEFAULT 0
+        must_reset_password INTEGER NOT NULL DEFAULT 0,
+        last_password_change TEXT
     );
     """
     )
@@ -105,6 +108,8 @@ def init_db() -> None:
         title TEXT NOT NULL,
         start_date TEXT NOT NULL,
         end_date TEXT,
+        start_time TEXT,
+        end_time TEXT,
         time_range TEXT,
         job_type TEXT,
         price REAL,
@@ -117,6 +122,7 @@ def init_db() -> None:
         rei_quantity INTEGER,
         rei_city_name TEXT,
         technician_id INTEGER,
+        two_man INTEGER NOT NULL DEFAULT 0,
         created_by INTEGER,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         last_modified TEXT,
@@ -165,6 +171,12 @@ def init_db() -> None:
             "INSERT INTO users (first_name,last_name,username,password,role,must_reset_password) VALUES (?,?,?,?,?,?)",
             ("Admin", "User", "admin", generate_password_hash("changeme"), "admin", 1),
         )
+
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_jobs_start ON jobs(start_date);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_jobs_end ON jobs(end_date);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_timeoff_start ON time_off(start_date);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_timeoff_end ON time_off(end_date);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_locks_date ON locks(date);")
 
     conn.commit()
     conn.close()
