@@ -319,6 +319,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
 }
 
+.form-container .field-with-action {
+    margin-bottom: .75rem;
+}
+
 .form-section {
     margin-bottom: 1.8em;
     padding-bottom: 1em;
