@@ -1,6 +1,6 @@
 # ExTerminus
 
-![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.3.1-blue.svg)
 
 Calendar-driven scheduling for pest control operations.  Fast to run, simple to deploy, opinionated where it counts.
 

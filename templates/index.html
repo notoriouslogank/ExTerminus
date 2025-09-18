@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
+{% set _u = session.get('user') or {} %}
+{% set _role = (_u.get('role', '') | lower) %}
+{% set _uid = _u.get('user_id') %}
 
 <div class="calendar-header">
     <img src="{{ url_for('static', filename='img/logo.png') }}" class="calendar-logo">
@@ -67,18 +70,34 @@
             <div class="jobs">
   {# Time Off pills (names only) #}
               {% if time_off_by_date.get(day_str) %}
-                {% for tech_name in time_off_by_date[day_str] %}
-                  <div class="job-entry off-entry" title="{{ tech_name }} is off">
-                    <div class="job-header">
-                      <span class="job-tag">OFF</span>
-                      {# initials + last name fallback #}
-                      {% set parts = (tech_name or '').split() %}
-                      {% set short = (parts[0][0] ~ '.' ~ (parts[1] if parts|length>1 else '')) if parts|length>=1 else tech_name %}
-                      <span class="job-title">{{ short }}</span>
-                    </div>
-                  </div>
-                {% endfor %}
-              {% endif %}
+  {% for to in time_off_by_date[day_str] %}
+    {# Support both shapes: "Logan Smith" OR {"id": 5, "name": "Logan Smith", "user_id": 42} #}
+    {% set _name  = to.name if to is mapping else to %}
+    {% set _id    = to.id   if to is mapping else None %}
+    {% set _owner = (to.user_id if to is mapping else None) or (to.technician_id if to is mapping else None) %}
+    {% set _can_remove = (_role in ['admin','manager']) or (_owner and _owner == _uid) %}
+
+    <div class="job-entry off-entry" title="{{ _name }} is off">
+      <div class="job-header">
+        <span class="job-tag">OFF</span>
+        {% set parts = (_name or '').split() %}
+        {% set short = (parts[0][0] ~ '.' ~ (parts[1] if parts|length>1 else '')) if parts|length>=1 else _name %}
+        <span class="job-title">{{ short }}</span>
+
+        {# tiny remove button, if permitted and we have an id #}
+        {% if _can_remove and _id %}
+          <form method="POST"
+                action="{{ url_for('calendar.delete_time_off', time_off_id=_id) }}"
+                class="inline"
+                onsubmit="return confirm('Remove this time off?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-red btn-xxs" title="Remove">×</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
 
               {# Jobs, sorted by time_range #}
               {% for job in (jobs_by_date.get(day_str, []) | sort(attribute='time_range')) %}

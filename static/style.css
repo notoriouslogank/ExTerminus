@@ -224,6 +224,31 @@ a:hover {
     background-color: #c00000;
 }
 
+.btn-xxs {
+    padding: 0 .35rem;
+    line-height: 1;
+    font-size: .85rem;
+    margin-left: .25rem;
+}
+
+.inline {
+    display: inline;
+}
+
+.job-header {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    justify-content: space-between;
+}
+
+.job-header .job-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Badges */
 .badge {
     padding: 0.3em 0.6em;
