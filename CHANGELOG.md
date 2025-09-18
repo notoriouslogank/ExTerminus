@@ -6,7 +6,7 @@ All notable changes to this project will be documented here.
 
 (nothing yet)
 
-## [v0.3.0-dev] - 2025-09-17
+## [v0.3.0] - 2025-09-17
 
 ### Added
 
