@@ -7,7 +7,22 @@ Provides:
 
 from functools import wraps
 
-from flask import flash, redirect, request, session, url_for
+from flask import flash, redirect, request, session, url_for, current_app, abort
+
+
+def write_guard(fn):
+    @wraps(fn)
+    def _inner(*a, **kw):
+        if current_app.config.get("READ_ONLY_PROD") and request.method in {
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE",
+        }:
+            abort(423)  # Locked
+        return fn(*a, **kw)
+
+    return _inner
 
 
 def role_required(*roles):

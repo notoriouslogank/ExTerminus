@@ -23,3 +23,4 @@ mkbug.py
 # Logs
 logs/
 *.bak
+.env.prod

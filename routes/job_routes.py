@@ -14,7 +14,7 @@ from flask import (
 )
 
 from db import get_database
-from utils.decorators import login_required, role_required
+from utils.decorators import login_required, role_required, write_guard
 from utils.holidays_util import is_holiday
 from utils.logger import setup_logger
 
@@ -228,6 +228,7 @@ def _compose_job_payload(form, cur, start_date: date, end_date: date | None):
 @job_bp.route("/add_job", methods=["GET", "POST"])
 @login_required
 @role_required("manager", "technician", "sales")
+@write_guard
 def add_job():
     """Create a new job (GET shows form, POST submits).
 
@@ -469,6 +470,7 @@ def add_job():
 @job_bp.route("/add_job/<date>", methods=["GET", "POST"])
 @login_required
 @role_required("manager", "technician", "sales")
+@write_guard
 def add_job_for_date(date):
     """Create a job for a specific day.
 
@@ -667,6 +669,7 @@ def add_job_for_date(date):
 @job_bp.route("/move_job/<int:job_id>", methods=["POST"])
 @login_required
 @role_required("manager", "technician", "sales")
+@write_guard
 def move_job(job_id: int):
     """Move a job to a new start date, preserving its duration.
 
@@ -723,6 +726,7 @@ def move_job(job_id: int):
 @job_bp.route("/delete_job/<int:job_id>", methods=["POST"])
 @login_required
 @role_required("manager", "sales")
+@write_guard
 def delete_job(job_id):
     """Delete a job permanently.
 
@@ -747,6 +751,7 @@ def delete_job(job_id):
 @job_bp.route("/edit_job/<int:job_id>", methods=["GET", "POST"])
 @login_required
 @role_required("manager", "sales")
+@write_guard
 def edit_job(job_id):
     """Edit an existing job.
 
@@ -885,6 +890,7 @@ def edit_job(job_id):
 @job_bp.post("/timeoff/add")
 @login_required
 @role_required("manager", "technician")
+@write_guard
 def timeoff_add():
 
     conn = get_database()
@@ -918,6 +924,7 @@ def timeoff_add():
 @job_bp.post("/timeoff/delete/<int:timeoff_id>", endpoint="timeoff_delete")
 @login_required
 @role_required("admin", "manager", "technician")
+@write_guard
 def timeoff_delete(timeoff_id: int):
     conn = get_database()
     cur = conn.cursor()
