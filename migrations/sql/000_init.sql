@@ -1,0 +1,2 @@
+-- 000_init.sql
+-- bootstrap migration stream (no-op)
