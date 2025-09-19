@@ -18,10 +18,10 @@ from flask_wtf.csrf import CSRFError, generate_csrf
 
 from db import ensure_pragmas, init_db
 from routes import register_routes
-from utils.config import BaseConfig, DevConfig, ProdConfig
+from utils.config import DevConfig
+from utils.feature_flags import feature
 from utils.logger import setup_logger
 from utils.version import __version__
-from utils.feature_flags import feature
 
 env_path = Path(__file__).resolve().parent / ".env"
 load_dotenv(dotenv_path=env_path)

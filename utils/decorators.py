@@ -7,7 +7,7 @@ Provides:
 
 from functools import wraps
 
-from flask import flash, redirect, request, session, url_for, current_app, abort
+from flask import abort, current_app, flash, redirect, request, session, url_for
 
 
 def write_guard(fn):

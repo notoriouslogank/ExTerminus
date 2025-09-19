@@ -10,8 +10,8 @@ Notes:
     Uses state code ``VA`` for holidays via ``holidays_for_month``.
 """
 
-from collections import defaultdict
 from calendar import Calendar, month_name
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for

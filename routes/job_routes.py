@@ -1,21 +1,10 @@
 from datetime import date, datetime
-from functools import wraps
 
 import zipcodes
-from flask import (
-    Blueprint,
-    Response,
-    flash,
-    redirect,
-    render_template,
-    request,
-    session,
-    url_for,
-)
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 from db import get_database
 from utils.decorators import login_required, role_required, write_guard
-from utils.holidays_util import is_holiday
 from utils.logger import setup_logger
 
 job_bp = Blueprint("job", __name__)
@@ -242,7 +231,6 @@ def add_job():
     cur = conn.cursor()
 
     if request.method == "POST":
-
         # Dates (route-level)
 
         start_date_raw = request.form.get("start_date")
@@ -892,7 +880,6 @@ def edit_job(job_id):
 @role_required("manager", "technician")
 @write_guard
 def timeoff_add():
-
     conn = get_database()
     cur = conn.cursor()
     uid = session.get("user", {}).get("user_id")
@@ -901,7 +888,6 @@ def timeoff_add():
 
     tech_id_raw = request.form.get("technician_id")
     tech_id = int(tech_id_raw) if tech_id_raw and tech_id_raw.isdigit() else uid
-    date_raw = request.form.get("date")
     reason = request.form.get("reason")
 
     if role_name not in ("manager", "admin"):
