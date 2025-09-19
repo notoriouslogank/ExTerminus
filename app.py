@@ -18,9 +18,10 @@ from flask_wtf.csrf import CSRFError, generate_csrf
 
 from db import ensure_pragmas, init_db
 from routes import register_routes
-from utils.config import Config
+from utils.config import BaseConfig, DevConfig, ProdConfig
 from utils.logger import setup_logger
 from utils.version import __version__
+from utils.feature_flags import feature
 
 env_path = Path(__file__).resolve().parent / ".env"
 load_dotenv(dotenv_path=env_path)
@@ -82,7 +83,7 @@ def create_app():
     app = Flask(
         __name__, static_folder=str(STATIC_DIR), template_folder=str(TEMPLATES_DIR)
     )
-    app.config.from_object(Config)
+    app.config.from_object(DevConfig)
 
     app.jinja_env.filters["fmt_ts"] = fmt_ts
 
@@ -97,6 +98,10 @@ def create_app():
 
     logger = setup_logger()  # type: ignore
     logger.debug("App starting with config loaded.")
+
+    @app.context_processor
+    def inject_flags():
+        return {"feature": feature}
 
     @app.context_processor
     def inject_csrf():
