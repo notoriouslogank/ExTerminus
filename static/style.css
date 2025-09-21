@@ -29,6 +29,9 @@ a:hover {
     margin: 0 auto;
 }
 
+.cell-overlay {z-index: 1; }
+.job-controls { position: relative; z-index: 2; }
+
 .field-with-action {
     position: relative;
     display: grid;

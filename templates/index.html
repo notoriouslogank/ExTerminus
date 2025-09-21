@@ -152,8 +152,16 @@
                       {% else %}
                         <span class="job-price tbd">TBD</span>
                       {% endif %}
-                      {% if cont_left %}<span class="job-arrow job-arrow-left">⟵</span>{% endif %}
-                      {% if cont_right %}<span class="job-arrow job-arrow-right">⟶</span>{% endif %}
+                      {% if cont_left %}
+                        <span class="job-arrow job-arrow-left">
+                        ⟵
+                        </span>
+                      {% endif %}
+                      {% if cont_right %}
+                        <span class="job-arrow job-arrow-right">
+                        ⟶
+                        </span>
+                      {% endif %}
                       {{ job_controls(job, locked=is_locked) }}
                     </div>
                   </div>

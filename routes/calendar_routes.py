@@ -85,6 +85,7 @@ def index():
             j.rei_city_name AS rei_city_name,
             j.technician_id,
             j.two_man,
+            j.created_by,
             t.name AS technician_name,
             CASE
                 WHEN j.two_man = 1 THEN 'Two Man'
