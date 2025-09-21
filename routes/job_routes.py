@@ -190,13 +190,15 @@ def _compose_job_payload(form, cur, start_date: date, end_date: date | None):
         # if rei_zip and rei_zip.isdigit() and len(rei_zip) == 5:
         #    rei_city_name = lookup_zipcode(rei_zip)
 
-        # Other Fields
-        exclusion_subtype = form.get("exclusion_subtype")
-        fumigation_type = form.get("fumigation_type")
-        target_pest = form.get("target_pest")
-        custom_pest = form.get("custom_pest")
-        if custom_pest:
-            target_pest = custom_pest.strip()
+    # Other Fields
+    exclusion_subtype = (form.get("exclusion_subtype") or "").strip() or None
+    fumigation_type = (form.get("fumigation_type") or "").strip() or None
+    target_pest = (form.get("target_pest") or "").strip() or None
+    custom_pest = (form.get("custom_pest") or "").strip() or None
+    if (target_pest or "").lower() != "other":
+        custom_pest = None
+    elif custom_pest:
+        target_pest = custom_pest
 
     # Core
     title = (form.get("title") or "").strip()
@@ -451,10 +453,9 @@ def add_job_for_date(date):
         )
 
 
-@job_bp.route("/move_job/<int:job_id>", methods=["POST"])
+@job_bp.route("/move_job/<int:job_id>", methods=["GET", "POST"])
 @login_required
 @owner_or_role()
-# @role_required("manager", "technician", "sales")
 @write_guard
 def move_job(job_id: int):
     """Move a job to a new start date, preserving its duration.
@@ -467,14 +468,35 @@ def move_job(job_id: int):
     Returns:
         Response: Redirect to the referrer or ``calendar.index``.  Returns a 404 response if the job is not found.
     """
-    new_start = request.form["new_date"]
     conn = get_database()
     cur = conn.cursor()
 
-    # get current job duration
-    job = cur.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    # Fetch current job to compute duration & validate existence
+    job = cur.execute(
+        "SELECT id, start_date, end_date FROM jobs WHERE id = ?", (job_id,)
+    ).fetchone()
     if not job:
         return "Job not found", 404
+
+    # GET: render form (or support fast move vie ?new_date=)
+    if request.method == "GET":
+        qs_new = (request.args.get("new_date") or "").strip()
+        if qs_new:
+            # treat like POST if new_date is provided
+            new_start = qs_new
+        else:
+            return render_template(
+                "move_job.html",
+                job=job,
+                next=request.args.get("next")
+                or request.referrer
+                or url_for("calendar.index"),
+            )
+    else:
+        new_start = request.form.get("new_date", "").strip()
+        if not new_start:
+            flash("Pick a new date.", "error")
+            return redirect(request.referrer or url_for("calendar.index"))
 
     old_start = datetime.strptime(job["start_date"], "%Y-%m-%d").date()
     if job["end_date"]:
@@ -485,6 +507,15 @@ def move_job(job_id: int):
 
     new_start_dt = datetime.strptime(new_start, "%Y-%m-%d").date()
     new_end_dt = new_start_dt + duration
+
+    # Respect locks
+    cur.execute("SELECT 1 FROM locks WHERE date = ?", (new_start_dt.isoformat(),))
+    if cur.fetchone():
+        flash("Target date is locked.  Cannot move job.", "error")
+        return redirect(
+            request.referrer
+            or url_for("calendar.day_view", selected_date=old_start.isoformat())
+        )
 
     cur.execute(
         """
@@ -506,7 +537,11 @@ def move_job(job_id: int):
     logger.info(
         f"Job ID {job_id} moved by user ID {session['user']['user_id']} to {new_start_dt}"
     )
-    return redirect(request.referrer or url_for("calendar.index"))
+    return redirect(
+        request.form.get("next")
+        or request.args.get("next")
+        or url_for("calendar.day_view", selected_date=new_start_dt.isoformat())
+    )
 
 
 @job_bp.route("/delete_job/<int:job_id>", methods=["POST"])
@@ -699,8 +734,8 @@ def timeoff_add():
         return redirect(request.referrer or url_for("calendar.index"))
 
     cur.execute(
-        "INSERT INTO time_off (technician_id, date, reason, created_at, created_by) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)",
-        (tech_id, d, d, reason),
+        "INSERT INTO time_off (technician_id, date, reason, created_at, created_by) VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?)",
+        (tech_id, d, reason, uid),
     )
     conn.commit()
     logger.info(f"time_off added for tech {tech_id} by user {uid} on {d}")

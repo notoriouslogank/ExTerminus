@@ -150,6 +150,11 @@ def create_app():
         return {"today": date.today(), "now": datetime.now()}
 
     @app.context_processor
+    def inject_identity():
+        su = session.get("user") or {}
+        return {"_uid": su.get("user_id"), "_role": (su.get("role") or "").lower()}
+
+    @app.context_processor
     def inject_viewer():
         uid = getattr(getattr(g, "user", None), "id", None) or session.get("user_id")
         role = getattr(getattr(g, "user", None), "role", None) or session.get("role")
