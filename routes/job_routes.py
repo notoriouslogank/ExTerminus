@@ -14,7 +14,7 @@ from flask import (
 )
 
 from db import get_database
-from utils.decorators import login_required, role_required, write_guard
+from utils.decorators import login_required, owner_or_role, role_required, write_guard
 from utils.logger import setup_logger
 
 job_bp = Blueprint("job", __name__)
@@ -426,7 +426,8 @@ def add_job_for_date(date):
 
 @job_bp.route("/move_job/<int:job_id>", methods=["POST"])
 @login_required
-@role_required("manager", "technician", "sales")
+@owner_or_role()
+# @role_required("manager", "technician", "sales")
 @write_guard
 def move_job(job_id: int):
     """Move a job to a new start date, preserving its duration.
@@ -483,7 +484,8 @@ def move_job(job_id: int):
 
 @job_bp.route("/delete_job/<int:job_id>", methods=["POST"])
 @login_required
-@role_required("manager", "sales")
+@owner_or_role()
+# @role_required("manager", "sales")
 @write_guard
 def delete_job(job_id):
     """Delete a job permanently.
@@ -508,7 +510,8 @@ def delete_job(job_id):
 
 @job_bp.route("/edit_job/<int:job_id>", methods=["GET", "POST"])
 @login_required
-@role_required("manager", "sales")
+@owner_or_role()
+# @role_required("manager", "sales")
 @write_guard
 def edit_job(job_id):
     """Edit an existing job.
@@ -679,7 +682,8 @@ def timeoff_add():
 
 @job_bp.post("/timeoff/delete/<int:timeoff_id>", endpoint="timeoff_delete")
 @login_required
-@role_required("admin", "manager", "technician")
+@owner_or_role()
+# @role_required("admin", "manager", "technician")
 @write_guard
 def timeoff_delete(timeoff_id: int):
     conn = get_database()

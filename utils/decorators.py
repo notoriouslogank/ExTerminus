@@ -7,7 +7,41 @@ Provides:
 
 from functools import wraps
 
-from flask import abort, current_app, flash, redirect, request, session, url_for
+from flask import abort, current_app, flash, g, redirect, request, session, url_for
+
+from db import get_database
+
+
+def _uid():
+    return getattr(getattr(g, "user", None), "id", None) or session.get("user_id")
+
+
+def owner_or_role(roles=("admin", "manager")):
+    def deco(fn):
+        @wraps(fn)
+        def wrapper(job_id, *a, **kw):
+            uid = _uid()
+            if not uid:
+                abort(401)
+            conn = get_database()
+            row = conn.execute(
+                """
+                SELECT j.created_by, u.role
+                FROM jobs j
+                JOIN users u ON u.id = ?
+                WHERE j.id = ?
+            """,
+                (uid, job_id),
+            ).fetchone()
+            if not row:
+                abort(404)
+            if not (row["created_by"] == uid or row["role"] in roles):
+                abort(403)
+            return fn(job_id, *a, **kw)
+
+        return wrapper
+
+    return deco
 
 
 def write_guard(fn):
