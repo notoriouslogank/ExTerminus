@@ -15,24 +15,44 @@
 
 <script>
 (function () {
-    if (window.openMoveModal) return;
+  // Don't rebind if already present
+  if (window.openMoveModal) return;
 
+  window.openMoveModal = function (jobId) {
+    // Re-query each time in case the DOM changed
     const modal = document.getElementById('move-modal');
-    const urlTpl = modal?.dataset.urlTpl || "";
+    if (!modal) return false;
 
-    window.openMoveModal = function (jobId) {
-        if (!modal) return false;
-        const form = modal.querySelector('form');
-        form.action = urlTpl.replace(/0$/, String(jobId));
-        const dateInput = form.querySelector('input[name="new_date"]');
-        if (dateInput) dateInput.value = "";
-        if (modal.showModal) modal.showModal(); else modal.style.display = 'block';
-        return false;
-    };
+    const urlTpl = modal.getAttribute('data-url-tpl') || "";
+    const form = modal.querySelector('form');
+    if (!form || !urlTpl) return false;
 
-    window.closeMoveModal = function () {
-        if (!modal) return;
-        if (modal.close) modal.close(); else modal.style.display = 'none';
-    };
+    // Point the form at the target job
+    form.action = urlTpl.replace(/0$/, String(jobId));
+
+    // Reset date field
+    const dateInput = form.querySelector('input[name="new_date"]');
+    if (dateInput) dateInput.value = "";
+
+    // Open dialog (with fallback)
+    if (typeof modal.showModal === 'function') {
+      modal.showModal();
+    } else {
+      modal.setAttribute('open', '');
+      modal.style.display = 'block';
+    }
+    return true; // <-- success: tell caller we opened it
+  };
+
+  window.closeMoveModal = function () {
+    const modal = document.getElementById('move-modal');
+    if (!modal) return;
+    if (typeof modal.close === 'function') {
+      modal.close();
+    } else {
+      modal.removeAttribute('open');
+      modal.style.display = 'none';
+    }
+  };
 })();
 </script>
