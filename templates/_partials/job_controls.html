@@ -12,7 +12,7 @@
       {# Works with or without JS modal #}
       <a href="{{ url_for('job.move_job', job_id=job.id, next=request.full_path) }}"
          class="btn btn-yellow btn-xxs"
-         onclick="return (window.openMoveModal ? openMoveModal({{ job.id }}) : true);">
+         onclick="if (window.openMoveModal) { event.preventDefault(); event.stopPropagation(); openMoveModal({{ job.id }}); return false; } return true;">
         📅 Move
       </a>
 
