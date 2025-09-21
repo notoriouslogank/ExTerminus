@@ -7,6 +7,7 @@ Responsibilities:
     - Register friendly error handlers (404/500, CSRF).
 """
 
+import os
 from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -18,7 +19,6 @@ from flask_wtf.csrf import CSRFError, generate_csrf
 
 from db import ensure_pragmas, init_db
 from routes import register_routes
-from utils.config import DevConfig
 from utils.feature_flags import feature
 from utils.logger import setup_logger
 from utils.version import __version__
@@ -83,14 +83,16 @@ def create_app():
     app = Flask(
         __name__, static_folder=str(STATIC_DIR), template_folder=str(TEMPLATES_DIR)
     )
-    app.config.from_object(DevConfig)
+    env = os.getenv("FLASK_ENV", "development").lower()
+    cfg = "config.ProdConfig" if env == "production" else "config.DevConfig"
+    app.config.from_object(cfg)
 
     app.jinja_env.filters["fmt_ts"] = fmt_ts
 
     if not app.debug and app.config.get("SECRET_KEY") in (
         None,
         "",
-        "dev-insecure-change-me",
+        "change-me",
     ):
         raise RuntimeError("SECRET_KEY must be set in production.")
 
@@ -123,6 +125,10 @@ def create_app():
     def server_error(e):
         """Render the generic 500 error page."""
         return render_template("errors.html", code=500), 500
+
+    @app.errorhandler(423)
+    def locked(_e):
+        return render_template("errors.html", code=423), 423
 
     init_db()
     ensure_pragmas()

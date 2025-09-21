@@ -20,7 +20,7 @@ class BaseConfig:
         "DATABASE_URL", "sqlite:///instance/exterminus.sqlite3"
     )
     # Feat flags
-    FEATURE_UNSCEDULED_POOL = _b("FEATURE_UNSCHEDULED_POOL", False)
+    FEATURE_UNSCHEDULED_POOL = _b("FEATURE_UNSCHEDULED_POOL", False)
     FEATURE_ONBOARDING_TOUR = _b("FEATURE_ONBOARDING_TOUR", False)
     # block prod writes
     READ_ONLY_PROD = _b("READ_ONLY_PROD", False)
