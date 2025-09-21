@@ -1,0 +1,16 @@
+{% macro job_controls(job, locked=False) -%}
+    {% set _can_edit = (job.created_by == _uid) or (_role in ["admin", "manager"]) %}
+    {% if not locked and _can_edit %}
+        <span class="job-controls">
+            <a href="{{ url_for('job.edit_job', job_id=job.id) }}" class="btn btn-yellow btn-xxs">Edit</a>
+            <button onclick="openMoveModal({{ job.id }})" class="btn btn-yellow btn-xxs">Move</button>
+            <form method="POST"
+                action="{{ url_for('job.delete_job', job_id=job.id) }}"
+                class="inline"
+                onsubmit="return confirm('Delete this job?')";>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-red btn-xxs">Delete</button>
+            </form>
+        </span>
+    {% endif %}
+{%- endmacro %}

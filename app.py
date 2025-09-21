@@ -13,7 +13,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
-from flask import Flask, flash, g, redirect, render_template, request, url_for
+from flask import Flask, flash, g, redirect, render_template, request, session, url_for
 from flask_wtf import CSRFProtect
 from flask_wtf.csrf import CSRFError, generate_csrf
 
@@ -148,6 +148,12 @@ def create_app():
     def inject_globals():
         """Provide ``today`` and ``now`` to all templates."""
         return {"today": date.today(), "now": datetime.now()}
+
+    @app.context_processor
+    def inject_viewer():
+        uid = getattr(getattr(g, "user", None), "id", None) or session.get("user_id")
+        role = getattr(getattr(g, "user", None), "role", None) or session.get("role")
+        return {"viewer_id": uid, "viewer_role": role}
 
     @app.context_processor
     def inject_app_version():

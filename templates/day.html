@@ -3,6 +3,7 @@
 {% set _u = session.get('user') or {} %}
 {% set _role = (_u.get('role', '') | lower) %}
 {% set _uid = _u.get('user_id') %}
+{% from "_partials/job_controls.html" import job_controls %}
 
 <div class="status-banner">
   {% if locked %}
@@ -103,17 +104,7 @@
           {% if job.last_modified %}<span class="sep">•</span><span>{{ job.last_modified|fmt_ts }}</span>{% endif %}
         </div>
 
-        {% if not locked %}
-          <div class="flex-row mt-05 gap">
-            <a href="{{ url_for('job.edit_job', job_id=job.id) }}" class="btn btn-yellow">✏️ Edit</a>
-            <form method="POST" action="{{ url_for('job.delete_job', job_id=job.id) }}"
-                  onsubmit="return confirm('Delete this job?');">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn btn-red">🗑 Delete</button>
-            </form>
-            <button onclick="openMoveModal({{ job.id }})" class="btn btn-yellow">📅 Move</button>
-          </div>
-        {% endif %}
+        {{ job_controls(job, locked=locked) }}
       </div>
     {% endfor %}
 
