@@ -143,30 +143,4 @@
   <p class="text-center" style="color: #888">No jobs scheduled for this day.</p>
 {% endif %}
 
-<!-- Move Modal -->
-<div id="moveModal" class="modal">
-  <div class="modal-content">
-    <form method="POST" id="moveForm" action="">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <label for="new_date">Select New Date:</label><br>
-      <input type="date" name="new_date" required class="mt-05">
-      <div class="flex-space-between mt-1">
-        <button type="submit" class="btn btn-green">Move</button>
-        <button type="button" onclick="closeMoveModal()" class="btn btn-cancel">Cancel</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<script>
-  function openMoveModal(jobId) {
-    const form = document.getElementById('moveForm');
-    form.action = `/move_job/${jobId}`;
-    document.getElementById('moveModal').style.display = 'flex';
-  }
-  function closeMoveModal() {
-    document.getElementById('moveModal').style.display = 'none';
-  }
-</script>
-
 {% endblock %}
