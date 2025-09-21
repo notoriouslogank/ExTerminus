@@ -22,7 +22,18 @@ logger = setup_logger()
 
 
 def _current_user_id():
-    return getattr(getattr(g, "user", None), "id", None) or session.get("user_id")
+    u = getattr(g, "user", None)
+    if isinstance(u, dict):
+        uid = u.get("user_id") or u.get("id")
+        if uid is not None:
+            return int(uid)
+    elif u is not None:
+        uid = getattr(u, "id", None)
+        if uid is not None:
+            return int(uid)
+    su = session.get("user") or {}
+    uid = su.get("user_id") or session.get("user_id")
+    return int(uid) if uid is not None else None
 
 
 def _parse_date(s: str | None) -> date | None:
@@ -151,30 +162,41 @@ def _compose_job_payload(form, cur, start_date: date, end_date: date | None):
     technician_raw = form.get("technician_id")
     technician_id, two_man = _parse_technician(technician_raw, cur)
 
-    # REI Fields (ZIP or City or None; Quantity is required)
+    # REI fields
     rei_quantity_raw = (form.get("rei_quantity") or "").strip()
-    rei_zip = (form.get("rei_quantity") or "").strip()
+    rei_zip = (form.get("rei_zip") or "").strip()
     rei_city_free = (form.get("rei_city_name") or form.get("rei_city") or "").strip()
-    rei_city_name = None
     if rei_city_free:
         rei_city_name = rei_city_free
-    elif rei_zip and rei_zip.isdigit() and len(rei_zip) == 5:
+    elif rei_zip.isdigit() and len(rei_zip) == 5:
         rei_city_name = lookup_zipcode(rei_zip)
+    else:
+        rei_city_name = None
 
-    # REI Fields
-    rei_quantity = form.get("rei_quantity")
-    rei_zip = (form.get("rei_zip") or "").strip()
-    rei_city_name = None
-    if rei_zip and rei_zip.isdigit() and len(rei_zip) == 5:
-        rei_city_name = lookup_zipcode(rei_zip)
+        # REI Fields (ZIP or City or None; Quantity is required)
+        # rei_quantity_raw = (form.get("rei_quantity") or "").strip()
+        # rei_zip = (form.get("rei_quantity") or "").strip()
+        # rei_city_free = (form.get("rei_city_name") or form.get("rei_city") or "").strip()
+        # rei_city_name = None
+        # if rei_city_free:
+        #     rei_city_name = rei_city_free
+        # elif rei_zip and rei_zip.isdigit() and len(rei_zip) == 5:
+        #     rei_city_name = lookup_zipcode(rei_zip)
+        #
+        # REI Fields
+        #   rei_quantity = form.get("rei_quantity")
+        #  rei_zip = (form.get("rei_zip") or "").strip()
+        # rei_city_name = None
+        # if rei_zip and rei_zip.isdigit() and len(rei_zip) == 5:
+        #    rei_city_name = lookup_zipcode(rei_zip)
 
-    # Other Fields
-    exclusion_subtype = form.get("exclusion_subtype")
-    fumigation_type = form.get("fumigation_type")
-    target_pest = form.get("target_pest")
-    custom_pest = form.get("custom_pest")
-    if custom_pest:
-        target_pest = custom_pest.strip()
+        # Other Fields
+        exclusion_subtype = form.get("exclusion_subtype")
+        fumigation_type = form.get("fumigation_type")
+        target_pest = form.get("target_pest")
+        custom_pest = form.get("custom_pest")
+        if custom_pest:
+            target_pest = custom_pest.strip()
 
     # Core
     title = (form.get("title") or "").strip()
@@ -201,6 +223,14 @@ def _compose_job_payload(form, cur, start_date: date, end_date: date | None):
         if not title:
             return None, "Title is required."
 
+    owner_id = _current_user_id()
+    if owner_id is None:
+        logger.warning(
+            "add_job: no owner_id found in g/session; session.user=%r",
+            session.get("user"),
+        )
+        abort(401)
+
     payload = {
         "title": title,
         "job_type": job_type,
@@ -224,6 +254,7 @@ def _compose_job_payload(form, cur, start_date: date, end_date: date | None):
         "fumigation_type": fumigation_type,
         "target_pest": target_pest,
         "custom_pest": custom_pest,
+        "created_by": owner_id,
     }
     return payload, None
 
@@ -240,10 +271,6 @@ def add_job():
     Returns:
         Response: On success, redirect to ``calendar.index``.  On validation errors, redirect back to the form.  On GET, render the form.
     """
-
-    owner_id = _current_user_id()
-    if not owner_id:
-        abort(401)
 
     conn = get_database()
     cur = conn.cursor()
@@ -309,7 +336,7 @@ def add_job():
                 payload["end_time"],
                 payload["time_range"],
                 payload["notes"],
-                owner_id,
+                payload["created_by"],
                 payload["technician_id"],
                 payload["two_man"],
                 payload["rei_quantity"],
@@ -393,7 +420,7 @@ def add_job_for_date(date):
                 payload["notes"],
                 payload["technician_id"],
                 payload["two_man"],
-                owner_id,
+                payload["created_by"],
                 payload["rei_quantity"],
                 payload["rei_zip"],
                 payload["rei_city_name"],
