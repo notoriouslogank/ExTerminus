@@ -19,7 +19,8 @@ from utils.logger import setup_logger
 
 logger = setup_logger(level=0)
 BASE_DIR = Path(__file__).parent
-DATABASE = str(BASE_DIR / "db.sqlite3")
+# DATABASE = str(BASE_DIR / "db.sqlite3")
+DATABASE = str(BASE_DIR / "instance/exterminus.sqlite3")
 
 
 def get_database() -> sqlite3.Connection:
