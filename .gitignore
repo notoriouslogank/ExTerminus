@@ -1,32 +1,33 @@
 # Python
-__pycache--/
-*.py[cod]
+__pycache__/
+*.pyc
 *.pyo
-# venv/env
-.env*
+*.pyd
 .venv/
-venv/
-# SQLite
-db.sqlite3
-db.sqlite3-*
-*.sqlite3
-*.sqlite3-*
-*.db
-*.db-*
-# OS/editor
-.DS_Store
-.idea/
-.vscode/
-# Tools
-mkbug.py
-.gitmessage.txt
-# Logs
-logs/
-*.bak
-.env.prod
 .ruff_cache/
-.env.prod
-repos/
-docs/
-.backup-before-password-flag.sqlite3
+
+# Environment
+.env
+.env.*
+
+# SQLite
+*.sqlite3
+*.db
+*.db-journal
+*.sqlite-shm
+*.sqlite-wal
+
+# Logs & Runtime Data
+logs/
+instance/
+backups/
+
+# Misc
+*.pid
+*.log
 .layout
+.gitmessage.txt
+.pre-commit-config.yaml
+
+utils/mkbug.py
+docs/BUGS.md.bak
