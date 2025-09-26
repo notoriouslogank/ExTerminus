@@ -50,6 +50,30 @@
     {% endblock %}
 
     {% include "_partials/move_modal.html" %}
+
+    <script>
+    (function(){
+    // Intercept before overlays/other handlers (capture=true)
+    document.addEventListener('click', function(e){
+        const a = e.target.closest('a.move-link');
+        if (!a) return;
+
+    // If modal API exists, try to open; only cancel if we succeed
+        if (typeof window.openMoveModal === 'function') {
+        const id = parseInt(a.getAttribute('data-move-job-id'), 10);
+        const opened = window.openMoveModal(id);
+        if (opened) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return;
+        }
+    }
+    // else: no modal available → allow normal navigation via href
+}, true); // <-- capture phase
+})();
+</script>
+
 </body>
 </html>
 

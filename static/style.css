@@ -29,8 +29,14 @@ a:hover {
     margin: 0 auto;
 }
 
-.cell-overlay {z-index: 1; }
-.job-controls { position: relative; z-index: 2; }
+.cell-overlay {
+    z-index: 1;
+}
+
+.job-controls {
+    position: relative;
+    z-index: 999;
+}
 
 .field-with-action {
     position: relative;
@@ -424,6 +430,49 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Default modal styling */
+.modal {
+    width: 400px;
+    /* Set modal width */
+    padding: 1rem;
+    margin: 0 auto;
+    /* Center horizontally */
+    background-color: #222;
+    /* Dark background */
+    border-radius: 8px;
+    /* Rounded corners */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    /* Shadow for depth */
+    display: none;
+    /* Hide by default */
+    position: fixed;
+    /* Fixed position to keep it centered */
+    top: 50%;
+    /* Vertically center */
+    left: 50%;
+    /* Horizontally center */
+    transform: translate(-50%, -50%);
+    /* Adjust to truly center */
+    z-index: 1000;
+    /* Ensure it’s on top of other content */
+}
+
+.modal form {
+    display: flex;
+    flex-direction: column;
+}
+
+.modal input[type="date"] {
+    padding: 0.5rem;
+    margin-top: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.modal button {
+    margin-top: 1rem;
 }
 
 /* == 7) Layout Helpers ===================================================== */

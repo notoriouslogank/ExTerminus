@@ -1,47 +1,56 @@
-<dialog id="move-modal" class="modal"
-        data-url-tpl="{{ url_for('job.move_job', job_id=0) }}">
-    <form method="POST" class="card" style="min-width: 360px;">
-        {% if csrf_token %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
-        <input type="hidden" name="next" value="{{ request.full_path }}">
-        <label class="mb-1">Select New Date:
-            <input type="date" name="new_date" required class="input">
-        </label>
-        <div class="flex-row gap mt-1">
-            <button type="submit" class="btn btn-yellow">Move</button>
-            <button type="button" class="btn" onclick="closeMoveModal()">Cancel</button>
-        </div>
-    </form>
+<dialog id="move-modal" class="modal" data-url-tpl="{{ url_for('job.move_job', job_id=0) }}">
+  <form method="POST" class="card" style="min-width: 360px;">
+    {% if csrf_token %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+    <input type="hidden" name="next" value="{{ request.full_path }}">
+    <label class="mb-1">Select New Date:
+      <input type="date" name="new_date" required class="input">
+    </label>
+    <div class="flex-row gap mt-1">
+      <button type="submit" class="btn btn-yellow">Move</button>
+      <button type="button" class="btn" onclick="closeMoveModal()">Cancel</button>
+    </div>
+  </form>
 </dialog>
-
 <script>
 (function () {
-  // Don't rebind if already present
   if (window.openMoveModal) return;
 
   window.openMoveModal = function (jobId) {
-    // Re-query each time in case the DOM changed
     const modal = document.getElementById('move-modal');
-    if (!modal) return false;
+    if (!modal) {
+      console.error('Modal not found!');
+      return false;
+    }
 
-    const urlTpl = modal.getAttribute('data-url-tpl') || "";
     const form = modal.querySelector('form');
-    if (!form || !urlTpl) return false;
+    const urlTpl = modal.getAttribute('data-url-tpl') || "";
+    if (!form || !urlTpl) {
+      console.error('Form or URL template is missing!');
+      return false;
+    }
 
-    // Point the form at the target job
     form.action = urlTpl.replace(/0$/, String(jobId));
 
-    // Reset date field
     const dateInput = form.querySelector('input[name="new_date"]');
     if (dateInput) dateInput.value = "";
 
-    // Open dialog (with fallback)
+    // Ensure modal is displayed and centered
+    modal.style.display = 'block';  // Force visibility
+    modal.style.position = 'fixed';  // Keep it fixed on screen
+    modal.style.top = '50%';         // Center vertically
+    modal.style.left = '50%';        // Center horizontally
+    modal.style.transform = 'translate(-50%, -50%)';  // Actual centering
+
+    // Fallback for older browsers: use open attribute
     if (typeof modal.showModal === 'function') {
-      modal.showModal();
-    } else {
-      modal.setAttribute('open', '');
-      modal.style.display = 'block';
+      modal.showModal();  // Native support for modern browsers
     }
-    return true; // <-- success: tell caller we opened it
+
+    // Ensure modal stays on top of everything else
+    modal.style.zIndex = '1000';
+
+    console.log("Modal successfully opened for job ID:", jobId);
+    return true;  // Modal opened
   };
 
   window.closeMoveModal = function () {
@@ -51,7 +60,7 @@
       modal.close();
     } else {
       modal.removeAttribute('open');
-      modal.style.display = 'none';
+      modal.style.display = 'none';  // Hide modal again
     }
   };
 })();
