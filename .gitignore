@@ -3,7 +3,7 @@ __pycache--/
 *.py[cod]
 *.pyo
 # venv/env
-.env
+.env*
 .venv/
 venv/
 # SQLite
@@ -24,3 +24,9 @@ mkbug.py
 logs/
 *.bak
 .env.prod
+.ruff_cache/
+.env.prod
+repos/
+docs/
+.backup-before-password-flag.sqlite3
+.layout
