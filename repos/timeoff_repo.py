@@ -1,20 +1,14 @@
-from sqlite3 import Connection
-from typing import Mapping
+class TimeOffRepo:
+    def __init__(self, conn):
+        self.conn = conn
 
+    def tech_off_on(self, tech_id: int, ymd: str) -> bool:
+        self.conn.execute(
+            "SELECT 1 FROM time_off WHERE tech_id=? AND date=?", (tech_id, ymd)
+        ).fetchone()
 
-def insert_time_off(conn: Connection, data: Mapping) -> int:
-    cur = conn.execute(
-        """
-        INSERT INTO time_off (technician_id, start_date, end_date, reason, created_by)
-        VALUES (?, ?, ?, ?, ?)
-    """,
-        (
-            data["technician_id"],
-            data["start_date"],
-            data["end_date"],
-            data["reason"],
-            data["created_by"],
-        ),
-    )
-    conn.commit()
-    return cur.lastrowid
+    def insert(self, tech_id: int, ymd: str, user_id: int):
+        self.conn.execute(
+            "INSERT INTO time_off(tech_id, date, created_at, created_by) VALUES(?, ?, datetime('now'), ?)",
+            (tech_id, ymd, user_id),
+        )

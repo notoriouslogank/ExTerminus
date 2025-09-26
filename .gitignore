@@ -31,3 +31,4 @@ backups/
 
 utils/mkbug.py
 docs/BUGS.md.bak
+*.bak
