@@ -85,7 +85,7 @@ def create_app():
             Flask: A fully-configured Flask application instance.
     """
     app = Flask(__name__)
-    app.config.from_object("config.Config")
+    app.config.from_object("config.DevConfig")
     csrf.init_app(app)
 
     # services container

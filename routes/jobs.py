@@ -19,7 +19,7 @@ def create():
         return redirect(request.referrer or url_for("calendar.index"))
 
 
-@bp.post("/<int: job_id>/move")
+@bp.post("/<int:job_id>/move")
 @login_required
 def move(job_id: int):
     svc = current_app.services["jobs"]
