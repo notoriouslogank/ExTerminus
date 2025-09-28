@@ -19,6 +19,25 @@ def create():
         return redirect(request.referrer or url_for("calendar.index"))
 
 
+@bp.route("/create-multiday", methods=["POST"])
+@login_required
+def create_multiday():
+    svc = current_app.extensions["services"]["jobs"]
+    try:
+        payload = svc.normalize_multiday_form(request.form)
+        job_id = svc.create_multiday(payload, g.user)
+        flash(
+            f'Created job #{job_id} "{payload["title"]}" '
+            f'({payload["start_date"]} -> {payload["end_date"]}).',
+            "success",
+        )
+
+        return redirect(url_for("calendar.day_view", date=payload["start_date"]))
+    except (ValueError, PermissionError) as e:
+        flash(str(e), "error")
+        return redirect(request.referrer or url_for("calendar.index"))
+
+
 @bp.post("/<int:job_id>/move")
 @login_required
 def move(job_id: int):

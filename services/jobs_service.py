@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Dict, List, Optional
 
 from db import get_database
 from repos.audit_repo import AuditRepo
@@ -14,8 +14,86 @@ def _conn():
     return get_database()
 
 
+def _iso(d: str) -> str:
+    return datetime.fromisoformat(d).date().isoformat()
+
+
+def _s(v):
+    v = (v or "").strip()
+    return v or None
+
+
+def _to_int(v):
+    if v in (None, ""):
+        return None
+    try:
+        return int(v)
+    except ValueError:
+        raise ValueError("Invalid integer")
+
+
+def _to_float(v):
+    if v in (
+        None,
+        "",
+    ):
+        return None
+    try:
+        return float(v)
+    except ValueError:
+        raise ValueError("Invalid number")
+
+
+def _to_iso_date(v):
+    if not v:
+        raise ValueError("Date required")
+    try:
+        return datetime.fromisoformat(str(v)).date().isoformat()
+    except Exception:
+        raise ValueError("Invalid date; expected YYYY-MM-DD")
+
+
 @dataclass
 class JobsService:
+
+    def _assignee_label(self, row) -> str:
+        if row["assignment_mode"] == "both":
+            return "2 Man"
+        return (
+            row["assigned_to_name"]
+            if "assigned_to_name" in row.keys()
+            else (row["assigned_to"] or "Unassigned")
+        )
+
+    def project_for_day(self, ymd: str) -> List[Dict]:
+        ymd = _iso(ymd)
+        rows = self._jobs().for_day_projected(ymd)
+        out = []
+        for r in rows:
+            is_multi = bool(r["is_multiday"])
+            is_first = is_multi and _iso(r["start_date"]) == ymd
+            is_last = is_multi and _iso(r["end_date"]) == ymd
+            is_mid = is_multi and not is_first and not is_last
+            show_price = (not is_multi) or is_first
+
+            out.append(
+                {
+                    "id": r["id"],
+                    "title": r["title"],
+                    "type": (
+                        r["type"] if "type" in r.keys() else r.get("job_type", "")
+                    ),
+                    "assignees": self._assignee_label(r),
+                    "price": r.get("price"),
+                    "show_price": show_price,
+                    "is_multiday": is_multi,
+                    "is_first": is_first,
+                    "is_last": is_last,
+                    "is_mid": is_mid,
+                }
+            )
+        return out
+
     def _jobs(self):
         return JobsRepo(_conn())
 
@@ -88,6 +166,35 @@ class JobsService:
             {"start": start, "end": end},
         )
         return job_id
+
+    def normalize_multiday_form(self, form: dict) -> dict:
+        title = _s(form.get("title"))
+        if not title:
+            raise ValueError("Title is required.")
+        start = _to_iso_date(form.get("start_date"))
+        end = _to_iso_date(form.get("end_date"))
+        if end < start:
+            raise ValueError("End date must be on or after start date.")
+
+        # guard for absurd ranges
+        span = (datetime.fromisoformat(end) - datetime.fromisoformat(start)).days + 1
+        if span > 60:
+            raise ValueError("Multiday range too large (max 60 days).")
+
+        return {
+            "title": title,
+            "date": start,
+            "start_date": start,
+            "end_date": end,
+            "assigned_to": _to_int(form.get("assigned_to")),
+            "assignment_mode": (form.get("assignment_mode") or "single")
+            .strip()
+            .lower(),
+            "price": _to_float(form.get("price")),
+            "notes": _s(form.get("notes")),
+            "rei_city": _s(form.get("rei_city")),
+            "rei_zip": _s(form.get("rei_zip")),
+        }
 
     def move(self, job_id: int, new_date: str, user):
         job = self._jobs().get(job_id)

@@ -220,26 +220,60 @@ def day_view(selected_date: str):
     cur.execute(
         """
         SELECT
-            j.*,
-            j.job_type AS type,
-            j.rei_quantity AS rei_quantity,
-            j.rei_zip AS rei_zip,
-            j.rei_city_name AS rei_city_name,
-            t.name AS technician_name,
-            cu.username AS created_by_name,
-            mu.username AS modified_by_name,
-            CASE
-                WHEN LOWER(COALESCE(j.job_type, '')) = 'rei' THEN 'REIs'
-                ELSE COALESCE(NULLIF(j.title, ''), '(Untitled)')
-            END AS display_title
+          j.id,
+          j.title,
+          j.job_type AS type,
+          j.price,
+          j.rei_quantity,
+          j.rei_zip,
+          j.rei_city_name,
+
+          -- assignment/multiday info
+          j.assignment_mode,
+          j.is_multiday,
+          COALESCE(j.start_date, j.date) AS start_date,
+          COALESCE(j.end_date, j.date) AS end_date,
+
+          -- template compatibility
+          CASE WHEN j.assignment_mode = 'both' THEN 1 ELSE 0 END AS two_man,
+          t.name AS technician_name,
+          
+          -- display helpers
+          cu.username AS created_by_name,
+          mu.username AS modified_by_name,
+          CASE
+            WHEN LOWER(COALESCE(j.job_type, '')) = 'rei' THEN 'REIs'
+            ELSE COALESCE(NULLIF(j.title, ''), '(Untitled)')
+          END AS display_title,
+          
+          -- day-position flags
+          CASE WHEN j.is_multiday = 1 AND date(COALESCE(j.start_date, j.date)) = date(:sel) THEN 1 ELSE 0 END AS is_first,
+          CASE WHEN j.is_multiday = 1 AND date (COALESCE(j.end_date, j.date)) = date(:sel) THEN 1 ELSE 0 END AS is_last,
+          CASE WHEN j.is_multiday = 1
+                     AND date(:sel) > date(COALESCE(j.start_date, j.date))
+                     AND date(:sel) < date(COALESCE(j.end_date, j.date)) THEN 1 ELSE 0 END AS is_mid,
+
+          -- price
+          CASE
+            WHEN j.is_multiday = 0 THEN 1
+            WHEN date(COALESCE(j.start_date, j.date)) = date(:sel) THEN 1
+            ELSE 0
+          END AS show_price
+          
         FROM jobs j
-        LEFT JOIN technicians t ON t.id = j.technician_id
+        LEFT JOIN technicians AS t ON t.id = j.technician_id
         LEFT JOIN users cu ON cu.id = j.created_by
         LEFT JOIN users mu ON mu.id = j.last_modified_by
-        WHERE j.start_date <= ? AND (j.end_date IS NULL OR j.end_date >= ?)
-        ORDER BY j.start_date, j.id
+        WHERE
+          (j.is_multiday = 0 AND date(COALESCE(j.date, j.start_date)) = date(:sel))
+          OR
+          (j.is_multiday = 1
+            AND date(COALESCE(j.start_date, j.date)) <= date(:sel)
+            AND date(COALESCE(j.end_date, j.date)) >= date(:sel))
+
+        ORDER BY date(COALESCE(j.start_date, j.date)), j.id
         """,
-        (selected_date, selected_date),
+        {"sel": selected_date},
     )
     jobs = cur.fetchall()
 

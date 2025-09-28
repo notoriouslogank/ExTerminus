@@ -258,6 +258,24 @@ a:hover {
     white-space: nowrap;
 }
 
+.job-row { 
+    display: flex;
+    gap:.5rem;
+    align-items:center;
+}
+
+.md-marker {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #888;
+}
+
+.md-marker.end {
+    padding: 0 .35rem;
+    border: 1px solid #888;
+    border-radius:.4rem;
+    font-size:.75rem;
+    letter-spacing:.02em;
+}
 /* Badges */
 .badge {
     padding: 0.3em 0.6em;

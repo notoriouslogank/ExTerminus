@@ -47,3 +47,21 @@ class JobsRepo:
           AND COALESCE(end_date, date)   >= :start
         """
         return self.conn.execute(q, {"start": start, "end": end}).fetchall()
+
+    def for_day_projected(self, ymd: str):
+        """
+        Return rows whose span includes ymd.
+        Single-day: date = ymd
+        Multi-day: start_date <= ymd <= end_date
+        """
+
+        q = """
+        SELECT *
+        FROM jobs
+        WHERE
+          (is_multiday = 0 AND date = :d)
+          OR
+          (is_multiday = 1 AND start_date <= :d AND end_date >= :d)
+        ORDER BY id
+        """
+        return self.conn.execute(q, {"d": ymd}).fetchall()
