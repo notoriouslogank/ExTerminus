@@ -452,6 +452,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* Default modal styling */
 .modal {
+    position:fixed;
+    inset:0;
+    align-items:center;
+    justify-content: center;
     width: 400px;
     /* Set modal width */
     padding: 1rem;
@@ -463,9 +467,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     /* Rounded corners */
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     /* Shadow for depth */
-    display: none;
+    display: flex;
     /* Hide by default */
-    position: fixed;
     /* Fixed position to keep it centered */
     top: 50%;
     /* Vertically center */
@@ -491,6 +494,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .modal button {
     margin-top: 1rem;
+}
+
+.modal[aria-hidden="true"]{
+    display:none;
+}
+.modal-dialog{ 
+    background:#222;
+    border:1px solid #444;
+    border-radius:8px;
+    padding: 16px;
+    max-width:520px;
+    width:92%;
 }
 
 /* == 7) Layout Helpers ===================================================== */
