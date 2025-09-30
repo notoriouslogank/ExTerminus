@@ -25,7 +25,7 @@ ngrok-logs:
 	@journalctl -u ngrok-exterminus -n 200 -f
 
 print-config:
-	@bash --noprofile --norc -c 'set -eu; source scripts/config.sh; print_config'
+	@./scripts/print_config.sh
 
 configure:
 	@cp -n deploy/config.example.env deploy/config.local.env 2>/dev/null || true 

@@ -35,7 +35,7 @@ APP_USER="${APP_USER:-$(id -un)}"
 
 #APP_HOME via passwd DB; fallback to $HOME
 if [[ -z "${APP_HOME:-}" ]]; then
-  APP_HOME="$(getent passwd "$APP_USER" | cut -d: -f6 2>/dev/null | echo "$HOME")"
+  APP_HOME="$(getent passwd "$APP_USER" | cut -d: -f6 2>/dev/null || true)"
 fi
 
 # If not set, prefer git repo root; else $APP_HOME/exterminus
@@ -50,6 +50,7 @@ REPO_NAME="$(basename "$APP_ROOT")"
 : "${SERVICE_PORT:=8000}"
 : "${APP_FACTORY:=exterminus.app:create_app()}"
 : "${VENV_DIR:=$APP_ROOT/.venv}"
+: "${CONFIG_PATH:=$APP_ROOT/deploy}"
 
 # ngrok (off by default unless DOMAIN is set)
 : "${DOMAIN:=}"						# empty = 'disabled'
