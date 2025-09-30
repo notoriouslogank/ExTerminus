@@ -1,7 +1,9 @@
 SHELL := /usr/bin/env bash
+SHELLFLAGS := -euo pipefail -c
+.PHONY: install
 
-install:
-	@bash --noprofile --norc -c 'set -eu; . scripts/config.sh; bash scripts/install.sh'
+install: 
+	./scripts/install.sh
 
 update:
 	@bash scripts/update.sh
