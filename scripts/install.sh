@@ -2,10 +2,18 @@
 set -euo pipefail
 
 # -- Config --
-APP_USER="${APP_USER:-$USER}"
-APP_HOME="${APP_HOME:-/home/${APP_USER}}"
-APP_ROOT="${APP_ROOT:-{$APP_HOME}/exterminus}}"
-VENV_DIR="${VENV_DIR:-${APP_ROOT}/.venv}"
+APP_USER="${APP_USER:-$(id -un)}"
+APP_GROUP="${APP_GROUP:-$(id -gn "${APP_USER}")}"
+APP_HOME="${APP_HOME:-$HOME}"
+
+if [[ $EUID -eq 0 ]]; then 
+	CHOWN=chown
+else CHOWN="sudo chown"
+fi
+
+
+APP_ROOT="${APP_ROOT:-$APP_HOME/exterminus}"
+VENV_DIR="${VENV_DIR:-$APP_ROOT/.venv}"
 SERVICE_NAME="${SERVICE_NAME:-exterminus}"
 SERVICE_PORT="${SERVICE_PORT:-8000}"
 APP_FACTORY="${APP_FACTORY:-exterminus.app:create_app()}"
@@ -25,8 +33,9 @@ command -v python3 >/dev/null || {
   sudo apt update
   sudo apt install -y python3 python3-venv python3-pip
 }
+
 sudo mkdir -p "${APP_ROOT}" "${APP_HOME}"
-sudo chown -R "${APP_USER:$APP_USER}" "$APP_HOME"
+sudo chown -R "${APP_USER}:${APP_GROUP}" "${APP_HOME}"
 
 # -- Ensure root --
 REPO_TOP="$(git rev-parse --show-toplevel 2>/dev/null || true)"
@@ -38,11 +47,14 @@ cd "${REPO_TOP}"
 # -- Python --
 if [[ ! -d "${VENV_DIR}" ]]; then
   log "Creating venv at ${VENV_DIR}"
+  python3 -m venv .venv
 fi
+
 log "Upgrading pip & installing requirements."
-sudo -u "${APP_USER}" "${VENV_DIR}/bin/pip" install --upgrade pip wheel
+source "${VENV_DIR}/bin/activate"
+pip install --upgrade pip
 if [[ -f "${REQ_FILE}" ]]; then
-  sudo -u "${APP_USER}" "${VENV_DIR}/bin/pip" install -r "${REQ_FILE}"
+  pip install -r "${REQ_FILE}"
 else
   log "No ${REQ_FILE}; skipping pip install."
 fi
@@ -61,7 +73,7 @@ SECRET_KEY=change-me
 # DATABASE_URL=sqlite:///instance/exterminus.sqlite3
 EOF
   fi
-  chown "${APP_USER}:${APP_USER}" "${ENV_FILE}"
+  chown "${APP_USER}:${APP_GROUP}" "${ENV_FILE}"
   chmod 640 "${ENV_FILE}"
 fi
 
