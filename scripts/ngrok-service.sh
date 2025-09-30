@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+. scripts/config.sh
+if [ -z "${DOMAIN:-}" ]; then
+  echo "ngrok disabled: DOMAIN is empty (set it in deploy/config.local.env)."
+  exit 0
+fi
+
 # -- Defaults --
 NGROK_BIN="${NGROK_BIN:-/usr/local/bin/ngrok}"
 SERVICE_NAME="${SERVICE_NAME}:-ngrok-exterminus"

@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # -- Config --
-APP_USER="${APP_USER:-{$USER}}"
+APP_USER="${APP_USER:-${USER}}"
 APP_HOME="${APP_HOME:-/home/${APP_USER}}"
-APP_ROOT="${APP_ROOT:-${APP_HOME}/exterminus}"
+APP_ROOT="${APP_ROOT:-{$APP_HOME}/exterminus}}"
 VENV_DIR="${VENV_DIR:-${APP_ROOT}/.venv}"
 SERVICE_NAME="${SERVICE_NAME:-exterminus}"
 SERVICE_PORT="${SERVICE_PORT:-8000}"
@@ -26,7 +26,7 @@ command -v python3 >/dev/null || {
   sudo apt install -y python3 python3-venv python3-pip
 }
 sudo mkdir -p "${APP_ROOT}" "${APP_HOME}"
-sudo chown -R "${APP_USER}:${APP_USER}" "${APP_HOME}"
+sudo chown -R "${APP_USER:$APP_USER}" "$APP_HOME"
 
 # -- Ensure root --
 REPO_TOP="$(git rev-parse --show-toplevel 2>/dev/null || true)"
