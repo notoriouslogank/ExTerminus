@@ -1,54 +1,67 @@
-from sqlite3 import Connection
-from typing import Mapping, Optional
+import sqlite3
+from typing import Mapping, Optional, Sequence
 
 
-def get_jobs_for_day(conn: Connection, day: str) -> list[Mapping]:
-    return conn.execute(
+class JobsRepo:
+    def __init__(self, conn: sqlite3.Connection):
+        self.conn = conn
+
+    # Core
+
+    def create(self, data: Mapping) -> int:
+        q = """
+        INSERT INTO jobs(title, date, start_date, end_date, is_multiday,
+                         created_at, updated_at, created_by, updated_by,
+                         assigned_to, assignment_mode, price, notes, rei_city, rei_zip)
+                         VALUES(:title, :date, :start_date, :end_date, :is_multiday,
+                                :created_at, :updated_at, :created_by, :updated_by, 
+                                :assigned_to, :assignment_mode, :price, :notes, :rei_city, :rei_zip)
         """
-        SELECT j.*,
-                t.name AS technician_name
-        FROM jobs j
-        LEFT JOIN technicians t ON t.id = j.technician_id
-        WHERE date(j.start_date) = date(?)
-        ORDER BY (j.start_time IS NULL), j.start_time, j.id
-    """,
-        (day,),
-    ).fetchall()
+        cur = self.conn.execute(q, data)
+        return cur.lastrowid
 
+    def get(self, job_id: int) -> Optional[sqlite3.Row]:
+        return self.conn.execute(
+            "SELECT * FROM jobs WHERE id = ?", (job_id,)
+        ).fetchone()
 
-def get_jobs_for_grid(conn: Connection, start: str, end: str) -> list[Mapping]:
-    return conn.execute(
+    def update(self, job_id: int, data: Mapping) -> None:
+        sets = ", ".join(f"{k}=:{k}" for k in data.keys())
+        params = {**data, "job_id": job_id}
+        self.conn.execute(f"UPDATE jobs SET {sets} WHERE id=:job_id", params)
+
+    def delete(self, job_id: int) -> None:
+        self.conn.execute("DELETE FROM jobs WHERE id = ?", (job_id,))
+
+    # Queries by services
+
+    def by_date(self, ymd: str) -> Sequence[sqlite3.Row]:
+        return self.conn.execute(
+            "SELECT * FROM jobs WHERE date = ? ORDER BY id", (ymd,)
+        ).fetchall()
+
+    def overlaps_range(self, start: str, end: str) -> Sequence[sqlite3.Row]:
+        q = """
+        SELECT * FROM jobs
+        WHERE COALESCE(start_date, date) <= :end
+          AND COALESCE(end_date, date)   >= :start
         """
-        SELECT j.*,
-            t.name AS technician_name
-        FROM jobs j
-        LEFT JOIN technicians t ON t.id = j.technician_id
-        WHERE date(j.start_date) <= date(?)
-            AND date(COALESCE(j.end_date, j.start_date)) >= date(?)
-        ORDER BY date(j.start_date), (j.start_time IS NULL), j.start_time, j.id
-    """,
-        (end, start),
-    ).fetchall()
+        return self.conn.execute(q, {"start": start, "end": end}).fetchall()
 
+    def for_day_projected(self, ymd: str):
+        """
+        Return rows whose span includes ymd.
+        Single-day: date = ymd
+        Multi-day: start_date <= ymd <= end_date
+        """
 
-def get_job(conn: Connection, job_id: int) -> Optional[Mapping]:
-    return conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
-
-
-def insert_job(conn: Connection, data: Mapping) -> int:
-    cols = ", ".join(data.keys())
-    qs = ", ".join(["?"] * len(data))
-    cur = conn.execute(f"INSERT INTO jobs ({cols}) VALUES ({qs})", tuple(data.values()))
-    conn.commit()
-    return cur.lastrowid
-
-
-def update_job(conn: Connection, job_id: int, data: Mapping) -> None:
-    sets = ", ".join([f"{k}=?" for k in data.keys()])
-    conn.execute(f"UPDATE jobs SET {sets} WHERE id=?", (*data.values(), job_id))
-    conn.commit()
-
-
-def delete_job(conn: Connection, job_id: int) -> None:
-    conn.execute("DELETE FROM jobs WHERE id = ?", (job_id,))
-    conn.commit()
+        q = """
+        SELECT *
+        FROM jobs
+        WHERE
+          (is_multiday = 0 AND date = :d)
+          OR
+          (is_multiday = 1 AND start_date <= :d AND end_date >= :d)
+        ORDER BY id
+        """
+        return self.conn.execute(q, {"d": ymd}).fetchall()

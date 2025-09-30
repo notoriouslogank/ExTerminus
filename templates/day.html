@@ -4,6 +4,7 @@
 {% set _role = (_u.get('role', '') | lower) %}
 {% set _uid = _u.get('user_id') %}
 {% from "_partials/job_controls.html" import job_controls %}
+{% include "_modal_create_multiday.html" %}
 
 <div class="status-banner">
   {% if locked %}
@@ -31,6 +32,7 @@
   <a href="{{ url_for('calendar.index') }}" class="btn btn-yellow">← Calendar</a>
   {% if session.get("user") and not locked %}
     <a href="{{ url_for('job.add_job_for_date', date=selected_date.isoformat()) }}" class="btn btn-yellow">+ Add Job</a>
+    <a href="#" class="button" data-open="#createMultidayModal">+ Add Multi-Day</a>
     <a href="{{ url_for('calendar.add_time_off', date=selected_date.isoformat()) }}" class="btn btn-yellow">+ Add Time Off</a>
   {% endif %}
 </div>
@@ -39,6 +41,13 @@
   <div style="max-width: 700px; margin: 0 auto;">
     {% for job in jobs %}
       <div class="card">
+        {% if job.is_multiday %}
+          {% if job.is_last %}
+            <span class="md-marker end">END</span>
+          {% elif job.is_mid %}
+            <span class="md-marker">-&gt;</span>
+          {% endif %}
+        {% endif %}
         {# normalize job type and tech label #}
         {% set jt = (job.job_type or job.type or '')|lower %}
         {% set tech_label = 'Two Man' if job.two_man else (job.technician_name or 'Unassigned') %}
@@ -57,8 +66,8 @@
         {% else %}
           <h3 class="job-heading">{{ job.display_title or job.title or "(Untitled)" }}</h3>
 
-          {% if job.price %}
-            <p class="job-meta">💵 ${{ "%.2f"|format(job.price) }}</p>
+          {% if job.show_price and job.price %}
+            <p class="job-meta">${{ "%.2f"|format(job.price) }}</p>
           {% endif %}
 
           {% if job.time_range or (job.start_time and job.end_time) %}

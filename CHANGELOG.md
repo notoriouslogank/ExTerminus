@@ -6,6 +6,43 @@ All notable changes to this project will be documented here.
 
 (nothing yet)
 
+## [1.0.0]
+
+### Added
+
+- Owner-only controls in day and month views, including filtering for ownership.
+- `job_controls` macro for job cards with hide/edit/move/delete for non-owners.
+- New `GET/POST` endpoint for `move_job`, including lock-day checks and redirect handling.
+- Assignment of `created_by` field when jobs are created.
+- Environment configuration and production write-guard flag system.
+- SQLite backup/rollback scripts and migration runner.
+- README version badge and pre-commit configuration (Black, Ruff, isort).
+
+### Changed
+
+- Repository layer refactor: extracted many functions into dedicated modules.
+- Modal system renamed: `move_modal` -> `_modal_move_job.html` with global stop-link navigation
+- Owner resolution now pulls from `g.user` or session rather than request body.
+- `job_controls` macro made self-contained and read-session aware.
+- `set_jobs.created_by` now defaults to the current user on creation.
+- URL building in templates switched to Jinja `url_for()` for better static inclusion.
+
+### Fixed
+
+- Move modal cancel link and opener behavior; modal now prevents unintended navigation.
+- Lock checks enforced on job move; redirect follows POST.
+- Time-off insert column order corrected.
+- Time-off "restore" flow fixed with sane defaults (`v0.3.1` regression).
+- NULL insert on `jobs.created_by` forbidden with DB constraint and index.
+- `auth` layer now restricts job edit/move/delete to owners or admin/manager roles.
+- Blocker guard now correctly prevents writes in `READ_ONLY_PROD=true` environments.
+- Hotfix merged from `v0.3.2` into `dev`.
+
+### Security
+
+- SECRET_KEY alignment and production write-guard enforcement.
+- Access controls tightened on mutation endpoints.
+
 ## [0.3.1] - 2025-09-17
 
 ### Fixed
