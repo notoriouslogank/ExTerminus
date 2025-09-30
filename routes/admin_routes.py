@@ -5,8 +5,7 @@ Notes:
     - Creating a user sets ``must_reset_password = 1`` so the first login forces a password change.
 """
 
-from flask import (Blueprint, flash, redirect, render_template, request,
-                   session, url_for)
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from werkzeug.security import generate_password_hash
 
 from db import get_database

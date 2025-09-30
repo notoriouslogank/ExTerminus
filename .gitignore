@@ -1,25 +1,35 @@
 # Python
-__pycache--/
-*.py[cod]
+__pycache__/
+*.pyc
 *.pyo
-# venv/env
-.env
+*.pyd
 .venv/
-venv/
+.ruff_cache/
+
+# Environment
+.env
+.env.*
+
 # SQLite
-db.sqlite3
-db.sqlite3-*
 *.sqlite3
-*.sqlite3-*
 *.db
-*.db-*
-# OS/editor
-.DS_Store
-.idea/
-.vscode/
-# Tools
-mkbug.py
-.gitmessage.txt
-# Logs
+*.db-journal
+*.sqlite-shm
+*.sqlite-wal
+
+# Logs & Runtime Data
 logs/
+instance/
+backups/
+
+# Misc
+*.pid
+*.log
+.layout
+.gitmessage.txt
+.pre-commit-config.yaml
+
+utils/mkbug.py
+docs/BUGS.md.bak
 *.bak
+deploy/config.local.env

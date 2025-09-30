@@ -1,0 +1,14 @@
+[Unit]
+Description=ngrok tunnel for ExTerminus
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User={{APP_USER}}
+ExecStart={{NGROK_BIN}} start --config {{CONFIG_PATH}} {{TUNNEL_NAME}}
+Restart=always
+RestartSec=3
+Environment=HOME=/home/{{APP_USER}}
+
+[Install]
+WantedBy=multi-user.target
