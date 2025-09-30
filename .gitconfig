@@ -1,0 +1,17 @@
+[pager]
+	diff = delta
+	log = delta
+	reflog = delta
+	show = delta
+
+[delta]
+	navigate = true
+	line-numbers = true
+	side-by-side = true
+
+[diff]
+	tool = meld
+[merge]
+	tool = meld
+[mergetool "meld"]
+	cmd = meld "$LOCAL" "$BASE" "$REMOTE" --output "$MERGED"
