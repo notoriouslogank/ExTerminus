@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # -- Config --
-APP_USER="${APP_USER:-${USER}}"
+APP_USER="${APP_USER:-$USER}"
 APP_HOME="${APP_HOME:-/home/${APP_USER}}"
 APP_ROOT="${APP_ROOT:-{$APP_HOME}/exterminus}}"
 VENV_DIR="${VENV_DIR:-${APP_ROOT}/.venv}"
