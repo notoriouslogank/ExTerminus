@@ -32,3 +32,4 @@ backups/
 utils/mkbug.py
 docs/BUGS.md.bak
 *.bak
+deploy/config.local.env

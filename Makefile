@@ -24,3 +24,5 @@ ngrok-restart:
 ngrok-logs:
 	@journalctl -u ngrok-exterminus -n 200 -f
 
+print-config:
+	@bash -c '. scripts/config.sh; print_config'
