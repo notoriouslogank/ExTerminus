@@ -4,7 +4,6 @@
 {% set _role = (_u.get('role', '') | lower) %}
 {% set _uid = _u.get('user_id') %}
 {% from "_partials/job_controls.html" import job_controls %}
-{% include "_modal_create_multiday.html" %}
 
 <div class="status-banner">
   {% if locked %}
