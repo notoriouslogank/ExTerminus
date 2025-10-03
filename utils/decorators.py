@@ -7,7 +7,74 @@ Provides:
 
 from functools import wraps
 
-from flask import flash, redirect, request, session, url_for
+from flask import abort, current_app, flash, g, redirect, request, session, url_for
+
+from db import get_database
+
+
+def _uid():
+    return getattr(getattr(g, "user", None), "id", None) or session.get("user_id")
+
+
+def current_user_id_and_role():
+    u = getattr(g, "user", None)
+    if u is not None:
+        uid = (
+            getattr(u, "id", None)
+            if not isinstance(u, dict)
+            else (u.get("user_id") or u.get("id"))
+        )
+        role = getattr(u, "role", None) if not isinstance(u, dict) else u.get("role")
+        if uid is not None:
+            return int(uid), (role or "").lower()
+
+    su = session.get("user") or {}
+    uid = su.get("user_id") or session.get("user_id")
+    role = su.get("role") or session.get("role")
+    return (int(uid) if uid is not None else None), (role or "").lower()
+
+
+def owner_or_role(roles=("admin", "manager")):
+    def deco(fn):
+        @wraps(fn)
+        def wrapper(job_id, *a, **kw):
+            uid, role = current_user_id_and_role()
+            if uid is None:
+                abort(401)
+
+            conn = get_database()
+            row = conn.execute(
+                """
+                SELECT j.created_by AS owner_id
+                FROM jobs j
+                WHERE j.id = ?
+            """,
+                (job_id,),
+            ).fetchone()
+            if row is None:
+                abort(404)
+            if not (row["owner_id"] == uid or role in roles):
+                abort(403)
+            return fn(job_id, *a, **kw)
+
+        return wrapper
+
+    return deco
+
+
+def write_guard(fn):
+    @wraps(fn)
+    def _inner(*a, **kw):
+        if current_app.config.get("READ_ONLY_PROD") and request.method in {
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE",
+        }:
+            abort(423)  # Locked
+        return fn(*a, **kw)
+
+    return _inner
 
 
 def role_required(*roles):

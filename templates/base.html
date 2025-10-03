@@ -8,6 +8,32 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
 </head>
+
+<script>
+(function(){
+    document.addEventListener('click', function(e){
+    var opener = e.target.closest('[data-open]');
+    if (opener){
+        e.preventDefault();
+        var sel = opener.getAttribute('data-open');
+        var m = document.querySelector(sel);
+        if (m){
+            m.removeAttribute('aria-hidden');
+            var first = m.querySelector('input,select,textarea,button');
+            if (first) first.focus();
+        }
+        return;
+    }
+    var closer = e.target.closest('[data-dismiss], .modal .close');
+    if (closer){
+        e.preventDefault();
+        var mm = closer.closest('.modal');
+        if (mm) mm.setAttribute('aria-hidden', 'true');
+      }
+    });
+})();
+    </script>
+
 <body>
 
     <!-- Top Right User Bar -->
@@ -47,6 +73,31 @@
         <script defer src="{{ url_for('static', filename='js/password-peek.js') }}"></script>
         <script defer src="{{ url_for('static', filename='js/timeoff-form.js') }}"></script>
     {% endblock %}
+
+    {% include "_partials/move_modal.html" %}
+
+    <script>
+    (function(){
+    // Intercept before overlays/other handlers (capture=true)
+    document.addEventListener('click', function(e){
+        const a = e.target.closest('a.move-link');
+        if (!a) return;
+
+    // If modal API exists, try to open; only cancel if we succeed
+        if (typeof window.openMoveModal === 'function') {
+        const id = parseInt(a.getAttribute('data-move-job-id'), 10);
+        const opened = window.openMoveModal(id);
+        if (opened) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return;
+        }
+    }
+    // else: no modal available → allow normal navigation via href
+}, true); // <-- capture phase
+})();
+</script>
+
 </body>
 </html>
-

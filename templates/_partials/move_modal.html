@@ -1,0 +1,67 @@
+<dialog id="move-modal" class="modal" data-url-tpl="{{ url_for('job.move_job', job_id=0) }}">
+  <form method="POST" class="card" style="min-width: 360px;">
+    {% if csrf_token %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+    <input type="hidden" name="next" value="{{ request.full_path }}">
+    <label class="mb-1">Select New Date:
+      <input type="date" name="new_date" required class="input">
+    </label>
+    <div class="flex-row gap mt-1">
+      <button type="submit" class="btn btn-yellow">Move</button>
+      <button type="button" class="btn" onclick="closeMoveModal()">Cancel</button>
+    </div>
+  </form>
+</dialog>
+<script>
+(function () {
+  if (window.openMoveModal) return;
+
+  window.openMoveModal = function (jobId) {
+    const modal = document.getElementById('move-modal');
+    if (!modal) {
+      console.error('Modal not found!');
+      return false;
+    }
+
+    const form = modal.querySelector('form');
+    const urlTpl = modal.getAttribute('data-url-tpl') || "";
+    if (!form || !urlTpl) {
+      console.error('Form or URL template is missing!');
+      return false;
+    }
+
+    form.action = urlTpl.replace(/0$/, String(jobId));
+
+    const dateInput = form.querySelector('input[name="new_date"]');
+    if (dateInput) dateInput.value = "";
+
+    // Ensure modal is displayed and centered
+    modal.style.display = 'block';  // Force visibility
+    modal.style.position = 'fixed';  // Keep it fixed on screen
+    modal.style.top = '50%';         // Center vertically
+    modal.style.left = '50%';        // Center horizontally
+    modal.style.transform = 'translate(-50%, -50%)';  // Actual centering
+
+    // Fallback for older browsers: use open attribute
+    if (typeof modal.showModal === 'function') {
+      modal.showModal();  // Native support for modern browsers
+    }
+
+    // Ensure modal stays on top of everything else
+    modal.style.zIndex = '1000';
+
+    console.log("Modal successfully opened for job ID:", jobId);
+    return true;  // Modal opened
+  };
+
+  window.closeMoveModal = function () {
+    const modal = document.getElementById('move-modal');
+    if (!modal) return;
+    if (typeof modal.close === 'function') {
+      modal.close();
+    } else {
+      modal.removeAttribute('open');
+      modal.style.display = 'none';  // Hide modal again
+    }
+  };
+})();
+</script>

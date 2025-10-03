@@ -1,0 +1,15 @@
+[Unit]
+Description=ExTerminus (Gunicorn)
+After=network.target
+
+[Service]
+User={{APP_USER}}
+WorkingDirectory={{APP_ROOT}}
+EnvironmentFile={{APP_ROOT}}/.env
+ExecStart={{VENV_DIR}}/bin/gunicorn -w 3 -b 127.0.1:{{PORT}} --timeout 120 "{{APP_FACTORY}}"
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

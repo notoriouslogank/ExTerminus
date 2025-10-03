@@ -1,6 +1,4 @@
-# ExTerminus
-
-![Version](https://img.shields.io/badge/version-0.3.2-blue.svg)
+# ExTerminus <!--VERSION-->
 
 Calendar-driven scheduling for pest control operations.  Fast to run, simple to deploy, opinionated where it counts.
 
@@ -33,6 +31,17 @@ Calendar-driven scheduling for pest control operations.  Fast to run, simple to 
 
 ---
 
+## New in v1.0.0
+
+- New `make install` workflow with Bash shell and hardened install script
+- Automatic `.env` creation (from template or safe defaults)
+- Safter `chown` logic with fallback user/group detection
+- Installer now sets up Python virtualenv, dependencies, database, and systemd service
+- Enhanced `.env` validation: fails fast if required variables are missing
+- Preflight diagnostics during installation (Python version, venv check, repo root detection)
+
+---
+
 ## New in v0.2.0
 
 - Lock/unlock dates now show "Last edited by NAME at TIMESTAMP (EST)" display for better auditing
@@ -57,75 +66,60 @@ Calendar-driven scheduling for pest control operations.  Fast to run, simple to 
 ### Requirements
 
 - Python 3.11+ recommended
-- `pip` and `venv`
+- `pip`, `venv`, and `make`
+- (Optional) `systemd` if deploying as a service
 
-### 1) Clone & install
+1) Clone the repo
+```bash
+git clone https://github.com/notoriouslogank/ExTerminus.git
+cd exterminus
+```
+2) Run the installer
+```bash
+make install
+```
+This will:
+  - Create and activate a virtual environment
+  - Install dependencies
+  - Create `.env` (from template or safe defaults)
+  - Initialize the database if needed
+  - Install and enable the `exterminus.service` systemd unit
+
+### Installer & Deployment
+
+#### Environment Variables
+
+`deploy/config.local.env` will be created automatically, but you should review it and replace placeholder values:
 
 ```bash
-git clone https://github.com/notoriouslogank/ExTerminus.git && cd ExTerminus
-python3 -m venv .venv
-# Linux
-source .venv/bin/activate
-# Windows
-.venv\Scripts\activate
-
-pip install -r requirements.txt
+SECRET_KEY=change-me
+SESSION_COOKIE_SECURE=1
+FLASK_ENV=production
 ```
 
-### 2) Configure .env
-
-```bash
-cp .env.example .env
-# Generate a proper secret:
-python3 - <<'PY'
-import secrets; print("SECRET_KEY="+secrets.token_hex(32))
-PY
-# Paste into .env (replace placeholders)
-```
-
-`.env.example` fields:
-
-```bash
-SECRET_KEY=change_me_in_prod
-SESSION_COOKIE_SECURE=0 # set to 1 in production behind HTTPS
-```
-
-### 3) Initialize DB (first run)
-
-The app will create the DB on first run and seed a default admin if none exists.
-If you ever need to force init:
-
+Generate a real secret:
 ```bash
 python3 - <<'PY'
-from exterminus.db import init_db; init_db()
-print("DB initialized.")
+import secrets
+print("SECRET_KEY="+secrets.token_hex(32))
 PY
 ```
 
-### 4) Run
+#### Service Management
+
+The installer registers a `systemd` unit named `exterminus.service`.  Typical usage:
 
 ```bash
-export FLASK_APP=app.py
-# Linux
-export FLASK_ENV=development
-# Windows PowerShell
-$env:FLASK_ENV="development"
-
-flask run
-
-# On first run, open http:127.0.0.1:5000
-# Default admin login:
-username: admin
-password: changeme # will require reset
-
+sudo systemctl start exterminus
+sudo systemctgl enable exterminus
+sudo systemctl status exterminus
 ```
 
-Open <http://127.0.0.1:5000>
-
-Default admin (first run only):
-`username: admin` / `password: changeme`
-You'll be prompted to change password on first login.
-
+Logs:
+```bash
+journalctl -u exterminus -f
+```
+If the service fails immediately after install, it's usually due to an invalid `config.local.env` or missing dependency.  Check the logs above for details.
 ---
 
 ## Common Tasks
@@ -167,10 +161,11 @@ INSERT INTO technicians (name) VALUES ('Alice');
 ## Configuration
 
 - `SECRET_KEY` must be set in prod (the app fails fast if not).
-- Cookies:
+- Session cookie options:
   - `SESSION_COOKIE_HTTPONLY=True`
   - `SESSION_COOKIE_SAMESITE="Lax"`
   - `SESSION_COOKIE_SECURE=1` in production (HTTPS)
+- Database initialization runs automatically on first start if no DB exists.
 
 ---
 

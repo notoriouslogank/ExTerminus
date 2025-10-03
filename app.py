@@ -7,18 +7,21 @@ Responsibilities:
     - Register friendly error handlers (404/500, CSRF).
 """
 
+import os
 from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
-from flask import Flask, flash, g, redirect, render_template, request, url_for
+from flask import Flask, flash, g, redirect, render_template, request, session, url_for
 from flask_wtf import CSRFProtect
 from flask_wtf.csrf import CSRFError, generate_csrf
 
 from db import ensure_pragmas, init_db
 from routes import register_routes
-from utils.config import Config
+from services.jobs_service import JobsService
+from services.timeoff_service import TimeOffService
+from utils.feature_flags import feature
 from utils.logger import setup_logger
 from utils.version import __version__
 
@@ -31,6 +34,8 @@ STATIC_DIR = BASE_DIR / "static"
 
 DISPLAY_TZ = ZoneInfo("America/New_York")
 ASSUME_UTC = True
+
+csrf = CSRFProtect()
 
 
 def fmt_ts(value):
@@ -70,26 +75,40 @@ def fmt_ts(value):
 
 def create_app():
     """Create and configure the Flask application.
+    i
+        Sets up configuration, CSRF protection, logging, DB initialization, Jinja filters/context, error handlers, and registers all blueprints.
 
-    Sets up configuration, CSRF protection, logging, DB initialization, Jinja filters/context, error handlers, and registers all blueprints.
+        Raises:
+            RuntimeError: SECRET_KEY must be set in production.
 
-    Raises:
-        RuntimeError: SECRET_KEY must be set in production.
-
-    Returns:
-        Flask: A fully-configured Flask application instance.
+        Returns:
+            Flask: A fully-configured Flask application instance.
     """
-    app = Flask(
-        __name__, static_folder=str(STATIC_DIR), template_folder=str(TEMPLATES_DIR)
-    )
-    app.config.from_object(Config)
+    app = Flask(__name__)
+    app.config.from_object("config.DevConfig")
+    csrf.init_app(app)
+
+    # services container
+    app.extensions = getattr(app, "extensions", {})
+    app.extensions["services"] = {
+        "jobs": JobsService(),
+        "timeoff": TimeOffService(),
+    }
+
+    from routes.jobs import bp as jobs_bp
+
+    app.register_blueprint(jobs_bp)
+
+    env = os.getenv("FLASK_ENV", "development").lower()
+    cfg = "config.ProdConfig" if env == "production" else "config.DevConfig"
+    app.config.from_object(cfg)
 
     app.jinja_env.filters["fmt_ts"] = fmt_ts
 
     if not app.debug and app.config.get("SECRET_KEY") in (
         None,
         "",
-        "dev-insecure-change-me",
+        "change-me",
     ):
         raise RuntimeError("SECRET_KEY must be set in production.")
 
@@ -97,6 +116,10 @@ def create_app():
 
     logger = setup_logger()  # type: ignore
     logger.debug("App starting with config loaded.")
+
+    @app.context_processor
+    def inject_flags():
+        return {"feature": feature}
 
     @app.context_processor
     def inject_csrf():
@@ -119,24 +142,28 @@ def create_app():
         """Render the generic 500 error page."""
         return render_template("errors.html", code=500), 500
 
+    @app.errorhandler(423)
+    def locked(_e):
+        return render_template("errors.html", code=423), 423
+
     init_db()
     ensure_pragmas()
-
-    @app.teardown_appcontext
-    def close_db(_exc):
-        """Commit/rollback and close any DB connection stored on ``g``."""
-        db = g.pop("db", None)
-        if db is not None:
-            try:
-                db.commit()
-            except Exception:
-                db.rollback()
-            db.close()
 
     @app.context_processor
     def inject_globals():
         """Provide ``today`` and ``now`` to all templates."""
         return {"today": date.today(), "now": datetime.now()}
+
+    @app.context_processor
+    def inject_identity():
+        su = session.get("user") or {}
+        return {"_uid": su.get("user_id"), "_role": (su.get("role") or "").lower()}
+
+    @app.context_processor
+    def inject_viewer():
+        uid = getattr(getattr(g, "user", None), "id", None) or session.get("user_id")
+        role = getattr(getattr(g, "user", None), "role", None) or session.get("role")
+        return {"viewer_id": uid, "viewer_role": role}
 
     @app.context_processor
     def inject_app_version():

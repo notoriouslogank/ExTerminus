@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Move Job #{{ job.id }}</h2>
+
+<form method="POST" action="{{ url_for('job.move_job', job_id=job.id) }}" class="card" style="max-width: 420px; margin: 1rem auto;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="next" value="{{ next }}">
+    <label class="mb-1">New date
+        <input type="date" name="new_date" required class="input">
+    </label>
+    <div class="flex-row gap mt-1">
+        <button class="btn btn-yellow">Move</button>
+        <a class="btn" href="{{ next or url_for('calendar.index') }}">Cancel</a>
+    </div>
+</form>
+
+{% endblock %}
