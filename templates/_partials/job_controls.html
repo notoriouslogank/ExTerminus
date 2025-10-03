@@ -4,18 +4,18 @@
   {% set viewer_id = (su.get('user_id')|int) if su.get('user_id') is not none else none %}
   {% set viewer_role = (su.get('role')|lower) if su.get('role') is not none else '' %}
 
-  {% set can_edit = (viewer_id is not none and job.created_by == viewer_id) or (viewer_role in ['admin','manager']) %}
-  {% if not locked and can_edit %}
+
+  {% set can_edit = (viewer_id is not none and job.created_by == viewer_id) or (viewer_role in ['admin', 'manager']) %}
+  {% if can_edit and (not locked or viewer_role in ['admin', 'manager']) %}
     <span class="job-controls">
-        <a href="{{ url_for('job.edit_job', job_id=job.id) }}" class="btn btn-yellow btn-xxs">✏️ Edit</a>
+      <a href="{{ url_for('job.edit_job', job_id=job.id) }}" class="btn btn-yellow btn-xxs">Edit</a>
 
       {# Works with or without JS modal #}
         <a href="{{ url_for('job.move_job', job_id=job.id, next=request.full_path) }}"
-            class="btn btn-yellow btn-xxs move-link"
-            data-move-job-id="{{ job.id }}"
-            onclick="if (window.openMoveModal && openMoveModal({{ job.id }})) { event.preventDefault(); event.stopPropagation(); return false; } return true;">
-            📅 Move
-        </a>
+           class="btn btn-yellow btn-xxs move-link"
+           data-move-job-id="{{ job.id }}"
+        onclick="if (window.openMoveModal) { openMoveModal({ jobId: {{ job.id }} }); even.stopPropagation(); return false; } return true;">
+        Move</a>
 
       <form method="POST"
             action="{{ url_for('job.delete_job', job_id=job.id) }}"
