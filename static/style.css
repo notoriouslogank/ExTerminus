@@ -258,7 +258,7 @@ a:hover {
     white-space: nowrap;
 }
 
-.job-row { 
+.job-row {
     display: flex;
     gap:.5rem;
     align-items:center;
@@ -499,7 +499,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .modal[aria-hidden="true"]{
     display:none;
 }
-.modal-dialog{ 
+.modal-dialog{
     background:#222;
     border:1px solid #444;
     border-radius:8px;

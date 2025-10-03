@@ -6,7 +6,7 @@ APP_USER="${APP_USER:-$(id -un)}"
 APP_GROUP="${APP_GROUP:-$(id -gn "${APP_USER}")}"
 APP_HOME="${APP_HOME:-$HOME}"
 
-if [[ $EUID -eq 0 ]]; then 
+if [[ $EUID -eq 0 ]]; then
 	CHOWN=chown
 else CHOWN="sudo chown"
 fi

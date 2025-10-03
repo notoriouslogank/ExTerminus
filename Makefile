@@ -2,7 +2,7 @@ SHELL := /usr/bin/env bash
 SHELLFLAGS := -euo pipefail -c
 .PHONY: install
 
-install: 
+install:
 	./scripts/install.sh
 
 update:
@@ -30,5 +30,5 @@ print-config:
 	@./scripts/print_config.sh
 
 configure:
-	@cp -n deploy/config.example.env deploy/config.local.env 2>/dev/null || true 
+	@cp -n deploy/config.example.env deploy/config.local.env 2>/dev/null || true
 	@ echo "Edit deploy/config.local.env to override defaults."

@@ -237,7 +237,7 @@ def day_view(selected_date: str):
           -- template compatibility
           CASE WHEN j.assignment_mode = 'both' THEN 1 ELSE 0 END AS two_man,
           t.name AS technician_name,
-          
+
           -- display helpers
           cu.username AS created_by_name,
           mu.username AS modified_by_name,
@@ -245,7 +245,7 @@ def day_view(selected_date: str):
             WHEN LOWER(COALESCE(j.job_type, '')) = 'rei' THEN 'REIs'
             ELSE COALESCE(NULLIF(j.title, ''), '(Untitled)')
           END AS display_title,
-          
+
           -- day-position flags
           CASE WHEN j.is_multiday = 1 AND date(COALESCE(j.start_date, j.date)) = date(:sel) THEN 1 ELSE 0 END AS is_first,
           CASE WHEN j.is_multiday = 1 AND date (COALESCE(j.end_date, j.date)) = date(:sel) THEN 1 ELSE 0 END AS is_last,
@@ -259,7 +259,7 @@ def day_view(selected_date: str):
             WHEN date(COALESCE(j.start_date, j.date)) = date(:sel) THEN 1
             ELSE 0
           END AS show_price
-          
+
         FROM jobs j
         LEFT JOIN technicians AS t ON t.id = j.technician_id
         LEFT JOIN users cu ON cu.id = j.created_by

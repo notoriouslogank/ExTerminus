@@ -32,4 +32,3 @@ if ! type -t print_config >/dev/null; then
 fi
 
 print_config
-

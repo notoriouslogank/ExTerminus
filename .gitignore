@@ -33,3 +33,6 @@ utils/mkbug.py
 docs/BUGS.md.bak
 *.bak
 deploy/config.local.env
+.gitattributes
+.gitmessage
+.pre-commit-config.yaml

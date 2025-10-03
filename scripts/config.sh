@@ -7,7 +7,7 @@ ROOT_DIR="$(git -C "$SCRIPT_DIR/.." rev-parse --show-toplevel 2>/dev/null \
 CONF_FILE="${CONF_FILE:-${ROOT_DIR}/deploy/config.env}"
 LOCAL_CONF="${LOCAL_CONF:-${ROOT_DIR}/deploy/config.local.env}"
 
-load_env() { 
+load_env() {
   if [ -r "$1" ]; then
     set -a
     . "$1"

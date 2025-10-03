@@ -14,7 +14,7 @@ class JobsRepo:
                          created_at, updated_at, created_by, updated_by,
                          assigned_to, assignment_mode, price, notes, rei_city, rei_zip)
                          VALUES(:title, :date, :start_date, :end_date, :is_multiday,
-                                :created_at, :updated_at, :created_by, :updated_by, 
+                                :created_at, :updated_at, :created_by, :updated_by,
                                 :assigned_to, :assignment_mode, :price, :notes, :rei_city, :rei_zip)
         """
         cur = self.conn.execute(q, data)
